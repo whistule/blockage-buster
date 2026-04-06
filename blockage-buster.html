@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blockage Buster</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: #e5e7eb;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: #4b5563;
+  }
+
+  body {
+    max-width: 430px;
+    margin: 0 auto;
+    position: relative;
+    background: #f5f7fa;
+    min-height: 100vh;
+  }
+
+  /* ── TOP BAR ── */
+
+  .bb-topbar {
+    background: #f9fafb;
+    padding: 1rem 1.25rem 0.75rem;
+    display: flex; align-items: center; gap: 0.75rem;
+    border-bottom: 1px solid #e5e7eb;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .bb-topbar-back {
+    font-size: 1.5rem; cursor: pointer; color: #4b5563;
+    width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+    display: none; /* hidden on kanban, shown on detail */
+  }
+  .bb-topbar-title {
+    font-size: 1.2rem; font-weight: 700; color: #e20e0c;
+    text-transform: uppercase; letter-spacing: 0.02em; flex: 1;
+  }
+
+  /* ── TABS ── */
+
+  .bb-tabs {
+    display: flex; background: #f3f4f6;
+    border-bottom: 1px solid #e5e7eb;
+    overflow-x: auto; -ms-overflow-style: none; scrollbar-width: none;
+    position: sticky; top: 56px; z-index: 9;
+  }
+  .bb-tabs::-webkit-scrollbar { display: none; }
+  .bb-tab {
+    flex: none; padding: 0.7rem 1rem;
+    font-size: 0.75rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    color: #6b7280; cursor: pointer; white-space: nowrap;
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .bb-tab--active { color: #4b5563; }
+  .bb-tab--flagged.bb-tab--active { border-bottom-color: #7a8a78; }
+  .bb-tab--onus.bb-tab--active { border-bottom-color: #3d6640; }
+  .bb-tab--onthem.bb-tab--active { border-bottom-color: #c4622d; }
+  .bb-tab--resolved.bb-tab--active { border-bottom-color: #0098a0; }
+  .bb-tab--add { color: #9ca3af; font-weight: 500; }
+
+  .bb-tab-count {
+    display: inline-block; margin-left: 0.35rem;
+    background: #e5e7eb; color: #4b5563;
+    font-size: 0.65rem; font-weight: 700;
+    padding: 1px 6px; border-radius: 8px;
+  }
+  .bb-tab--active .bb-tab-count { background: #4b5563; color: white; }
+
+  /* ── SUB-TABS ── */
+
+  .bb-subtabs {
+    display: none; background: white;
+    border-bottom: 1px solid #e5e7eb;
+    overflow-x: auto; -ms-overflow-style: none; scrollbar-width: none;
+    padding: 0 0.5rem;
+    position: sticky; top: 93px; z-index: 8;
+  }
+  .bb-subtabs::-webkit-scrollbar { display: none; }
+  .bb-subtab {
+    flex: none; padding: 0.55rem 0.85rem;
+    font-size: 0.75rem; font-weight: 500;
+    color: #9ca3af; cursor: pointer; white-space: nowrap;
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .bb-subtab--active { color: #4b5563; font-weight: 600; }
+  .bb-subtabs--onus .bb-subtab--active { border-bottom-color: #3d6640; }
+  .bb-subtabs--onthem .bb-subtab--active { border-bottom-color: #c4622d; }
+  .bb-subtab-count {
+    display: inline-block; margin-left: 0.3rem;
+    font-size: 0.65rem; font-weight: 600; color: #9ca3af;
+  }
+  .bb-subtab--active .bb-subtab-count { color: #4b5563; }
+
+  /* ── CARD LIST ── */
+
+  .bb-cardlist { padding: 0.75rem 1rem; }
+
+  /* ── CARD ── */
+
+  .bb-card {
+    background: white; border: 1px solid #d1d5db;
+    box-shadow: inset 1px 1px 2px rgba(0,0,0,0.06);
+    padding: 14px 16px; margin-bottom: 10px;
+    border-left: 4px solid #7a8a78;
+    cursor: pointer; transition: background 0.15s;
+  }
+  .bb-card:active { background: #f9fafb; }
+  .bb-card--onus { border-left-color: #3d6640; }
+  .bb-card--onthem { border-left-color: #c4622d; }
+  .bb-card--resolved { border-left-color: #0098a0; }
+  .bb-card--urgent { border-left-color: #ef4444 !important; }
+
+  .bb-card-top {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 0.35rem;
+  }
+  .bb-card-num {
+    font-size: 0.75rem; font-weight: 700; color: #9ca3af;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .bb-card-bell {
+    font-size: 0.7rem; color: #6b7280; margin-left: auto; margin-right: 0.5rem;
+  }
+
+  /* ── LED ── */
+
+  .bb-led {
+    width: 1.5rem; height: 1.5rem; border-radius: 50%;
+    border: 1px solid #6b7280; flex-shrink: 0;
+    box-shadow: inset 0 -2px 4px rgba(0,0,0,0.2), inset 0 2px 4px rgba(255,255,255,0.3);
+  }
+  .bb-led--urgent { background: linear-gradient(135deg, #fca5a5 0%, #dc2626 100%); }
+  .bb-led--high { background: linear-gradient(135deg, #fdba74 0%, #ea580c 100%); }
+  .bb-led--medium { background: linear-gradient(135deg, #86efac 0%, #16a34a 100%); }
+  .bb-led--low { background: linear-gradient(135deg, #f9fafb 0%, #e5e7eb 100%); }
+
+  .bb-card-title {
+    font-size: 1.05rem; font-weight: 600; color: #4b5563;
+    margin-bottom: 0.3rem;
+  }
+  .bb-card-desc {
+    font-size: 0.9rem; color: #6b7280; line-height: 1.35;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden; margin-bottom: 0.6rem;
+  }
+  .bb-card-meta { display: flex; flex-direction: column; gap: 0.2rem; }
+  .bb-card-meta-row { display: flex; gap: 0.3rem; align-items: baseline; }
+  .bb-card-label {
+    font-size: 0.75rem; font-weight: 500; color: #6b7280;
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .bb-card-value { font-size: 0.9rem; font-weight: 500; color: #4b5563; }
+
+  /* ── DETAIL VIEW ── */
+
+  .bb-detail { padding: 0 1rem 2rem; }
+  .bb-detail-top {
+    display: flex; align-items: center; gap: 0.75rem;
+    margin-bottom: 0.75rem; flex-wrap: wrap;
+  }
+  .bb-detail-num {
+    font-size: 0.85rem; font-weight: 700; color: #9ca3af;
+  }
+  .bb-state {
+    background: #1f2937; color: #10b981;
+    padding: 0.3rem 0.7rem; font-size: 0.75rem; font-weight: 600;
+    letter-spacing: 0.05em; text-transform: uppercase; border-radius: 3px;
+  }
+  .bb-heading {
+    font-size: 0.875rem; font-weight: 600; color: #6b7280;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    padding-bottom: 0.4rem; margin-bottom: 0.75rem;
+    border-bottom: 1px solid #9ca3af;
+    margin-top: 1.5rem;
+  }
+  .bb-heading:first-child { margin-top: 0; }
+  .bb-desc {
+    font-size: 0.95rem; color: #4b5563; line-height: 1.5;
+    margin-bottom: 0.75rem;
+  }
+
+  /* ── TIMELINE ── */
+
+  .bb-timeline { position: relative; padding-left: 2.5rem; }
+  .bb-timeline::before {
+    content: ''; position: absolute; left: 0.75rem; top: 0.75rem;
+    bottom: 0.75rem; width: 1px; background: #e5e7eb;
+  }
+  .bb-stage { position: relative; padding: 0.5rem 0 1rem; }
+  .bb-stage:last-child { padding-bottom: 0; }
+
+  .bb-stage-led {
+    position: absolute; left: -1.75rem; top: 0.35rem;
+    width: 1.25rem; height: 1.25rem; border-radius: 50%;
+    border: 1px solid #6b7280;
+    box-shadow: inset 0 -2px 4px rgba(0,0,0,0.2), inset 0 2px 4px rgba(255,255,255,0.3);
+    background: linear-gradient(135deg, #f9fafb 0%, #e5e7eb 100%);
+  }
+  .bb-stage--done .bb-stage-led {
+    background: linear-gradient(135deg, #86efac 0%, #16a34a 100%);
+  }
+  .bb-stage--now .bb-stage-led {
+    background: linear-gradient(135deg, #fdba74 0%, #ea580c 100%);
+    width: 1.5rem; height: 1.5rem; left: -1.875rem; top: 0.2rem;
+  }
+
+  .bb-stage-head {
+    display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+    cursor: pointer;
+  }
+  .bb-stage-date { font-size: 0.8rem; font-weight: 600; color: #4b5563; }
+  .bb-stage-name { font-size: 0.95rem; font-weight: 500; color: #4b5563; }
+  .bb-stage-person { font-size: 0.85rem; font-weight: 400; color: #6b7280; }
+  .bb-stage-now-pill {
+    background: #1f2937; color: #10b981;
+    font-size: 0.65rem; font-weight: 700; letter-spacing: 0.05em;
+    padding: 2px 8px; border-radius: 3px; text-transform: uppercase;
+  }
+  .bb-stage--upcoming .bb-stage-name,
+  .bb-stage--upcoming .bb-stage-person { opacity: 0.5; }
+
+  .bb-stage-body { display: none; margin-top: 0.5rem; }
+  .bb-stage-body--open { display: block; }
+
+  .bb-stage-note {
+    font-size: 0.85rem; color: #4b5563; font-style: italic;
+    margin-bottom: 0.35rem; line-height: 1.4;
+  }
+  .bb-stage-note-date { font-style: normal; font-weight: 600; color: #6b7280; }
+  .bb-stage-link {
+    font-size: 0.85rem; font-weight: 500; color: #3d6640;
+    text-decoration: underline; display: block;
+    margin-bottom: 0.25rem; cursor: pointer;
+  }
+  .bb-stage-link::before { content: '🔗 '; font-size: 0.75rem; }
+
+  .bb-stage-actions { display: flex; gap: 0.75rem; margin-top: 0.5rem; }
+  .bb-stage-action { font-size: 0.8rem; color: #9ca3af; cursor: pointer; }
+
+  /* ── BUTTONS ── */
+
+  .bb-btn {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.5rem 1rem; background: white;
+    border: 1px solid #9ca3af; cursor: pointer;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 0.95rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.03em;
+    box-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+    transition: background 0.15s;
+    margin-top: 0.75rem;
+  }
+  .bb-btn:active { background: #e5e7eb; }
+  .bb-btn-indicator {
+    width: 1rem; height: 2rem; flex-shrink: 0;
+    border: 1px solid #6b7280;
+    box-shadow: inset 1px 1px 2px rgba(0,0,0,0.2);
+  }
+  .bb-btn-indicator--green { background: #84cc16; }
+  .bb-btn-indicator--yellow { background: #facc15; }
+  .bb-btn-indicator--red { background: #ef4444; }
+
+  /* ── REMINDERS ── */
+
+  .bb-reminders { margin-top: 0.5rem; }
+  .bb-reminder-item {
+    display: flex; align-items: center; gap: 0.6rem;
+    padding: 0.6rem 0; border-bottom: 1px solid #e5e7eb;
+    font-size: 0.85rem;
+  }
+  .bb-reminder-bell { font-size: 0.9rem; color: #6b7280; }
+  .bb-reminder-date { font-weight: 600; color: #4b5563; white-space: nowrap; }
+  .bb-reminder-to { color: #6b7280; flex: 1; }
+  .bb-reminder-x { color: #9ca3af; cursor: pointer; padding: 0.25rem; }
+
+  .bb-empty {
+    text-align: center; padding: 3rem 1rem;
+    font-size: 0.95rem; color: #9ca3af;
+  }
+
+  /* ── VIEWS ── */
+
+  .bb-view { display: none; }
+  .bb-view--active { display: block; }
+
+  /* ── TOAST ── */
+
+  .bb-toast {
+    position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
+    background: #1f2937; color: #10b981; padding: 0.6rem 1.25rem;
+    font-size: 0.85rem; font-weight: 600; border-radius: 4px;
+    letter-spacing: 0.03em; z-index: 100;
+    animation: bbToastIn 0.2s ease-out, bbToastOut 0.3s 1.7s ease-in forwards;
+  }
+  @keyframes bbToastIn { from { opacity: 0; transform: translateX(-50%) translateY(10px); } }
+  @keyframes bbToastOut { to { opacity: 0; transform: translateX(-50%) translateY(-10px); } }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--              KANBAN VIEW                        -->
+<!-- ═══════════════════════════════════════════════ -->
+
+<div class="bb-view bb-view--active" id="bbKanban">
+
+  <div class="bb-topbar">
+    <div class="bb-topbar-title">Blockage Buster</div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="bb-tabs" id="bbTabs">
+    <div class="bb-tab bb-tab--flagged bb-tab--active" data-col="flagged">Flagged <span class="bb-tab-count">2</span></div>
+    <div class="bb-tab bb-tab--onus" data-col="onus">On Us <span class="bb-tab-count">5</span></div>
+    <div class="bb-tab bb-tab--onthem" data-col="onthem">On Them <span class="bb-tab-count">4</span></div>
+    <div class="bb-tab bb-tab--resolved" data-col="resolved">Resolved <span class="bb-tab-count">1</span></div>
+    <div class="bb-tab bb-tab--add">+ Column</div>
+  </div>
+
+  <!-- Sub-tabs: On Us -->
+  <div class="bb-subtabs bb-subtabs--onus" id="bbSubOnus">
+    <div class="bb-subtab bb-subtab--active" data-person="dillon">Dillon <span class="bb-subtab-count">(2)</span></div>
+    <div class="bb-subtab" data-person="helan">Helan <span class="bb-subtab-count">(1)</span></div>
+    <div class="bb-subtab" data-person="misha">Misha <span class="bb-subtab-count">(2)</span></div>
+  </div>
+
+  <!-- Sub-tabs: On Them -->
+  <div class="bb-subtabs bb-subtabs--onthem" id="bbSubOnthem">
+    <div class="bb-subtab bb-subtab--active" data-person="bcscotland">BC Scotland <span class="bb-subtab-count">(2)</span></div>
+    <div class="bb-subtab" data-person="pinkston">Pinkston <span class="bb-subtab-count">(1)</span></div>
+    <div class="bb-subtab" data-person="jamiem">Jamie M. <span class="bb-subtab-count">(1)</span></div>
+  </div>
+
+  <!-- Cards -->
+  <div class="bb-cardlist" id="bbCardlist">
+
+    <!-- FLAGGED -->
+    <div class="bb-card" data-col="flagged" data-urgency="high" data-person="" data-id="001">
+      <div class="bb-card-top">
+        <span class="bb-card-num">#001</span>
+        <div class="bb-led bb-led--high" title="High"></div>
+      </div>
+      <div class="bb-card-title">Expired first aid certs</div>
+      <div class="bb-card-desc">Three leaders have first aid certificates expiring before the summer season starts in...</div>
+      <div class="bb-card-meta">
+        <div class="bb-card-meta-row"><span class="bb-card-label">Stage: </span><span class="bb-card-value">Identify affected leaders</span></div>
+        <div class="bb-card-meta-row"><span class="bb-card-label">Stuck with: </span><span class="bb-card-value">Committee</span></div>
+      </div>
+    </div>
+
+    <div class="bb-card" data-col="flagged" data-urgency="medium" data-person="" data-id="002">
+      <div class="bb-card-top">
+        <span class="bb-card-num">#002</span>
+        <div class="bb-led bb-led--medium" title="Medium"></div>
+      </div>
+      <div class="bb-card-title">Missing trip reports</div>
+      <div class="bb-card-desc">Four trip reports from March are still outstanding, blocking experience tallies for...</div>
+      <div class="bb-card-meta">
+        <div class="bb-card-meta-row"><span class="bb-card-label">Stage: </span><span class="bb-card-value">Chase leaders for submissions</span></div>
+        <div class="bb-card-meta-row"><span class="bb-card-label">Stuck with: </span><span class="bb-card-value">Various leaders</span></div>
+      </div>
+    </div>
+
+    <!-- ON US — Dillon -->
+    <div class="bb-card bb-card--onus" data-col="onus" data-urgency="high" data-person="dillon" data-id="003" style="display:none;">
+      <div class="bb-card-top">
+        <span class="bb-card-num">#003</span>
+        <div class="bb-led bb-led--high" title="High"></div>
+      </div>
+      <div class="bb-card-title">Insurance renewal paperwork</div>
+      <div class="bb-card-desc">Annual club insurance renewal documents need to be submitted to SCA by end of...</div>
+      <div class="bb-card-meta">
+        <div class="bb-card-meta-row"><span class="bb-card-label">Stage: </span><span class="bb-card-value">Submit forms to SCA</span></div>
+      </div>
+    </div>
+
+    <div class="bb-card bb-card--onus" data-col="onus" data-urgency="low" data-person="dillon" data-id="004" style="display:none;">
+      <div class="bb-card-top">
+        <span class="bb-card-num">#004</span>
+        <div class="bb-led bb-led--low" title="Low"></div>
+      </div>
+      <div class="bb-card-title">Equipment audit follow-up</div>
+      <div class="bb-card-desc">Audit spreadsheet needs updating with the new boats purchased in February before...</div>
+      <div class="bb-card-meta">
+        <div class="bb-card-meta-row"><span class="bb-card-label">Stage: </span><span class="bb-card-value">Update inventory spreadsheet</span></div>
+      </div>
+    </div>
+
+    <!-- ON US — Helan -->
+    <div class="bb-card bb-card--onus" data-col="onus" data-urgency="low" data-person="helan" data-id="005" style="display:none;">
+      <div class="bb-card-top">
+        <span class="bb-card-num">#005</span>
+        <div class="bb-led bb-led--low" title="Low"></div>
+      </div>
+      <div class="bb-card-title">Committee minutes backlog</div>
+      <div class="bb-card-desc">Minutes from the last two committee meetings haven't been circulated yet, several...</div>
+      <div class="bb-card-meta">
+        <div class="bb-card-meta-row"><span class="bb-card-label">Stage: </span><span class="bb-card-value">Write up March minutes</span></div>
+      </div>
+    </div>
+
+    <!-- ON US — Misha -->
+    <div class="bb-card bb-card--onus" data-col="onus" data-urgency="medium" data-person="misha" data-id="006" style="display:none;">
+      <div class="bb-card-top">
+        <span class="bb-card-num">#006</span>
+        <div class="bb-led bb-led--medium" title="Medium"></div>
+      </div>
+      <div class="bb-card-title">Website event calendar sync</div>
+      <div class="bb-card-desc">The public website calendar is out of sync with the OtterPool calendar, some April...</div>
+      <div class="bb-card-meta">
+        <div class="bb-card-meta-row"><span class="bb-card-label">Stage: </span><span class="bb-card-value">Sync April events to website</span></div>
+      </div>
+    </div>
+
+    <div class="bb-card bb-card--onus" data-col="onus" data-urgency="medium" data-person="misha" data-id="007" style="display:none;">
+      <div class="bb-card-top">
+        <span class="bb-card-num">#007</span>
+        <div class="bb-led bb-led--medium" title="Medium"></div>
+      </div>
+      <div class="bb-card-title">New member welcome packs</div>
+      <div class="bb-card-desc">Six new members from the spring intake haven't received their welcome packs with...</div>
+      <div class="bb-card-meta">
+        <div class="bb-card-meta-row"><span class="bb-card-label">Stage: </span><span class="bb-card-value">Assemble and post packs</span></div>
+      </div>
+    </div>
+
+    <!-- ON THEM — BC Scotland -->
+    <div class="bb-card bb-card--onthem" data-col="onthem" data-urgency="medium" data-person="bcscotland" data-id="008" style="display:none;">
+      <div class="bb-card-top">
+        <span class="bb-card-num">#008</span>
+        <div class="bb-led bb-led--medium" title="Medium"></div>
+      </div>
+      <div class="bb-card-title">BC qualification verification</div>
+      <div class="bb-card-desc">Two new members submitted BC qualification evidence three weeks ago but haven't...</div>
+      <div class="bb-card-meta">
+        <div class="bb-card-meta-row"><span class="bb-card-label">Stage: </span><span class="bb-card-value">Awaiting BC verification</span></div>
+      </div>
+    </div>
+
+    <div class="bb-card bb-card--onthem" data-col="onthem" data-urgency="low" data-person="bcscotland" data-id="009" style="display:none;">
+      <div class="bb-card-top">
+        <span class="bb-card-num">#009</span>
+        <div class="bb-led bb-led--low" title="Low"></div>
+      </div>
+      <div class="bb-card-title">Coaching grant application</div>
+      <div class="bb-card-desc">The grant application for coaching bursaries was submitted in February but we've...</div>
+      <div class="bb-card-meta">
+        <div class="bb-card-meta-row"><span class="bb-card-label">Stage: </span><span class="bb-card-value">Awaiting grant review</span></div>
+      </div>
+    </div>
+
+    <!-- ON THEM — Pinkston -->
+    <div class="bb-card bb-card--onthem" data-col="onthem" data-urgency="high" data-person="pinkston" data-id="010" style="display:none;">
+      <div class="bb-card-top">
+        <span class="bb-card-num">#010</span>
+        <div class="bb-led bb-led--high" title="High"></div>
+      </div>
+      <div class="bb-card-title">Summer session pricing</div>
+      <div class="bb-card-desc">We need the confirmed pricing for the summer block before we can publish the...</div>
+      <div class="bb-card-meta">
+        <div class="bb-card-meta-row"><span class="bb-card-label">Stage: </span><span class="bb-card-value">Awaiting pricing confirmation</span></div>
+      </div>
+    </div>
+
+    <!-- ON THEM — Jamie M. -->
+    <div class="bb-card bb-card--onthem bb-card--urgent" data-col="onthem" data-urgency="urgent" data-person="jamiem" data-id="011" style="display:none;">
+      <div class="bb-card-top">
+        <span class="bb-card-num">#011</span>
+        <span class="bb-card-bell">&#128276;</span>
+        <div class="bb-led bb-led--urgent" title="Urgent"></div>
+      </div>
+      <div class="bb-card-title">River risk assessment overdue</div>
+      <div class="bb-card-desc">The RA for the Grade 3 Tay trip hasn't been submitted yet and the trip is in...</div>
+      <div class="bb-card-meta">
+        <div class="bb-card-meta-row"><span class="bb-card-label">Stage: </span><span class="bb-card-value">Submit completed RA</span></div>
+      </div>
+    </div>
+
+    <!-- RESOLVED -->
+    <div class="bb-card bb-card--resolved" data-col="resolved" data-urgency="" data-person="" data-id="012" style="display:none;">
+      <div class="bb-card-top">
+        <span class="bb-card-num">#012</span>
+        <div class="bb-led bb-led--low" title="Resolved"></div>
+      </div>
+      <div class="bb-card-title">Pinkston booking confirmed</div>
+      <div class="bb-card-desc">Summer block booking at Pinkston was held up waiting for the new pricing schedule...</div>
+      <div class="bb-card-meta">
+        <div class="bb-card-meta-row"><span class="bb-card-label">Stage: </span><span class="bb-card-value">Confirm booking receipt</span></div>
+        <div class="bb-card-meta-row"><span class="bb-card-label">Stuck with: </span><span class="bb-card-value">Pinkston staff</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--              DETAIL VIEW                        -->
+<!-- ═══════════════════════════════════════════════ -->
+
+<div class="bb-view" id="bbDetail">
+
+  <div class="bb-topbar">
+    <div class="bb-topbar-back" id="bbDetailBack" style="display:flex;">&#8592;</div>
+    <div class="bb-topbar-title" style="font-size:1rem; text-transform:none; color:#4b5563;" id="bbDetailTitle">River risk assessment overdue</div>
+  </div>
+
+  <div class="bb-detail">
+    <div class="bb-detail-top">
+      <span class="bb-detail-num" id="bbDetailNum">#011</span>
+      <div class="bb-led bb-led--urgent" id="bbDetailLed" title="Urgent"></div>
+      <span class="bb-state" id="bbDetailState">On Them</span>
+    </div>
+
+    <div class="bb-heading">Description</div>
+    <div class="bb-desc" id="bbDetailDesc">The risk assessment for the Grade 3 Tay trip hasn't been submitted yet. The trip is scheduled for 19 April and we need the RA at least 5 days in advance per club policy. Jamie took responsibility for it at the last committee meeting but hasn't submitted yet.</div>
+
+    <div class="bb-heading">Stages</div>
+    <div class="bb-timeline" id="bbTimeline">
+
+      <!-- Stage 1: Done -->
+      <div class="bb-stage bb-stage--done">
+        <div class="bb-stage-led"></div>
+        <div class="bb-stage-head" onclick="this.nextElementSibling.classList.toggle('bb-stage-body--open')">
+          <span class="bb-stage-date">28 Mar</span>
+          <span class="bb-stage-name">Identify missing RA</span>
+          <span class="bb-stage-person">Sarah K.</span>
+        </div>
+        <div class="bb-stage-body">
+          <div class="bb-stage-note"><span class="bb-stage-note-date">28 Mar — </span>Noticed during trip planning that the RA is missing</div>
+          <a class="bb-stage-link">Club RA policy (Google Doc)</a>
+          <div class="bb-stage-actions">
+            <span class="bb-stage-action">+ Add note</span>
+            <span class="bb-stage-action">+ Add link</span>
+            <span class="bb-stage-action">+ Add image</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stage 2: Done -->
+      <div class="bb-stage bb-stage--done">
+        <div class="bb-stage-led"></div>
+        <div class="bb-stage-head" onclick="this.nextElementSibling.classList.toggle('bb-stage-body--open')">
+          <span class="bb-stage-date">30 Mar</span>
+          <span class="bb-stage-name">Email Jamie with template</span>
+          <span class="bb-stage-person">Helan</span>
+        </div>
+        <div class="bb-stage-body">
+          <div class="bb-stage-note"><span class="bb-stage-note-date">30 Mar — </span>Sent the template and the 14 Apr deadline</div>
+          <div class="bb-stage-note"><span class="bb-stage-note-date">2 Apr — </span>Chased again by phone, Jamie says he's on it</div>
+          <a class="bb-stage-link">RA template (Google Doc)</a>
+          <a class="bb-stage-link">Email thread with Jamie (Gmail)</a>
+          <div class="bb-stage-actions">
+            <span class="bb-stage-action">+ Add note</span>
+            <span class="bb-stage-action">+ Add link</span>
+            <span class="bb-stage-action">+ Add image</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stage 3: NOW -->
+      <div class="bb-stage bb-stage--now">
+        <div class="bb-stage-led"></div>
+        <div class="bb-stage-head" onclick="this.nextElementSibling.classList.toggle('bb-stage-body--open')">
+          <span class="bb-stage-name">Submit completed RA</span>
+          <span class="bb-stage-person">Jamie M.</span>
+          <span class="bb-stage-now-pill">Now</span>
+        </div>
+        <div class="bb-stage-body">
+          <div class="bb-stage-note"><span class="bb-stage-note-date">4 Apr — </span>Jamie confirmed he'll have it done by weekend</div>
+          <div class="bb-stage-actions">
+            <span class="bb-stage-action">+ Add note</span>
+            <span class="bb-stage-action">+ Add link</span>
+            <span class="bb-stage-action">+ Add image</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stage 4: Upcoming -->
+      <div class="bb-stage bb-stage--upcoming">
+        <div class="bb-stage-led"></div>
+        <div class="bb-stage-head" onclick="this.nextElementSibling.classList.toggle('bb-stage-body--open')">
+          <span class="bb-stage-name">Review submitted RA</span>
+          <span class="bb-stage-person">Dillon</span>
+        </div>
+        <div class="bb-stage-body">
+          <a class="bb-stage-link">RA review checklist (Google Doc)</a>
+          <div class="bb-stage-actions">
+            <span class="bb-stage-action">+ Add note</span>
+            <span class="bb-stage-action">+ Add link</span>
+            <span class="bb-stage-action">+ Add image</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stage 5: Upcoming -->
+      <div class="bb-stage bb-stage--upcoming">
+        <div class="bb-stage-led"></div>
+        <div class="bb-stage-head" onclick="this.nextElementSibling.classList.toggle('bb-stage-body--open')">
+          <span class="bb-stage-name">Upload signed RA to trip record</span>
+          <span class="bb-stage-person">Sarah K.</span>
+        </div>
+        <div class="bb-stage-body">
+          <div class="bb-stage-actions">
+            <span class="bb-stage-action">+ Add note</span>
+            <span class="bb-stage-action">+ Add link</span>
+            <span class="bb-stage-action">+ Add image</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add stage -->
+    <div class="bb-btn" onclick="alert('Add stage form would open here')" style="margin-top:1rem;">
+      <div class="bb-btn-indicator bb-btn-indicator--green"></div>
+      + Add Stage
+    </div>
+
+    <!-- Complete current stage -->
+    <div class="bb-btn" id="bbCompleteBtn" style="margin-top:0.5rem;">
+      <div class="bb-btn-indicator bb-btn-indicator--green"></div>
+      Complete Current Stage
+    </div>
+
+    <!-- Reminders -->
+    <div class="bb-heading">Reminders</div>
+    <div class="bb-reminders">
+      <div class="bb-reminder-item">
+        <span class="bb-reminder-bell">🔔</span>
+        <span class="bb-reminder-date">11 Apr</span>
+        <span class="bb-reminder-to">Jamie M. — Calendar invite</span>
+        <span class="bb-reminder-x">✕</span>
+      </div>
+    </div>
+    <div class="bb-btn" onclick="alert('Set reminder form would open here')">
+      <div class="bb-btn-indicator bb-btn-indicator--yellow"></div>
+      Set Reminder
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--              JAVASCRIPT                         -->
+<!-- ═══════════════════════════════════════════════ -->
+
+<script>
+(function() {
+
+  var activeCol = 'flagged';
+  var activeSub = null;
+
+  var tabs = document.querySelectorAll('#bbTabs .bb-tab[data-col]');
+  var cards = document.querySelectorAll('#bbCardlist .bb-card');
+  var subOnus = document.getElementById('bbSubOnus');
+  var subOnthem = document.getElementById('bbSubOnthem');
+
+  // ── View switching ──
+
+  function showKanban() {
+    document.getElementById('bbKanban').classList.add('bb-view--active');
+    document.getElementById('bbDetail').classList.remove('bb-view--active');
+  }
+
+  function showDetail() {
+    document.getElementById('bbKanban').classList.remove('bb-view--active');
+    document.getElementById('bbDetail').classList.add('bb-view--active');
+    window.scrollTo(0, 0);
+  }
+
+  // ── Tab switching ──
+
+  function showCol(col) {
+    activeCol = col;
+    activeSub = null;
+
+    tabs.forEach(function(t) {
+      t.classList.toggle('bb-tab--active', t.getAttribute('data-col') === col);
+    });
+
+    subOnus.style.display = col === 'onus' ? 'flex' : 'none';
+    subOnthem.style.display = col === 'onthem' ? 'flex' : 'none';
+
+    if (col === 'onus' || col === 'onthem') {
+      var subContainer = col === 'onus' ? subOnus : subOnthem;
+      var subs = subContainer.querySelectorAll('.bb-subtab');
+      subs.forEach(function(s, i) { s.classList.toggle('bb-subtab--active', i === 0); });
+      activeSub = subs[0].getAttribute('data-person');
+    }
+
+    filterCards(col);
+  }
+
+  function filterCards(col) {
+    var urgencyOrder = { urgent: 0, high: 1, medium: 2, low: 3, '': 4 };
+    var visible = [];
+
+    cards.forEach(function(c) {
+      var cardCol = c.getAttribute('data-col');
+      var cardPerson = c.getAttribute('data-person');
+      var show = cardCol === col;
+      if (show && activeSub) show = cardPerson === activeSub;
+      c.style.display = show ? 'block' : 'none';
+      if (show) visible.push(c);
+    });
+
+    // Sort by urgency
+    if (visible.length > 1) {
+      var parent = visible[0].parentNode;
+      visible.sort(function(a, b) {
+        return (urgencyOrder[a.getAttribute('data-urgency')] || 4) - (urgencyOrder[b.getAttribute('data-urgency')] || 4);
+      });
+      visible.forEach(function(c) { parent.appendChild(c); });
+    }
+
+    // Empty state
+    var existing = document.getElementById('bbEmpty');
+    if (existing) existing.remove();
+    if (visible.length === 0) {
+      var empty = document.createElement('div');
+      empty.className = 'bb-empty'; empty.id = 'bbEmpty';
+      empty.textContent = 'No blockages here';
+      document.getElementById('bbCardlist').appendChild(empty);
+    }
+  }
+
+  // ── Wire tabs ──
+
+  tabs.forEach(function(t) {
+    t.onclick = function() { showCol(t.getAttribute('data-col')); };
+  });
+
+  subOnus.querySelectorAll('.bb-subtab').forEach(function(s) {
+    s.onclick = function() {
+      subOnus.querySelectorAll('.bb-subtab').forEach(function(x) { x.classList.remove('bb-subtab--active'); });
+      s.classList.add('bb-subtab--active');
+      activeSub = s.getAttribute('data-person');
+      filterCards('onus');
+    };
+  });
+
+  subOnthem.querySelectorAll('.bb-subtab').forEach(function(s) {
+    s.onclick = function() {
+      subOnthem.querySelectorAll('.bb-subtab').forEach(function(x) { x.classList.remove('bb-subtab--active'); });
+      s.classList.add('bb-subtab--active');
+      activeSub = s.getAttribute('data-person');
+      filterCards('onthem');
+    };
+  });
+
+  // ── Wire cards → detail ──
+
+  cards.forEach(function(c) {
+    c.onclick = function() { showDetail(); };
+  });
+
+  // ── Detail: back button ──
+
+  document.getElementById('bbDetailBack').onclick = function() { showKanban(); };
+
+  // ── Detail: complete stage ──
+
+  document.getElementById('bbCompleteBtn').onclick = function() {
+    var nowStage = document.querySelector('.bb-stage--now');
+    if (!nowStage) return;
+
+    nowStage.classList.remove('bb-stage--now');
+    nowStage.classList.add('bb-stage--done');
+
+    var pill = nowStage.querySelector('.bb-stage-now-pill');
+    if (pill) pill.remove();
+
+    var head = nowStage.querySelector('.bb-stage-head');
+    if (head) {
+      var dateSpan = document.createElement('span');
+      dateSpan.className = 'bb-stage-date';
+      dateSpan.textContent = '6 Apr';
+      head.insertBefore(dateSpan, head.firstChild);
+    }
+
+    // Reset LED size
+    var led = nowStage.querySelector('.bb-stage-led');
+    if (led) led.removeAttribute('style');
+
+    var next = document.querySelector('.bb-stage--upcoming');
+    if (next) {
+      next.classList.remove('bb-stage--upcoming');
+      next.classList.add('bb-stage--now');
+
+      var nowPill = document.createElement('span');
+      nowPill.className = 'bb-stage-now-pill';
+      nowPill.textContent = 'Now';
+      next.querySelector('.bb-stage-head').appendChild(nowPill);
+
+      // Toast
+      var person = next.querySelector('.bb-stage-person');
+      showToast('Stage advanced → ' + (person ? person.textContent : ''));
+    } else {
+      var state = document.getElementById('bbDetailState');
+      if (state) { state.textContent = 'Resolved'; state.style.color = '#0098a0'; }
+      document.getElementById('bbCompleteBtn').style.display = 'none';
+      showToast('All stages complete — Resolved');
+    }
+  };
+
+  function showToast(msg) {
+    var old = document.querySelector('.bb-toast');
+    if (old) old.remove();
+    var t = document.createElement('div');
+    t.className = 'bb-toast';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(function() { t.remove(); }, 2200);
+  }
+
+  // ── Init ──
+  showCol('flagged');
+
+})();
+</script>
+
+</body>
+</html>
