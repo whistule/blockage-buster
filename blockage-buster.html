@@ -191,6 +191,31 @@
   .bb-heading:first-child { margin-top: 0; }
   .bb-desc { font-size: 0.95rem; color: #4b5563; line-height: 1.5; margin-bottom: 0.75rem; }
 
+  /* Editable fields */
+  .bb-edit-input {
+    width: 100%; font-family: 'Oswald', sans-serif; font-size: 1.25rem; font-weight: 600;
+    color: #1f2937; background: transparent; border: none; border-bottom: 2px solid #e5e7eb;
+    padding: 0.4rem 0; outline: none; letter-spacing: 0.02em;
+  }
+  .bb-edit-input:focus { border-bottom-color: #e20e0c; }
+  .bb-edit-textarea {
+    width: 100%; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.95rem;
+    color: #4b5563; background: transparent; border: none; border-bottom: 2px solid #e5e7eb;
+    padding: 0.4rem 0; outline: none; resize: vertical; min-height: 4rem; line-height: 1.5;
+  }
+  .bb-edit-textarea:focus { border-bottom-color: #e20e0c; }
+  .bb-edit-select {
+    font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.85rem; font-weight: 600;
+    color: #1f2937; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 4px;
+    padding: 0.4rem 0.6rem; outline: none; cursor: pointer;
+  }
+  .bb-edit-select:focus { border-color: #e20e0c; }
+  .bb-edit-row { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
+  .bb-edit-field { flex: 1; min-width: 140px; }
+  .bb-edit-label { font-size: 0.7rem; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.25rem; }
+  .bb-btn--save { border-color: #16a34a; color: #16a34a; }
+  .bb-btn--save:active { background: #dcfce7; }
+
   /* Timeline */
   .bb-timeline { position: relative; padding-left: 2.5rem; }
   .bb-timeline::before { content: ''; position: absolute; left: 0.75rem; top: 0.75rem; bottom: 0.75rem; width: 1px; background: #e5e7eb; }
@@ -405,49 +430,9 @@
 <div class="bb-view" id="bbDetail">
   <div class="bb-topbar">
     <div class="bb-topbar-back" onclick="showBoard()">&#8592;</div>
-    <div class="bb-topbar-title bb-topbar-title--sub">River risk assessment overdue</div>
+    <div class="bb-topbar-title bb-topbar-title--sub" id="bbDetailTitle"></div>
   </div>
-  <div class="bb-detail">
-    <div class="bb-detail-top">
-      <span class="bb-detail-num">#011</span>
-      <span class="bb-pill bb-pill--urgent">Urgent</span>
-      <span class="bb-state">On Them</span>
-    </div>
-    <div class="bb-heading">Description</div>
-    <div class="bb-desc">The risk assessment for the Grade 3 Tay trip hasn't been submitted yet. The trip is scheduled for 19 April and we need the RA at least 5 days in advance per club policy. Jamie took responsibility for it at the last committee meeting but hasn't submitted yet.</div>
-    <div class="bb-heading">Stages</div>
-    <div class="bb-timeline">
-      <div class="bb-stage bb-stage--done"><div class="bb-stage-led"></div>
-        <div class="bb-stage-head" onclick="this.nextElementSibling.classList.toggle('bb-stage-body--open')"><span class="bb-stage-date">28 Mar</span><span class="bb-stage-name">Identify missing RA</span><span class="bb-stage-person">Sarah K.</span></div>
-        <div class="bb-stage-body"><div class="bb-stage-note"><span class="bb-stage-note-date">28 Mar — </span>Noticed during trip planning that the RA is missing</div><a class="bb-stage-link">Club RA policy (Google Doc)</a><div class="bb-stage-actions"><span class="bb-stage-action">+ Add note</span><span class="bb-stage-action">+ Add link</span><span class="bb-stage-action">+ Add image</span></div></div>
-      </div>
-      <div class="bb-stage bb-stage--done"><div class="bb-stage-led"></div>
-        <div class="bb-stage-head" onclick="this.nextElementSibling.classList.toggle('bb-stage-body--open')"><span class="bb-stage-date">30 Mar</span><span class="bb-stage-name">Email Jamie with template</span><span class="bb-stage-person">Helan</span></div>
-        <div class="bb-stage-body"><div class="bb-stage-note"><span class="bb-stage-note-date">30 Mar — </span>Sent the template and the 14 Apr deadline</div><div class="bb-stage-note"><span class="bb-stage-note-date">2 Apr — </span>Chased again by phone, Jamie says he's on it</div><a class="bb-stage-link">RA template (Google Doc)</a><a class="bb-stage-link">Email thread with Jamie (Gmail)</a><div class="bb-stage-actions"><span class="bb-stage-action">+ Add note</span><span class="bb-stage-action">+ Add link</span><span class="bb-stage-action">+ Add image</span></div></div>
-      </div>
-      <div class="bb-stage bb-stage--now"><div class="bb-stage-led"></div>
-        <div class="bb-stage-head" onclick="this.nextElementSibling.classList.toggle('bb-stage-body--open')"><span class="bb-stage-name">Submit completed RA</span><span class="bb-stage-person">Jamie M.</span><span class="bb-stage-now-pill">Now</span></div>
-        <div class="bb-stage-body"><div class="bb-stage-note"><span class="bb-stage-note-date">4 Apr — </span>Jamie confirmed he'll have it done by weekend</div><div class="bb-stage-actions"><span class="bb-stage-action">+ Add note</span><span class="bb-stage-action">+ Add link</span><span class="bb-stage-action">+ Add image</span></div></div>
-      </div>
-      <div class="bb-stage bb-stage--upcoming"><div class="bb-stage-led"></div>
-        <div class="bb-stage-head" onclick="this.nextElementSibling.classList.toggle('bb-stage-body--open')"><span class="bb-stage-name">Review submitted RA</span><span class="bb-stage-person">Dillon</span></div>
-        <div class="bb-stage-body"><a class="bb-stage-link">RA review checklist (Google Doc)</a><div class="bb-stage-actions"><span class="bb-stage-action">+ Add note</span><span class="bb-stage-action">+ Add link</span><span class="bb-stage-action">+ Add image</span></div></div>
-      </div>
-      <div class="bb-stage bb-stage--upcoming"><div class="bb-stage-led"></div>
-        <div class="bb-stage-head" onclick="this.nextElementSibling.classList.toggle('bb-stage-body--open')"><span class="bb-stage-name">Upload signed RA to trip record</span><span class="bb-stage-person">Sarah K.</span></div>
-        <div class="bb-stage-body"><div class="bb-stage-actions"><span class="bb-stage-action">+ Add note</span><span class="bb-stage-action">+ Add link</span><span class="bb-stage-action">+ Add image</span></div></div>
-      </div>
-    </div>
-    <div class="bb-btn" onclick="alert('Add stage form would open here')" style="margin-top:1rem;"><div class="bb-btn-indicator bb-btn-indicator--green"></div>+ Add Stage</div>
-    <div class="bb-btn" id="bbCompleteBtn" style="margin-top:0.5rem;"><div class="bb-btn-indicator bb-btn-indicator--green"></div>Complete Current Stage</div>
-    <div class="bb-heading">Reminders</div>
-    <div class="bb-reminders"><div class="bb-reminder-item"><span class="bb-reminder-bell">🔔</span><span class="bb-reminder-date">11 Apr</span><span class="bb-reminder-to">Jamie M. — Calendar invite</span><span class="bb-reminder-x">✕</span></div></div>
-    <div class="bb-btn" onclick="alert('Set reminder form would open here')"><div class="bb-btn-indicator bb-btn-indicator--yellow"></div>Set Reminder</div>
-
-    <div class="bb-btn bb-btn--delete" id="bbDeleteBtn" onclick="deleteCard()">
-      <div class="bb-btn-indicator bb-btn-indicator--red"></div>Delete Buster Card
-    </div>
-  </div>
+  <div class="bb-detail" id="bbDetailContent"></div>
 </div>
 
 <script>
@@ -688,8 +673,78 @@
   // ── VIEW SWITCHING ──
   var currentCardId = null;
 
+  // ── RENDER DETAIL VIEW ──
+  function renderDetail(cardId) {
+    var card = cards.find(function(c) { return c.id === cardId; });
+    if (!card) return;
+
+    document.getElementById('bbDetailTitle').textContent = card.title;
+
+    var urgOpts = ['', 'low', 'medium', 'high', 'urgent'];
+    var urgLabels = { '': 'None', low: 'Low', medium: 'Medium', high: 'High', urgent: 'Urgent' };
+    var stageOpts = ['flagged', 'onus', 'onthem', 'resolved', 'onhold'];
+
+    var urgSelect = urgOpts.map(function(u) {
+      return '<option value="' + u + '"' + (u === card.urgency ? ' selected' : '') + '>' + urgLabels[u] + '</option>';
+    }).join('');
+
+    var stageSelect = stageOpts.map(function(s) {
+      return '<option value="' + s + '"' + (s === card.stage ? ' selected' : '') + '>' + stageLabels[s] + '</option>';
+    }).join('');
+
+    var personSelect = '<option value="">Unassigned</option>';
+    Object.keys(contactsMap).forEach(function(id) {
+      var c = contactsMap[id];
+      var sel = c.name === card.person ? ' selected' : '';
+      personSelect += '<option value="' + id + '"' + sel + '>' + c.name + '</option>';
+    });
+
+    var html = '<div class="bb-detail-top">' +
+      '<span class="bb-detail-num">#' + card.id + '</span>' +
+      '<span class="bb-state" style="color:' + (stageColors[card.stage] || '#10b981') + '">' + stageLabels[card.stage] + '</span>' +
+    '</div>' +
+    '<div class="bb-heading">Title</div>' +
+    '<input class="bb-edit-input" id="editTitle" value="' + (card.title || '').replace(/"/g, '&quot;') + '">' +
+    '<div class="bb-heading">Description</div>' +
+    '<textarea class="bb-edit-textarea" id="editDesc">' + (card.desc || '').replace(/</g, '&lt;') + '</textarea>' +
+    '<div class="bb-edit-row" style="margin-top:1.5rem">' +
+      '<div class="bb-edit-field"><div class="bb-edit-label">Urgency</div><select class="bb-edit-select" id="editUrgency">' + urgSelect + '</select></div>' +
+      '<div class="bb-edit-field"><div class="bb-edit-label">Stage</div><select class="bb-edit-select" id="editStage">' + stageSelect + '</select></div>' +
+      '<div class="bb-edit-field"><div class="bb-edit-label">Person</div><select class="bb-edit-select" id="editPerson">' + personSelect + '</select></div>' +
+    '</div>' +
+    '<div class="bb-btn bb-btn--save" onclick="updateCard()" style="margin-top:1.5rem"><div class="bb-btn-indicator bb-btn-indicator--green"></div>Save Changes</div>' +
+    '<div class="bb-btn bb-btn--delete" onclick="deleteCard()" style="margin-top:0.5rem"><div class="bb-btn-indicator bb-btn-indicator--red"></div>Delete Buster Card</div>';
+
+    document.getElementById('bbDetailContent').innerHTML = html;
+  }
+
+  // ── UPDATE CARD ──
+  window.updateCard = async function() {
+    if (!currentCardId) return;
+    var card = cards.find(function(c) { return c.id === currentCardId; });
+    if (!card || !card.dbId) return;
+
+    var title = document.getElementById('editTitle').value.trim();
+    if (!title) { showToast('Title is required'); return; }
+
+    var updates = {
+      title: title,
+      description: document.getElementById('editDesc').value,
+      urgency: document.getElementById('editUrgency').value,
+      stage: document.getElementById('editStage').value,
+      person_id: document.getElementById('editPerson').value || null
+    };
+
+    var { error } = await sb.from('cards').update(updates).eq('id', card.dbId);
+    if (error) { showToast('Error: ' + error.message); return; }
+    showToast('Card #' + currentCardId + ' updated');
+    await loadData();
+    renderDetail(currentCardId);
+  };
+
   window.showDetail = function(cardId) {
     currentCardId = cardId || null;
+    renderDetail(cardId);
     document.getElementById('bbBoard').classList.remove('bb-view--active');
     document.getElementById('bbDetail').classList.add('bb-view--active');
     window.scrollTo(0, 0);
@@ -699,8 +754,8 @@
     document.getElementById('bbBoard').classList.add('bb-view--active');
   };
 
-  // ── COMPLETE STAGE ──
-  document.getElementById('bbCompleteBtn').onclick = function() {
+  // ── COMPLETE STAGE ── (disabled until detail view wired to stages)
+  /* document.getElementById('bbCompleteBtn').onclick = function() {
     var nowStage = document.querySelector('.bb-stage--now');
     if (!nowStage) return;
     nowStage.classList.remove('bb-stage--now');
@@ -725,7 +780,7 @@
       document.getElementById('bbCompleteBtn').style.display = 'none';
       showToast('All stages complete — Resolved');
     }
-  };
+  }; */
 
   function showToast(msg) {
     var old = document.querySelector('.bb-toast');
