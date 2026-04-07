@@ -727,11 +727,13 @@
         var nowPill = s.status === 'now' ? '<span class="bb-stage-now-pill">Now</span>' : '';
         var personName = (s.contacts && s.contacts.name) ? s.contacts.name : '';
         var personStr = personName ? '<span class="bb-stage-person">' + personName + '</span>' : '';
+        var ownerBadge = s.ownership === 'them' ? '<span style="font-size:0.65rem;font-weight:700;padding:2px 6px;border-radius:3px;background:#c4622d;color:#fff;text-transform:uppercase;letter-spacing:0.05em">Them</span>' :
+          s.ownership === 'us' ? '<span style="font-size:0.65rem;font-weight:700;padding:2px 6px;border-radius:3px;background:#3d6640;color:#fff;text-transform:uppercase;letter-spacing:0.05em">Us</span>' : '';
         timelineHTML += '<div class="bb-stage ' + cls + '">' +
           '<div class="bb-stage-led"></div>' +
           '<div class="bb-stage-head">' + dateStr +
             '<span class="bb-stage-name">' + (s.name || '') + '</span>' +
-            personStr + nowPill +
+            personStr + ownerBadge + nowPill +
           '</div>' +
         '</div>';
       });
@@ -756,17 +758,18 @@
       '<div class="bb-edit-field"><div class="bb-edit-label">Stage</div><select class="bb-edit-select" id="editStage">' + stageSelect + '</select></div>' +
       '<div class="bb-edit-field"><div class="bb-edit-label">Person</div><select class="bb-edit-select" id="editPerson">' + personSelect + '</select></div>' +
     '</div>' +
-    '<div class="bb-heading" style="margin-top:2rem">Resolution Stages</div>' +
+    '<div class="bb-heading" style="margin-top:2rem">Resolution Steps</div>' +
     timelineHTML +
     completeBtn +
     '<div style="margin-top:0.75rem;padding:0.75rem;background:#f9fafb;border:1px solid #e5e7eb;border-radius:4px">' +
-      '<div class="bb-edit-label" style="margin-bottom:0.5rem">Add a stage</div>' +
+      '<div class="bb-edit-label" style="margin-bottom:0.5rem">Add a step</div>' +
       '<div class="bb-edit-row" style="margin-bottom:0">' +
-        '<div class="bb-edit-field" style="flex:2"><input class="bb-edit-input" id="newStageName" placeholder="Stage name" style="font-size:0.9rem;font-family:inherit"></div>' +
+        '<div class="bb-edit-field" style="flex:2"><input class="bb-edit-input" id="newStageName" placeholder="Step name" style="font-size:0.9rem;font-family:inherit"></div>' +
         '<div class="bb-edit-field"><select class="bb-edit-select" id="newStagePerson">' + stagePersonOpts + '</select></div>' +
+        '<div class="bb-edit-field" style="flex:0"><select class="bb-edit-select" id="newStageOwnership"><option value="us">Us</option><option value="them">Them</option></select></div>' +
         '<div class="bb-edit-field" style="flex:0"><select class="bb-edit-select" id="newStageStatus"><option value="upcoming">Upcoming</option><option value="now">Now</option><option value="done">Done</option></select></div>' +
       '</div>' +
-      '<div class="bb-btn" onclick="addStage()" style="margin-top:0.5rem"><div class="bb-btn-indicator bb-btn-indicator--green"></div>+ Add Stage</div>' +
+      '<div class="bb-btn" onclick="addStage()" style="margin-top:0.5rem"><div class="bb-btn-indicator bb-btn-indicator--green"></div>+ Add Step</div>' +
     '</div>' +
     '<div class="bb-heading" style="margin-top:2rem">5 Whys</div>' +
     '<div style="font-size:0.75rem;color:#9ca3af;margin-bottom:0.75rem">Keep asking "why?" to find the root cause</div>' +
@@ -812,6 +815,7 @@
 
     var personId = document.getElementById('newStagePerson').value;
     var status = document.getElementById('newStageStatus').value;
+    var ownership = document.getElementById('newStageOwnership').value;
 
     // Get next sort order
     var { data: existing } = await sb.from('stages').select('sort_order').eq('card_id', card.dbId).order('sort_order', { ascending: false }).limit(1);
@@ -822,9 +826,15 @@
       name: name,
       person_id: personId || null,
       status: status,
+      ownership: ownership,
       sort_order: nextOrder,
       completed_at: status === 'done' ? new Date().toISOString() : null
     };
+
+    // If this step is "now", update the card's board column to match ownership
+    if (status === 'now') {
+      await sb.from('cards').update({ stage: ownership === 'them' ? 'onthem' : 'onus' }).eq('id', card.dbId);
+    }
 
     var { error } = await sb.from('stages').insert(insert);
     if (error) { showToast('Error: ' + error.message); return; }
@@ -852,9 +862,14 @@
     var nextUpcoming = allStages.find(function(s) { return s.status === 'upcoming' && s.sort_order > nowStage.sort_order; });
     if (nextUpcoming) {
       await sb.from('stages').update({ status: 'now' }).eq('id', nextUpcoming.id);
-      showToast('Stage complete — ' + (nextUpcoming.name) + ' is up next');
+      // Auto-move card to On Us / On Them based on next step's ownership
+      var newBoardStage = nextUpcoming.ownership === 'them' ? 'onthem' : 'onus';
+      await sb.from('cards').update({ stage: newBoardStage }).eq('id', card.dbId);
+      showToast('Step complete — ' + (nextUpcoming.name) + ' is up next');
     } else {
-      showToast('All stages complete');
+      // All steps done — move card to Busted
+      await sb.from('cards').update({ stage: 'busted' }).eq('id', card.dbId);
+      showToast('All steps complete — Busted!');
     }
 
     await loadData();
