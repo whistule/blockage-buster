@@ -876,6 +876,22 @@
   }
 
   // ── ADD STAGE ──
+  // ── SYNC CARD STAGE FROM CURRENT "NOW" STEP ──
+  async function syncCardStageFromSteps(dbCardId) {
+    var { data: allStages } = await sb.from('stages').select('*').eq('card_id', dbCardId).order('sort_order');
+    if (!allStages || allStages.length === 0) return;
+
+    var nowStep = allStages.find(function(s) { return s.status === 'now'; });
+    var allDone = allStages.every(function(s) { return s.status === 'done'; });
+
+    if (allDone) {
+      await sb.from('cards').update({ stage: 'busted' }).eq('id', dbCardId);
+    } else if (nowStep && nowStep.person_id && contactsMap[nowStep.person_id]) {
+      var pType = contactsMap[nowStep.person_id].type;
+      await sb.from('cards').update({ stage: pType === 'external' ? 'onthem' : 'onus' }).eq('id', dbCardId);
+    }
+  }
+
   window.addStage = async function() {
     if (!currentCardId) return;
     var card = cards.find(function(c) { return c.id === currentCardId; });
@@ -905,13 +921,9 @@
       completed_at: status === 'done' ? new Date().toISOString() : null
     };
 
-    // If this step is "now", update the card's board column to match ownership
-    if (status === 'now') {
-      await sb.from('cards').update({ stage: ownership === 'them' ? 'onthem' : 'onus' }).eq('id', card.dbId);
-    }
-
     var { error } = await sb.from('stages').insert(insert);
     if (error) { showToast('Error: ' + error.message); return; }
+    await syncCardStageFromSteps(card.dbId);
     showToast('Step added');
     await loadData();
     await renderDetail(currentCardId);
@@ -935,54 +947,35 @@
     }
   };
 
-  // ── COMPLETE A STEP ──
   // ── UNCOMPLETE A STEP ──
   window.uncompleteStep = async function(stepId) {
     if (!currentCardId) return;
     var card = cards.find(function(c) { return c.id === currentCardId; });
     if (!card || !card.dbId) return;
-
-    // Set step back to 'now' and clear completion date
     await sb.from('stages').update({ status: 'now', completed_at: null }).eq('id', stepId);
-
-    // Update card stage based on this step's person type
-    var step = null;
-    var { data: s } = await sb.from('stages').select('*').eq('id', stepId).single();
-    if (s) step = s;
-    if (step && step.person_id && contactsMap[step.person_id]) {
-      var pType = contactsMap[step.person_id].type;
-      await sb.from('cards').update({ stage: pType === 'external' ? 'onthem' : 'onus' }).eq('id', card.dbId);
-    }
-
+    await syncCardStageFromSteps(card.dbId);
     showToast('Step reopened');
     await loadData();
     await renderDetail(currentCardId);
   };
 
+  // ── COMPLETE A STEP ──
   window.completeStep = async function(stepId) {
     if (!currentCardId) return;
     var card = cards.find(function(c) { return c.id === currentCardId; });
     if (!card || !card.dbId) return;
-
     await sb.from('stages').update({ status: 'done', completed_at: new Date().toISOString() }).eq('id', stepId);
 
-    // Check if there's a next upcoming step to promote to now
+    // Promote next upcoming to now
     var { data: allStages } = await sb.from('stages').select('*').eq('card_id', card.dbId).order('sort_order');
     var nextUpcoming = allStages ? allStages.find(function(s) { return s.status === 'upcoming'; }) : null;
     if (nextUpcoming) {
       await sb.from('stages').update({ status: 'now' }).eq('id', nextUpcoming.id);
-      var nextPersonType = nextUpcoming.person_id && contactsMap[nextUpcoming.person_id] ? contactsMap[nextUpcoming.person_id].type : 'internal';
-      await sb.from('cards').update({ stage: nextPersonType === 'external' ? 'onthem' : 'onus' }).eq('id', card.dbId);
       showToast('Step complete — ' + nextUpcoming.name + ' is next');
     } else {
-      // No upcoming steps left — check if ALL steps are done
-      var allDone = allStages ? allStages.every(function(s) { return s.status === 'done'; }) : false;
-      if (allDone) {
-        var { error: updateErr } = await sb.from('cards').update({ stage: 'busted' }).eq('id', card.dbId);
-        if (updateErr) { showToast('Error moving to Busted: ' + updateErr.message); }
-        else { showToast('All steps complete — Busted!'); }
-      }
+      showToast('All steps complete — Busted!');
     }
+    await syncCardStageFromSteps(card.dbId);
     await loadData();
     await renderDetail(currentCardId);
   };
@@ -1065,6 +1058,13 @@
     };
     if (!updates.name) { showToast('Step name required'); return; }
     await sb.from('stages').update(updates).eq('id', stepId);
+
+    // Sync card position from steps
+    if (currentCardId) {
+      var card = cards.find(function(c) { return c.id === currentCardId; });
+      if (card && card.dbId) await syncCardStageFromSteps(card.dbId);
+    }
+
     showToast('Step updated');
     await loadData();
     await renderDetail(currentCardId);
