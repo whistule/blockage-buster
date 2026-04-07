@@ -379,25 +379,12 @@
 <div class="bb-view bb-view--active" id="bbBoard">
 
   <div class="bb-topbar bb-topbar--main">
-    <!-- Watchtower logo -->
-    <svg class="bb-logo" viewBox="0 0 50 55" xmlns="http://www.w3.org/2000/svg">
-      <!-- Tower body -->
-      <polygon points="18,52 32,52 30,22 20,22" fill="#2a4560" />
-      <!-- Tower top / lamp housing -->
-      <rect x="17" y="16" width="16" height="7" rx="1" fill="#2a4560" />
-      <!-- Lamp dome -->
-      <path d="M20,16 Q25,10 30,16" fill="#2a4560" />
-      <!-- Signal lines -->
-      <line x1="15" y1="14" x2="5" y2="8" stroke="#e20e0c" stroke-width="2.5" stroke-linecap="round" />
-      <line x1="14" y1="18" x2="3" y2="18" stroke="#e20e0c" stroke-width="2.5" stroke-linecap="round" />
-      <line x1="15" y1="22" x2="5" y2="28" stroke="#e20e0c" stroke-width="2.5" stroke-linecap="round" />
-      <!-- Base -->
-      <rect x="14" y="52" width="22" height="3" rx="1" fill="#2a4560" />
-      <!-- Window dots -->
-      <circle cx="25" cy="30" r="2" fill="#f5f7fa" />
-      <circle cx="25" cy="38" r="1.5" fill="#f5f7fa" />
-      <circle cx="25" cy="44" r="1.5" fill="#f5f7fa" />
-    </svg>
+    <a id="homeBtn" title="Watchtower Dashboard" style="display:flex;align-items:center;justify-content:center;width:40px;height:40px;border:1px solid #e5e7eb;background:#fff;text-decoration:none;cursor:pointer;border-radius:3px;flex-shrink:0">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px;color:#9ca3af">
+        <path d="M8 22L10 10h4L16 22"/><rect x="9" y="7" width="6" height="3" rx="0.5"/><path d="M9 7L12 4L15 7"/>
+        <path d="M15 8.5L20 5M15 8.5L20 8.5M15 8.5L20 12" style="opacity:0.4;stroke:#e20e0c;stroke-width:1.5"/><circle cx="12" cy="14" r="1"/>
+      </svg>
+    </a>
     <div class="bb-topbar-brand">
       <div class="bb-topbar-title"><span class="bb-topbar-mk">MK</span><span class="bb-topbar-app">BLOCKAGE BUSTER</span></div>
       <div class="bb-topbar-sub">workshop app dashboard</div>
@@ -865,6 +852,7 @@
 
 })();
 </script>
+<script>document.getElementById('homeBtn').href = location.protocol + '//' + location.hostname;</script>
 
 </body>
 </html>
