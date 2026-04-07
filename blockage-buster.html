@@ -1361,7 +1361,8 @@
   window.remindCardUntil = async function(cardId, isoStr) {
     var card = cards.find(function(c) { return c.id === cardId; });
     if (!card || !card.dbId) return;
-    await sb.from('cards').update({ remind_at: isoStr }).eq('id', card.dbId);
+    var { error } = await sb.from('cards').update({ remind_at: isoStr }).eq('id', card.dbId);
+    if (error) { showToast('Error: ' + error.message); console.error('remind_at error:', error); return; }
     var d = new Date(isoStr);
     showToast('Reminder set — ' + d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ' ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }));
     await loadData();
@@ -1371,7 +1372,8 @@
     var card = cards.find(function(c) { return c.id === cardId; });
     if (!card || !card.dbId) return;
     var until = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
-    await sb.from('cards').update({ remind_at: until }).eq('id', card.dbId);
+    var { error } = await sb.from('cards').update({ remind_at: until }).eq('id', card.dbId);
+    if (error) { showToast('Error: ' + error.message); console.error('remind_at error:', error); return; }
     showToast('Reminder set');
     await loadData();
   };
