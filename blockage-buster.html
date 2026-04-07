@@ -1309,12 +1309,15 @@
     // Date/time picker
     var input = document.createElement('input');
     input.type = 'datetime-local';
-    input.style.cssText = 'width:100%;font-size:0.9rem;padding:8px;border:1px solid #d1d5db;border-radius:4px;margin-bottom:8px;font-family:inherit;box-sizing:border-box';
+    input.style.cssText = 'width:100%;font-size:1.1rem;padding:12px;border:2px solid #0098a0;border-radius:6px;margin-bottom:8px;font-family:inherit;box-sizing:border-box;background:#f9fafb';
     var tmrw = new Date(Date.now() + 24 * 60 * 60 * 1000);
     tmrw.setHours(9, 0, 0, 0);
     input.value = tmrw.toISOString().slice(0, 16);
     input.onclick = function(ev) { ev.stopPropagation(); };
+    input.onfocus = function(ev) { ev.stopPropagation(); };
     menu.appendChild(input);
+    // Auto-open the calendar picker
+    setTimeout(function() { try { input.showPicker(); } catch(e) { input.focus(); } }, 100);
 
     // Set / Cancel buttons
     var btnRow = document.createElement('div');
