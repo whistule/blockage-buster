@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/twemoji@14.0.2/dist/twemoji.min.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; background: #e5e7eb; font-family: 'Plus Jakarta Sans', sans-serif; color: #4b5563; }
@@ -158,7 +159,7 @@
   .bb-column { background: #f3f4f6; min-height: 300px; border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; }
   .bb-column:last-child { border-right: none; }
   .bb-col-header { padding: 0.75rem 1rem; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center; gap: 0.5rem; position: sticky; top: 52px; z-index: 8; background: #f3f4f6; }
-  .bb-col-title { font-size: 1.1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #4b5563; }
+  .bb-col-title { font-size: 1.4rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #4b5563; }
   .bb-col-count { background: #4b5563; color: white; font-size: 0.65rem; font-weight: 700; padding: 1px 6px; border-radius: 8px; }
   .bb-col-stripe { width: 4px; height: 16px; border-radius: 2px; }
   .bb-col-stripe--flagged { background: #7a8a78; }
@@ -317,6 +318,9 @@
   .bb-btn--delete:active { background: #fde8e8; }
 
   /* Toast */
+  /* Twemoji inline images */
+  img.emoji { height: 1em; width: 1em; margin: 0 0.05em 0 0.1em; vertical-align: -0.1em; }
+
   .bb-toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: #1f2937; color: #10b981; padding: 0.6rem 1.25rem; font-size: 0.85rem; font-weight: 600; border-radius: 4px; letter-spacing: 0.03em; z-index: 100; animation: bbToastIn 0.2s ease-out, bbToastOut 0.3s 1.7s ease-in forwards; }
   @keyframes bbToastIn { from { opacity: 0; transform: translateX(-50%) translateY(10px); } }
   @keyframes bbToastOut { to { opacity: 0; transform: translateX(-50%) translateY(-10px); } }
@@ -561,7 +565,7 @@
     if (isBusted) {
       meta += '<div class="bb-card-meta-row"><span class="bb-card-value" style="color:#0098a0;font-weight:600">All steps complete</span></div>';
     } else {
-      meta += '<div class="bb-card-meta-row"><span class="bb-card-label">Next step: </span><span class="bb-card-value">' + c.currentStep + '</span><span onclick="event.stopPropagation();showMoodPicker(event,\'' + c.id + '\')" style="cursor:pointer;font-size:1.6rem;margin-left:auto;line-height:1" title="Set feeling">' + (c.mood || '&#128300;') + '</span></div>';
+      meta += '<div class="bb-card-meta-row"><span class="bb-card-label">Next step: </span><span class="bb-card-value">' + c.currentStep + '</span></div>';
     }
     if (showStage) {
       meta += '<div class="bb-card-meta-row"><span class="bb-card-label">Status: </span><span class="bb-card-stage-pill" style="border-left:3px solid ' + stageColors[c.stage] + ';padding-left:6px;">' + stageLabels[c.stage] + '</span></div>';
@@ -592,20 +596,23 @@
 
     // Bust circle
     var bustCircle = isBusted
-      ? '<div onclick="event.stopPropagation();unbustCard(\'' + c.id + '\')" style="width:22px;height:22px;background:#0098a0;border:2px solid #0098a0;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0" title="Reopen"><span style="color:#fff;font-size:12px;font-weight:700">&#10003;</span></div>'
-      : '<div onclick="event.stopPropagation();bustCard(\'' + c.id + '\')" style="width:22px;height:22px;background:#fff;border:2px solid #d1d5db;border-radius:50%;cursor:pointer;flex-shrink:0" title="Mark as busted"></div>';
+      ? '<div onclick="event.stopPropagation();unbustCard(\'' + c.id + '\')" style="width:28px;height:28px;background:#0098a0;border:2px solid #0098a0;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0" title="Reopen"><span style="color:#fff;font-size:15px;font-weight:700">&#10003;</span></div>'
+      : '<div onclick="event.stopPropagation();bustCard(\'' + c.id + '\')" style="width:28px;height:28px;background:#fff;border:2px solid #d1d5db;border-radius:50%;cursor:pointer;flex-shrink:0" title="Mark as busted"></div>';
 
     // Alarm icon
     var alarmIcon = hasRemindAt
-      ? '<div onclick="event.stopPropagation();clearReminder(\'' + c.id + '\')" style="cursor:pointer;font-size:0.65rem;font-weight:600;color:#ef4444;background:#fde8e8;border:1px solid #ef4444;border-radius:4px;padding:3px 8px;opacity:1" title="Cancel reminder">&#10005; Cancel</div>'
-      : '<div onclick="event.stopPropagation();showRemindMenu(event,\'' + c.id + '\')" style="cursor:pointer;font-size:1rem;opacity:0.4" title="Snooze this card">&#9200;</div>';
+      ? '<div onclick="event.stopPropagation();clearReminder(\'' + c.id + '\')" style="cursor:pointer;font-size:0.75rem;font-weight:600;color:#ef4444;background:#fde8e8;border:1px solid #ef4444;border-radius:4px;padding:4px 10px;opacity:1" title="Cancel reminder">&#10005; Cancel</div>'
+      : '<div onclick="event.stopPropagation();showRemindMenu(event,\'' + c.id + '\')" style="cursor:pointer;font-size:1.4rem;opacity:0.4" title="Set reminder">&#9200;</div>';
 
     // Bottom menu bar
+    // Mood emoji for bottom bar
+    var moodEmoji = '<span onclick="event.stopPropagation();showMoodPicker(event,\'' + c.id + '\')" style="cursor:pointer;font-size:1.5rem;line-height:1" title="Set feeling">' + (c.mood || '&#128300;') + '</span>';
+
     var bottomBar = '<div class="bb-card-bar">' +
-      '<span class="bb-pill ' + pillCls + '">' + pillText + '</span>' +
+      '<span class="bb-pill ' + pillCls + '" style="font-size:0.7rem;padding:4px 10px">' + pillText + '</span>' +
       remindInfo +
-      '<div style="display:flex;align-items:center;gap:8px;margin-left:auto">' +
-        alarmIcon + bustCircle +
+      '<div style="display:flex;align-items:center;gap:10px;margin-left:auto">' +
+        moodEmoji + alarmIcon + bustCircle +
       '</div>' +
     '</div>';
 
@@ -759,6 +766,11 @@
       colsHTML += '</div></div>';
     });
     colsEl.innerHTML = colsHTML;
+
+    // Convert emojis to Twemoji images
+    if (typeof twemoji !== 'undefined') {
+      twemoji.parse(document.getElementById('bbBoard'), { folder: 'svg', ext: '.svg' });
+    }
   }
 
   // ── VIEW MODE TOGGLE ──
@@ -908,6 +920,7 @@
     '<div class="bb-btn bb-btn--delete" onclick="deleteCard()" style="margin-top:0.5rem"><div class="bb-btn-indicator bb-btn-indicator--red"></div>Delete Buster Card</div>';
 
     document.getElementById('bbDetailContent').innerHTML = html;
+    if (typeof twemoji !== 'undefined') twemoji.parse(document.getElementById('bbDetailContent'), { folder: 'svg', ext: '.svg' });
 
     // Wire up autosave on all editable fields
     var autoFields = ['editTitle', 'editDesc', 'editUrgency', 'editLoggedBy',
