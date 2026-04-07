@@ -596,10 +596,10 @@
       remindInfo = '<span style="font-size:0.65rem;color:#6b7280;display:flex;align-items:center;gap:3px;background:#f3f4f6;padding:2px 6px;border-radius:3px" title="Reminder set for ' + fullDate + '">&#128564; ' + wakeLabel + '</span>';
     }
 
-    // Bust circle
+    // Bust circle (for stripe)
     var bustCircle = isBusted
-      ? '<div onclick="event.stopPropagation();unbustCard(\'' + c.id + '\')" style="width:28px;height:28px;background:#0098a0;border:2px solid #0098a0;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0" title="Reopen"><span style="color:#fff;font-size:15px;font-weight:700">&#10003;</span></div>'
-      : '<div onclick="event.stopPropagation();bustCard(\'' + c.id + '\')" style="width:28px;height:28px;background:#fff;border:2px solid #d1d5db;border-radius:50%;cursor:pointer;flex-shrink:0" title="Mark as busted"></div>';
+      ? '<div onclick="event.stopPropagation();unbustCard(\'' + c.id + '\')" style="width:26px;height:26px;background:rgba(255,255,255,0.95);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0" title="Reopen"><span style="color:#0098a0;font-size:15px;font-weight:700">&#10003;</span></div>'
+      : '<div onclick="event.stopPropagation();bustCard(\'' + c.id + '\')" style="width:26px;height:26px;background:transparent;border:2px solid rgba(255,255,255,0.5);border-radius:50%;cursor:pointer;flex-shrink:0" title="Mark as busted"></div>';
 
     // Alarm icon
     var alarmIcon = hasRemindAt
@@ -614,7 +614,7 @@
       '<span class="bb-pill ' + pillCls + '" style="font-size:0.7rem;padding:4px 10px">' + pillText + '</span>' +
       remindInfo +
       '<div style="display:flex;align-items:center;gap:10px;margin-left:auto">' +
-        moodEmoji + alarmIcon + bustCircle +
+        moodEmoji + alarmIcon +
       '</div>' +
     '</div>';
 
@@ -623,6 +623,7 @@
 
     return '<div class="bb-card"' + cardOpacity + ' onclick="showDetail(\'' + c.id + '\')">' +
       '<div class="bb-card-stripe" style="background:' + borderColor + ';">' +
+        bustCircle +
         '<span class="bb-card-stripe-text bb-card-stripe-num">#' + c.id + '</span>' +
         '<span class="bb-card-stripe-text bb-card-stripe-who">' + (isBusted ? '<span style="font-size:0.8rem">COMPLETE</span>' : '<span style="font-size:0.4rem;opacity:0.7;letter-spacing:0.1em;display:block">CURRENTLY WITH</span><span style="font-size:0.8rem;display:block">' + stripeName + '</span>') + '</span>' +
       '</div>' +
