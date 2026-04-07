@@ -347,6 +347,9 @@
         <option value="flagged">Flagged</option>
         <option value="onus">On Us</option>
         <option value="onthem">On Them</option>
+        <option value="sticky">Sticky</option>
+        <option value="onhold">On Hold</option>
+        <option value="busted">Busted</option>
       </select>
     </div>
 
@@ -440,8 +443,9 @@
   var activeTab = null;
   var urgencyOrder = { urgent: 0, high: 1, medium: 2, low: 3, '': 4 };
 
-  var stageLabels = { flagged: 'Flagged', onus: 'On Us', onthem: 'On Them', resolved: 'Resolved', onhold: 'On Hold' };
-  var stageColors = { flagged: '#7a8a78', onus: '#3d6640', onthem: '#c4622d', resolved: '#0098a0', onhold: '#6b7280' };
+  var stageLabels = { flagged: 'Flagged', onus: 'On Us', onthem: 'On Them', sticky: 'Sticky', onhold: 'On Hold', busted: 'Busted' };
+  var stageColors = { flagged: '#7a8a78', onus: '#3d6640', onthem: '#c4622d', sticky: '#a855f7', onhold: '#6b7280', busted: '#0098a0' };
+  var stageOrder = ['flagged', 'onus', 'onthem', 'sticky', 'onhold', 'busted'];
 
   // ── LOAD FROM SUPABASE ──
   async function loadData() {
@@ -558,9 +562,17 @@
       });
       // Remove empty groups
       order = order.filter(function(k) { return groups[k].length > 0; });
+    } else if (viewMode === 'stage') {
+      // Always show all stage columns in fixed order
+      stageOrder.forEach(function(s) { groups[s] = []; order.push(s); });
+      filtered.forEach(function(c) {
+        var key = c.stage;
+        if (!groups[key]) { groups[key] = []; order.push(key); }
+        groups[key].push(c);
+      });
     } else {
       filtered.forEach(function(c) {
-        var key = viewMode === 'stage' ? c.stage : c.person;
+        var key = c.person;
         if (!groups[key]) { groups[key] = []; order.push(key); }
         groups[key].push(c);
       });
@@ -601,7 +613,7 @@
     });
     if (viewMode === 'stage') tabsHTML += '<div class="bb-tab bb-tab--add">+ Column</div>';
     // Add card button for mobile (in current tab)
-    if (viewMode === 'stage' && activeTab && activeTab !== 'resolved') {
+    if (viewMode === 'stage' && activeTab && activeTab !== 'busted') {
       tabsHTML += '<div class="bb-tab-add-card" onclick="openNewCard(\'' + activeTab + '\')">+</div>';
     }
     tabsEl.innerHTML = tabsHTML;
@@ -642,7 +654,7 @@
         label = key;
         stripeStyle = 'background:' + (personColors[key] || defaultPersonColor);
       }
-      var addBtn = (viewMode === 'stage' && key !== 'resolved') ? '<div class="bb-col-add" onclick="openNewCard(\'' + key + '\')">+</div>' : '';
+      var addBtn = (viewMode === 'stage' && key !== 'busted') ? '<div class="bb-col-add" onclick="openNewCard(\'' + key + '\')">+</div>' : '';
       colsHTML += '<div class="bb-column"><div class="bb-col-header"><div class="bb-col-stripe" style="' + stripeStyle + ';"></div><span class="bb-col-title">' + label + '</span><span class="bb-col-count">' + groups[key].length + '</span>' + addBtn + '</div><div class="bb-col-cards">';
       groups[key].forEach(function(c) { colsHTML += cardHTML(c, showStage); });
       colsHTML += '</div></div>';
@@ -669,7 +681,7 @@
 
     var urgOpts = ['', 'low', 'medium', 'high', 'urgent'];
     var urgLabels = { '': 'None', low: 'Low', medium: 'Medium', high: 'High', urgent: 'Urgent' };
-    var stageOpts = ['flagged', 'onus', 'onthem', 'resolved', 'onhold'];
+    var stageOpts = stageOrder;
 
     var urgSelect = urgOpts.map(function(u) {
       return '<option value="' + u + '"' + (u === card.urgency ? ' selected' : '') + '>' + urgLabels[u] + '</option>';
