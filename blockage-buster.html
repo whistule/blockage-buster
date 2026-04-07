@@ -678,11 +678,16 @@
   var currentCardId = null;
 
   // ── RENDER DETAIL VIEW ──
-  function renderDetail(cardId) {
+  async function renderDetail(cardId) {
     var card = cards.find(function(c) { return c.id === cardId; });
     if (!card) return;
 
     document.getElementById('bbDetailTitle').textContent = card.title;
+
+    // Load stages for this card
+    var cardStages = [];
+    var { data: stagesData } = await sb.from('stages').select('*').eq('card_id', card.dbId).order('sort_order');
+    if (stagesData) cardStages = stagesData;
 
     var urgOpts = ['', 'low', 'medium', 'high', 'urgent'];
     var urgLabels = { '': 'None', low: 'Low', medium: 'Medium', high: 'High', urgent: 'Urgent' };
@@ -703,6 +708,38 @@
       personSelect += '<option value="' + id + '"' + sel + '>' + c.name + '</option>';
     });
 
+    // Build person options for stage form
+    var stagePersonOpts = '<option value="">—</option>';
+    Object.keys(contactsMap).forEach(function(id) {
+      stagePersonOpts += '<option value="' + contactsMap[id].name + '">' + contactsMap[id].name + '</option>';
+    });
+
+    // Build stages timeline
+    var hasNow = cardStages.some(function(s) { return s.status === 'now'; });
+    var timelineHTML = '';
+    if (cardStages.length > 0) {
+      timelineHTML = '<div class="bb-timeline">';
+      cardStages.forEach(function(s) {
+        var cls = s.status === 'done' ? 'bb-stage--done' : s.status === 'now' ? 'bb-stage--now' : 'bb-stage--upcoming';
+        var dateStr = s.completed_date ? '<span class="bb-stage-date">' + s.completed_date + '</span>' : '';
+        var nowPill = s.status === 'now' ? '<span class="bb-stage-now-pill">Now</span>' : '';
+        var personStr = s.person ? '<span class="bb-stage-person">' + s.person + '</span>' : '';
+        timelineHTML += '<div class="bb-stage ' + cls + '">' +
+          '<div class="bb-stage-led"></div>' +
+          '<div class="bb-stage-head">' + dateStr +
+            '<span class="bb-stage-name">' + (s.name || '') + '</span>' +
+            personStr + nowPill +
+          '</div>' +
+        '</div>';
+      });
+      timelineHTML += '</div>';
+    } else {
+      timelineHTML = '<div style="font-size:0.85rem;color:#9ca3af;font-style:italic">No stages yet — add one below to start planning</div>';
+    }
+
+    // Complete stage button (only if there's a "now" stage)
+    var completeBtn = hasNow ? '<div class="bb-btn" onclick="completeCurrentStage()" style="margin-top:0.75rem"><div class="bb-btn-indicator bb-btn-indicator--green"></div>Complete Current Stage</div>' : '';
+
     var html = '<div class="bb-detail-top">' +
       '<span class="bb-detail-num">#' + card.id + '</span>' +
       '<span class="bb-state" style="color:' + (stageColors[card.stage] || '#10b981') + '">' + stageLabels[card.stage] + '</span>' +
@@ -715,6 +752,18 @@
       '<div class="bb-edit-field"><div class="bb-edit-label">Urgency</div><select class="bb-edit-select" id="editUrgency">' + urgSelect + '</select></div>' +
       '<div class="bb-edit-field"><div class="bb-edit-label">Stage</div><select class="bb-edit-select" id="editStage">' + stageSelect + '</select></div>' +
       '<div class="bb-edit-field"><div class="bb-edit-label">Person</div><select class="bb-edit-select" id="editPerson">' + personSelect + '</select></div>' +
+    '</div>' +
+    '<div class="bb-heading" style="margin-top:2rem">Resolution Stages</div>' +
+    timelineHTML +
+    completeBtn +
+    '<div style="margin-top:0.75rem;padding:0.75rem;background:#f9fafb;border:1px solid #e5e7eb;border-radius:4px">' +
+      '<div class="bb-edit-label" style="margin-bottom:0.5rem">Add a stage</div>' +
+      '<div class="bb-edit-row" style="margin-bottom:0">' +
+        '<div class="bb-edit-field" style="flex:2"><input class="bb-edit-input" id="newStageName" placeholder="Stage name" style="font-size:0.9rem;font-family:inherit"></div>' +
+        '<div class="bb-edit-field"><select class="bb-edit-select" id="newStagePerson">' + stagePersonOpts + '</select></div>' +
+        '<div class="bb-edit-field" style="flex:0"><select class="bb-edit-select" id="newStageStatus"><option value="upcoming">Upcoming</option><option value="now">Now</option><option value="done">Done</option></select></div>' +
+      '</div>' +
+      '<div class="bb-btn" onclick="addStage()" style="margin-top:0.5rem"><div class="bb-btn-indicator bb-btn-indicator--green"></div>+ Add Stage</div>' +
     '</div>' +
     '<div class="bb-heading" style="margin-top:2rem">5 Whys</div>' +
     '<div style="font-size:0.75rem;color:#9ca3af;margin-bottom:0.75rem">Keep asking "why?" to find the root cause</div>' +
@@ -733,6 +782,69 @@
 
     document.getElementById('bbDetailContent').innerHTML = html;
   }
+
+  // ── ADD STAGE ──
+  window.addStage = async function() {
+    if (!currentCardId) return;
+    var card = cards.find(function(c) { return c.id === currentCardId; });
+    if (!card || !card.dbId) return;
+
+    var name = document.getElementById('newStageName').value.trim();
+    if (!name) { showToast('Stage name is required'); return; }
+
+    var person = document.getElementById('newStagePerson').value;
+    var status = document.getElementById('newStageStatus').value;
+
+    // Get next sort order
+    var { data: existing } = await sb.from('stages').select('sort_order').eq('card_id', card.dbId).order('sort_order', { ascending: false }).limit(1);
+    var nextOrder = (existing && existing.length > 0) ? (existing[0].sort_order || 0) + 1 : 1;
+
+    var today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    var insert = {
+      card_id: card.dbId,
+      name: name,
+      person: person || null,
+      status: status,
+      sort_order: nextOrder,
+      completed_date: status === 'done' ? today : null
+    };
+
+    var { error } = await sb.from('stages').insert(insert);
+    if (error) { showToast('Error: ' + error.message); return; }
+    showToast('Stage added');
+    await renderDetail(currentCardId);
+  };
+
+  // ── COMPLETE CURRENT STAGE ──
+  window.completeCurrentStage = async function() {
+    if (!currentCardId) return;
+    var card = cards.find(function(c) { return c.id === currentCardId; });
+    if (!card || !card.dbId) return;
+
+    // Get all stages for this card
+    var { data: allStages } = await sb.from('stages').select('*').eq('card_id', card.dbId).order('sort_order');
+    if (!allStages) return;
+
+    var nowStage = allStages.find(function(s) { return s.status === 'now'; });
+    if (!nowStage) { showToast('No current stage to complete'); return; }
+
+    var today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+
+    // Mark current as done
+    await sb.from('stages').update({ status: 'done', completed_date: today }).eq('id', nowStage.id);
+
+    // Find next upcoming and promote to now
+    var nextUpcoming = allStages.find(function(s) { return s.status === 'upcoming' && s.sort_order > nowStage.sort_order; });
+    if (nextUpcoming) {
+      await sb.from('stages').update({ status: 'now' }).eq('id', nextUpcoming.id);
+      showToast('Stage complete — ' + (nextUpcoming.person || nextUpcoming.name) + ' is up next');
+    } else {
+      showToast('All stages complete');
+    }
+
+    await loadData();
+    await renderDetail(currentCardId);
+  };
 
   // ── UPDATE CARD ──
   window.updateCard = async function() {
@@ -763,12 +875,13 @@
     renderDetail(currentCardId);
   };
 
-  window.showDetail = function(cardId) {
+  window.showDetail = async function(cardId) {
     currentCardId = cardId || null;
-    renderDetail(cardId);
     document.getElementById('bbBoard').classList.remove('bb-view--active');
     document.getElementById('bbDetail').classList.add('bb-view--active');
+    document.getElementById('bbDetailContent').innerHTML = '<div style="padding:2rem;color:#9ca3af;text-align:center">Loading...</div>';
     window.scrollTo(0, 0);
+    await renderDetail(cardId);
   };
   window.showBoard = function() {
     document.getElementById('bbDetail').classList.remove('bb-view--active');
