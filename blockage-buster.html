@@ -919,11 +919,12 @@
       await sb.from('cards').update({ stage: nextPersonType === 'external' ? 'onthem' : 'onus' }).eq('id', card.dbId);
       showToast('Step complete — ' + nextUpcoming.name + ' is next');
     } else {
-      // No upcoming steps left — check if any are still now (other than the one we just completed)
-      var anyActive = allStages ? allStages.some(function(s) { return (s.status === 'now' || s.status === 'upcoming') && s.id !== stepId; }) : false;
-      if (!anyActive) {
-        await sb.from('cards').update({ stage: 'busted' }).eq('id', card.dbId);
-        showToast('All steps complete — Busted!');
+      // No upcoming steps left — check if ALL steps are done
+      var allDone = allStages ? allStages.every(function(s) { return s.status === 'done'; }) : false;
+      if (allDone) {
+        var { error: updateErr } = await sb.from('cards').update({ stage: 'busted' }).eq('id', card.dbId);
+        if (updateErr) { showToast('Error moving to Busted: ' + updateErr.message); }
+        else { showToast('All steps complete — Busted!'); }
       }
     }
     await loadData();
