@@ -462,7 +462,7 @@
     var { data: dbCards } = await sb.from('cards').select('*, contacts!person_id(name, type, color)').order('buster_num');
 
     // Load stages for current step display
-    var { data: stages } = await sb.from('stages').select('*').eq('status', 'now');
+    var { data: stages } = await sb.from('stages').select('*, contacts!person_id(name, type)').eq('status', 'now');
     var nowStageByCard = {};
     if (stages) {
       stages.forEach(function(s) { nowStageByCard[s.card_id] = s; });
@@ -479,14 +479,15 @@
       cards = dbCards.map(function(c) {
         var contact = c.contacts || {};
         var nowStage = nowStageByCard[c.id];
+        var nowContact = nowStage && nowStage.contacts ? nowStage.contacts : null;
         return {
           id: String(c.buster_num).padStart(3, '0'),
           dbId: c.id,
           title: c.title,
           desc: c.description || '',
           stage: c.stage,
-          person: contact.name || 'Unassigned',
-          type: contact.type || 'internal',
+          person: nowContact ? nowContact.name : (contact.name || 'Unassigned'),
+          type: nowContact ? (nowContact.type || 'internal') : (contact.type || 'internal'),
           urgency: c.urgency || '',
           currentStep: nowStage ? nowStage.name : '—',
           hasReminder: !!reminderByCard[c.id],
