@@ -459,7 +459,7 @@
     }
 
     // Load cards with their current stage (from stages table)
-    var { data: dbCards } = await sb.from('cards').select('*, contacts(name, type, color)').order('buster_num');
+    var { data: dbCards } = await sb.from('cards').select('*, contacts!person_id(name, type, color)').order('buster_num');
 
     // Load stages for current step display
     var { data: stages } = await sb.from('stages').select('*').eq('status', 'now');
@@ -573,6 +573,8 @@
       stageOrder.forEach(function(s) { groups[s] = []; order.push(s); });
       filtered.forEach(function(c) {
         var key = c.stage;
+        // Map old 'resolved' to 'busted'
+        if (key === 'resolved') key = 'busted';
         if (!groups[key]) { groups[key] = []; order.push(key); }
         groups[key].push(c);
       });
