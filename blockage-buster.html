@@ -142,6 +142,7 @@
   .bb-pill--high { background: #f97316; }
   .bb-pill--medium { background: #22c55e; }
   .bb-pill--low { background: #9ca3af; }
+  .bb-pill--resolved { background: #0098a0; }
 
   /* Stage pill on card (shown in person view) */
   .bb-card-stage-pill {
@@ -504,18 +505,30 @@
   // ── RENDER CARD HTML ──
   function cardHTML(c, showStage) {
     var pillCls = c.urgency ? 'bb-pill--' + c.urgency : 'bb-pill--low';
-    var pillText = c.urgency === 'urgent' ? 'Urgent' : c.urgency === 'high' ? 'High Priority' : c.urgency === 'medium' ? 'Medium' : c.stage === 'resolved' ? 'Resolved' : 'Low';
+    var isBusted = c.stage === 'busted' || c.stage === 'resolved';
+    var pillText;
+    if (isBusted) {
+      pillCls = 'bb-pill--resolved';
+      pillText = 'Busted';
+    } else {
+      pillText = c.urgency === 'urgent' ? 'Urgent' : c.urgency === 'high' ? 'High Priority' : c.urgency === 'medium' ? 'Medium' : 'Low';
+    }
     var bell = c.hasReminder ? '<span class="bb-card-bell">🔔</span>' : '';
 
     // Stripe always shows person colour
     var borderColor = personColors[c.person] || defaultPersonColor;
-    if (c.urgency === 'urgent') borderColor = '#ef4444';
+    if (isBusted) borderColor = '#0098a0';
+    else if (c.urgency === 'urgent') borderColor = '#ef4444';
 
-    // Stripe text: always person name at bottom, card number at top
-    var stripeName = c.person;
+    // Stripe text: person name at bottom (or 'Complete' if busted), card number at top
+    var stripeName = isBusted ? 'Complete' : c.person;
 
     var meta = '<div class="bb-card-meta">';
-    meta += '<div class="bb-card-meta-row"><span class="bb-card-label">Stage: </span><span class="bb-card-value">' + c.currentStep + '</span></div>';
+    if (isBusted) {
+      meta += '<div class="bb-card-meta-row"><span class="bb-card-value" style="color:#0098a0;font-weight:600">All steps complete</span></div>';
+    } else {
+      meta += '<div class="bb-card-meta-row"><span class="bb-card-label">Step: </span><span class="bb-card-value">' + c.currentStep + '</span></div>';
+    }
     if (showStage) {
       meta += '<div class="bb-card-meta-row"><span class="bb-card-label">Status: </span><span class="bb-card-stage-pill" style="border-left:3px solid ' + stageColors[c.stage] + ';padding-left:6px;">' + stageLabels[c.stage] + '</span></div>';
     }
@@ -530,7 +543,7 @@
       '</div>' +
       '<div class="bb-card-body">' +
         '<div class="bb-card-top"><span class="bb-card-num">#' + c.id + '</span>' + bell + '<span class="bb-pill ' + pillCls + '">' + pillText + '</span></div>' +
-        '<div class="bb-card-title">' + c.title + '</div>' +
+        '<div class="bb-card-title">' + (isBusted ? '<span style="color:#0098a0;margin-right:4px">&#10003;</span>' : '') + c.title + '</div>' +
         '<div class="bb-card-desc">' + c.desc + '</div>' +
         meta +
       '</div>' +
