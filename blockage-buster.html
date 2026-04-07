@@ -901,8 +901,9 @@
       await sb.from('cards').update({ stage: nextPersonType === 'external' ? 'onthem' : 'onus' }).eq('id', card.dbId);
       showToast('Step complete — ' + nextUpcoming.name + ' is next');
     } else {
-      var anyNow = allStages ? allStages.some(function(s) { return s.status === 'now' && s.id !== stepId; }) : false;
-      if (!anyNow) {
+      // No upcoming steps left — check if any are still now (other than the one we just completed)
+      var anyActive = allStages ? allStages.some(function(s) { return (s.status === 'now' || s.status === 'upcoming') && s.id !== stepId; }) : false;
+      if (!anyActive) {
         await sb.from('cards').update({ stage: 'busted' }).eq('id', card.dbId);
         showToast('All steps complete — Busted!');
       }
