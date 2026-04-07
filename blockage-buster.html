@@ -750,13 +750,18 @@
         var ownerBadge = personType === 'external' ? '<span style="font-size:0.65rem;font-weight:700;padding:2px 6px;border-radius:3px;background:#c4622d;color:#fff;text-transform:uppercase;letter-spacing:0.05em">Them</span>' :
           personName ? '<span style="font-size:0.65rem;font-weight:700;padding:2px 6px;border-radius:3px;background:#3d6640;color:#fff;text-transform:uppercase;letter-spacing:0.05em">Us</span>' : '';
         var doneCheck = s.status === 'done' ? ' checked disabled' : '';
-        var checkbox = '<input type="checkbox" onclick="completeStep(\'' + s.id + '\')" style="width:18px;height:18px;cursor:pointer;accent-color:#16a34a;flex-shrink:0" title="Mark as done"' + doneCheck + '>';
-        var editBtn = '<span onclick="editStep(\'' + s.id + '\')" style="font-size:0.7rem;color:#9ca3af;cursor:pointer;margin-left:auto" title="Edit step">edit</span>';
+        var checkbox = '<input type="checkbox" onclick="event.stopPropagation();completeStep(\'' + s.id + '\')" style="width:18px;height:18px;cursor:pointer;accent-color:#16a34a;flex-shrink:0" title="Mark as done"' + doneCheck + '>';
+        var editBtn = '<span onclick="event.stopPropagation();editStep(\'' + s.id + '\')" style="font-size:0.7rem;color:#9ca3af;cursor:pointer;margin-left:auto" title="Edit step">edit</span>';
+        var notesPreview = s.notes ? '<div style="font-size:0.8rem;color:#6b7280;font-style:italic;margin-top:0.25rem;white-space:pre-wrap;line-height:1.4">' + (s.notes || '').replace(/</g, '&lt;').substring(0, 120) + (s.notes.length > 120 ? '...' : '') + '</div>' : '';
         timelineHTML += '<div class="bb-stage ' + cls + '" id="step-' + s.id + '">' +
           '<div class="bb-stage-led"></div>' +
-          '<div class="bb-stage-head">' + checkbox + dateStr +
+          '<div class="bb-stage-head" onclick="toggleStepNotes(\'' + s.id + '\')" style="cursor:pointer">' + checkbox + dateStr +
             '<span class="bb-stage-name">' + (s.name || '') + '</span>' +
             personStr + ownerBadge + nowPill + editBtn +
+          '</div>' +
+          notesPreview +
+          '<div class="bb-stage-body" id="step-notes-' + s.id + '" style="display:none;margin-top:0.5rem">' +
+            '<textarea id="step-notes-input-' + s.id + '" class="bb-edit-textarea" style="min-height:3rem;font-size:0.85rem" placeholder="Add notes..." onblur="saveStepNotes(\'' + s.id + '\')">' + (s.notes || '').replace(/</g, '&lt;') + '</textarea>' +
           '</div>' +
         '</div>';
       });
@@ -913,6 +918,26 @@
   };
 
   // ── EDIT A STEP ──
+  // ── TOGGLE STEP NOTES ──
+  window.toggleStepNotes = function(stepId) {
+    var el = document.getElementById('step-notes-' + stepId);
+    if (!el) return;
+    var isOpen = el.style.display !== 'none';
+    el.style.display = isOpen ? 'none' : 'block';
+    if (!isOpen) {
+      var input = document.getElementById('step-notes-input-' + stepId);
+      if (input) input.focus();
+    }
+  };
+
+  // ── SAVE STEP NOTES ──
+  window.saveStepNotes = async function(stepId) {
+    var input = document.getElementById('step-notes-input-' + stepId);
+    if (!input) return;
+    var { error } = await sb.from('stages').update({ notes: input.value }).eq('id', stepId);
+    if (error) { showToast('Error saving notes'); return; }
+  };
+
   window.editStep = async function(stepId) {
     var { data: step } = await sb.from('stages').select('*').eq('id', stepId).single();
     if (!step) return;
@@ -951,6 +976,7 @@
           '<div class="bb-edit-field"><select class="bb-edit-select" id="stepEditPerson">' + stagePersonOpts + '</select></div>' +
           '<div class="bb-edit-field" style="flex:0"><select class="bb-edit-select" id="stepEditStatus">' + statusOpts + '</select></div>' +
         '</div>' +
+        '<div style="margin-bottom:0.5rem"><textarea class="bb-edit-textarea" id="stepEditNotes" placeholder="Notes..." style="min-height:3rem;font-size:0.85rem">' + (step.notes || '').replace(/</g, '&lt;') + '</textarea></div>' +
         '<div style="display:flex;gap:0.5rem">' +
           '<div class="bb-btn bb-btn--save" onclick="saveStep(\'' + stepId + '\')" style="flex:1;margin:0"><div class="bb-btn-indicator bb-btn-indicator--green"></div>Save</div>' +
           '<div class="bb-btn" onclick="renderDetail(currentCardId)" style="flex:1;margin:0">Cancel</div>' +
@@ -964,7 +990,8 @@
     var updates = {
       name: document.getElementById('stepEditName').value.trim(),
       person_id: document.getElementById('stepEditPerson').value || null,
-      status: document.getElementById('stepEditStatus').value
+      status: document.getElementById('stepEditStatus').value,
+      notes: document.getElementById('stepEditNotes').value
     };
     if (!updates.name) { showToast('Step name required'); return; }
     await sb.from('stages').update(updates).eq('id', stepId);
