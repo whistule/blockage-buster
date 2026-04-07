@@ -117,7 +117,7 @@
   .bb-card-stripe-num { transform: rotate(180deg); }
   .bb-card-stripe-name { transform: rotate(180deg); }
 
-  .bb-card-body { padding: 12px 14px; flex: 1; min-width: 0; }
+  .bb-card-body { padding: 12px 14px 44px; flex: 1; min-width: 0; position: relative; }
 
   .bb-card-img {
     width: 64px; min-width: 64px; height: 64px;
@@ -535,8 +535,8 @@
     meta += '</div>';
 
     var bustedCheck = isBusted
-      ? '<div style="display:flex;align-items:center;gap:4px;margin-top:4px"><input type="checkbox" checked style="width:16px;height:16px;accent-color:#0098a0;cursor:pointer" onclick="event.stopPropagation();unbustCard(\'' + c.id + '\')" title="Reopen this blockage"><span style="font-size:0.7rem;color:#0098a0;font-weight:600">Busted</span></div>'
-      : '<div style="display:flex;align-items:center;gap:4px;margin-top:4px"><input type="checkbox" style="width:16px;height:16px;accent-color:#0098a0;cursor:pointer" onclick="event.stopPropagation();bustCard(\'' + c.id + '\')" title="Mark as busted"><span style="font-size:0.7rem;color:#9ca3af">Busted?</span></div>';
+      ? '<div onclick="event.stopPropagation();unbustCard(\'' + c.id + '\')" style="position:absolute;bottom:8px;right:8px;display:flex;align-items:center;gap:6px;padding:6px 12px;background:#e6f7f7;border:2px solid #0098a0;border-radius:6px;cursor:pointer"><span style="width:22px;height:22px;border-radius:4px;background:#0098a0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:700">&#10003;</span><span style="font-size:0.8rem;color:#0098a0;font-weight:700;text-transform:uppercase;letter-spacing:0.05em">Busted</span></div>'
+      : '<div onclick="event.stopPropagation();bustCard(\'' + c.id + '\')" style="position:absolute;bottom:8px;right:8px;display:flex;align-items:center;gap:6px;padding:6px 12px;background:#f9fafb;border:2px solid #d1d5db;border-radius:6px;cursor:pointer" title="Mark as busted"><span style="width:22px;height:22px;border-radius:4px;border:2px solid #d1d5db;background:#fff"></span><span style="font-size:0.8rem;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:0.05em">Bust</span></div>';
 
     var imgHTML = c.img ? '<img class="bb-card-img" src="' + c.img + '" alt="">' : '';
 
