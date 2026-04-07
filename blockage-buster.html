@@ -492,6 +492,7 @@
           hasReminder: !!reminderByCard[c.id],
           img: c.image_url || '',
           isSticky: c.is_sticky,
+          loggedBy: c.logged_by || '',
           why1: c.why1 || '',
           why2: c.why2 || '',
           why3: c.why3 || '',
@@ -702,17 +703,37 @@
       return '<option value="' + s + '"' + (s === card.stage ? ' selected' : '') + '>' + stageLabels[s] + '</option>';
     }).join('');
 
-    var personSelect = '<option value="">Unassigned</option>';
+    // Build sorted person list: Us first, then Them
+    var usContacts = [];
+    var themContacts = [];
     Object.keys(contactsMap).forEach(function(id) {
       var c = contactsMap[id];
-      var sel = c.name === card.person ? ' selected' : '';
-      personSelect += '<option value="' + id + '"' + sel + '>' + c.name + '</option>';
+      if (c.type === 'external') themContacts.push({ id: id, name: c.name });
+      else usContacts.push({ id: id, name: c.name });
     });
+    usContacts.sort(function(a,b) { return a.name.localeCompare(b.name); });
+    themContacts.sort(function(a,b) { return a.name.localeCompare(b.name); });
 
-    // Build person options for stage form
-    var stagePersonOpts = '<option value="">—</option>';
-    Object.keys(contactsMap).forEach(function(id) {
-      stagePersonOpts += '<option value="' + id + '">' + contactsMap[id].name + '</option>';
+    function buildPersonSelect(selectedId, includeBlank) {
+      var html = includeBlank ? '<option value="">—</option>' : '';
+      if (usContacts.length) {
+        html += '<optgroup label="Us">';
+        usContacts.forEach(function(c) { html += '<option value="' + c.id + '"' + (c.id === selectedId ? ' selected' : '') + '>' + c.name + '</option>'; });
+        html += '</optgroup>';
+      }
+      if (themContacts.length) {
+        html += '<optgroup label="Them">';
+        themContacts.forEach(function(c) { html += '<option value="' + c.id + '"' + (c.id === selectedId ? ' selected' : '') + '>' + c.name + '</option>'; });
+        html += '</optgroup>';
+      }
+      html += '<option value="__new__">+ Add person...</option>';
+      return html;
+    }
+
+    // Logged by — internal people only
+    var loggedBySelect = '<option value="">—</option>';
+    usContacts.forEach(function(c) {
+      loggedBySelect += '<option value="' + c.id + '"' + (c.id === card.loggedBy ? ' selected' : '') + '>' + c.name + '</option>';
     });
 
     // Build stages timeline
@@ -726,14 +747,16 @@
         var dateStr = dateVal ? '<span class="bb-stage-date">' + dateVal + '</span>' : '';
         var nowPill = s.status === 'now' ? '<span class="bb-stage-now-pill">Now</span>' : '';
         var personName = (s.contacts && s.contacts.name) ? s.contacts.name : '';
+        var personType = s.person_id && contactsMap[s.person_id] ? contactsMap[s.person_id].type : '';
         var personStr = personName ? '<span class="bb-stage-person">' + personName + '</span>' : '';
-        var ownerBadge = s.ownership === 'them' ? '<span style="font-size:0.65rem;font-weight:700;padding:2px 6px;border-radius:3px;background:#c4622d;color:#fff;text-transform:uppercase;letter-spacing:0.05em">Them</span>' :
-          s.ownership === 'us' ? '<span style="font-size:0.65rem;font-weight:700;padding:2px 6px;border-radius:3px;background:#3d6640;color:#fff;text-transform:uppercase;letter-spacing:0.05em">Us</span>' : '';
+        var ownerBadge = personType === 'external' ? '<span style="font-size:0.65rem;font-weight:700;padding:2px 6px;border-radius:3px;background:#c4622d;color:#fff;text-transform:uppercase;letter-spacing:0.05em">Them</span>' :
+          personName ? '<span style="font-size:0.65rem;font-weight:700;padding:2px 6px;border-radius:3px;background:#3d6640;color:#fff;text-transform:uppercase;letter-spacing:0.05em">Us</span>' : '';
+        var checkbox = s.status === 'now' ? '<input type="checkbox" onclick="completeCurrentStage()" style="width:18px;height:18px;cursor:pointer;accent-color:#16a34a;flex-shrink:0" title="Complete this step">' : '';
         timelineHTML += '<div class="bb-stage ' + cls + '">' +
           '<div class="bb-stage-led"></div>' +
           '<div class="bb-stage-head">' + dateStr +
             '<span class="bb-stage-name">' + (s.name || '') + '</span>' +
-            personStr + ownerBadge + nowPill +
+            personStr + ownerBadge + nowPill + checkbox +
           '</div>' +
         '</div>';
       });
@@ -742,8 +765,7 @@
       timelineHTML = '<div style="font-size:0.85rem;color:#9ca3af;font-style:italic">No stages yet — add one below to start planning</div>';
     }
 
-    // Complete stage button (only if there's a "now" stage)
-    var completeBtn = hasNow ? '<div class="bb-btn" onclick="completeCurrentStage()" style="margin-top:0.75rem"><div class="bb-btn-indicator bb-btn-indicator--green"></div>Complete Current Stage</div>' : '';
+    var completeBtn = '';
 
     var html = '<div class="bb-detail-top">' +
       '<span class="bb-detail-num">#' + card.id + '</span>' +
@@ -755,6 +777,7 @@
     '<textarea class="bb-edit-textarea" id="editDesc">' + (card.desc || '').replace(/</g, '&lt;') + '</textarea>' +
     '<div class="bb-edit-row" style="margin-top:1.5rem">' +
       '<div class="bb-edit-field"><div class="bb-edit-label">Urgency</div><select class="bb-edit-select" id="editUrgency">' + urgSelect + '</select></div>' +
+      '<div class="bb-edit-field"><div class="bb-edit-label">Logged by</div><select class="bb-edit-select" id="editLoggedBy">' + loggedBySelect + '</select></div>' +
     '</div>' +
     '<div class="bb-heading" style="margin-top:2rem">Resolution Steps</div>' +
     timelineHTML +
@@ -763,8 +786,7 @@
       '<div class="bb-edit-label" style="margin-bottom:0.5rem">Add a step</div>' +
       '<div class="bb-edit-row" style="margin-bottom:0">' +
         '<div class="bb-edit-field" style="flex:2"><input class="bb-edit-input" id="newStageName" placeholder="Step name" style="font-size:0.9rem;font-family:inherit"></div>' +
-        '<div class="bb-edit-field"><select class="bb-edit-select" id="newStagePerson">' + stagePersonOpts + '</select></div>' +
-        '<div class="bb-edit-field" style="flex:0"><select class="bb-edit-select" id="newStageOwnership"><option value="us">Us</option><option value="them">Them</option></select></div>' +
+        '<div class="bb-edit-field"><select class="bb-edit-select" id="newStagePerson" onchange="handleNewPerson(this)">' + buildPersonSelect(null, true) + '</select></div>' +
         '<div class="bb-edit-field" style="flex:0"><select class="bb-edit-select" id="newStageStatus"><option value="upcoming">Upcoming</option><option value="now">Now</option><option value="done">Done</option></select></div>' +
       '</div>' +
       '<div class="bb-btn" onclick="addStage()" style="margin-top:0.5rem"><div class="bb-btn-indicator bb-btn-indicator--green"></div>+ Add Step</div>' +
@@ -787,7 +809,7 @@
     document.getElementById('bbDetailContent').innerHTML = html;
 
     // Wire up autosave on all editable fields
-    var autoFields = ['editTitle', 'editDesc', 'editUrgency',
+    var autoFields = ['editTitle', 'editDesc', 'editUrgency', 'editLoggedBy',
       'editWhy1', 'editWhy2', 'editWhy3', 'editWhy4', 'editWhy5'];
     autoFields.forEach(function(id) {
       var el = document.getElementById(id);
@@ -812,8 +834,12 @@
     if (!name) { showToast('Stage name is required'); return; }
 
     var personId = document.getElementById('newStagePerson').value;
+    if (personId === '__new__') { personId = ''; } // handled by handleNewPerson
     var status = document.getElementById('newStageStatus').value;
-    var ownership = document.getElementById('newStageOwnership').value;
+
+    // Derive ownership from contact type
+    var ownership = 'us';
+    if (personId && contactsMap[personId] && contactsMap[personId].type === 'external') ownership = 'them';
 
     // Get next sort order
     var { data: existing } = await sb.from('stages').select('sort_order').eq('card_id', card.dbId).order('sort_order', { ascending: false }).limit(1);
@@ -824,7 +850,6 @@
       name: name,
       person_id: personId || null,
       status: status,
-      ownership: ownership,
       sort_order: nextOrder,
       completed_at: status === 'done' ? new Date().toISOString() : null
     };
@@ -836,8 +861,27 @@
 
     var { error } = await sb.from('stages').insert(insert);
     if (error) { showToast('Error: ' + error.message); return; }
-    showToast('Stage added');
+    showToast('Step added');
+    await loadData();
     await renderDetail(currentCardId);
+  };
+
+  // ── ADD NEW PERSON ──
+  window.handleNewPerson = async function(selectEl) {
+    if (selectEl.value !== '__new__') return;
+    var name = prompt('New contact name:');
+    if (!name || !name.trim()) { selectEl.value = ''; return; }
+    var type = confirm('Is this person part of our team (Us)?\n\nOK = Us\nCancel = Them') ? 'internal' : 'external';
+    var { data, error } = await sb.from('contacts').insert({ name: name.trim(), type: type }).select();
+    if (error) { showToast('Error: ' + error.message); selectEl.value = ''; return; }
+    if (data && data[0]) {
+      contactsMap[data[0].id] = data[0];
+      showToast(name.trim() + ' added');
+      await renderDetail(currentCardId);
+      // Re-select the new person
+      var sel = document.getElementById(selectEl.id);
+      if (sel) sel.value = data[0].id;
+    }
   };
 
   // ── COMPLETE CURRENT STAGE ──
@@ -860,8 +904,9 @@
     var nextUpcoming = allStages.find(function(s) { return s.status === 'upcoming' && s.sort_order > nowStage.sort_order; });
     if (nextUpcoming) {
       await sb.from('stages').update({ status: 'now' }).eq('id', nextUpcoming.id);
-      // Auto-move card to On Us / On Them based on next step's ownership
-      var newBoardStage = nextUpcoming.ownership === 'them' ? 'onthem' : 'onus';
+      // Auto-move card to On Us / On Them based on next step's person type
+      var nextPersonType = nextUpcoming.person_id && contactsMap[nextUpcoming.person_id] ? contactsMap[nextUpcoming.person_id].type : 'internal';
+      var newBoardStage = nextPersonType === 'external' ? 'onthem' : 'onus';
       await sb.from('cards').update({ stage: newBoardStage }).eq('id', card.dbId);
       showToast('Step complete — ' + (nextUpcoming.name) + ' is up next');
     } else {
@@ -886,7 +931,8 @@
     var updates = {
       title: title,
       description: document.getElementById('editDesc').value,
-      urgency: document.getElementById('editUrgency').value
+      urgency: document.getElementById('editUrgency').value,
+      logged_by: document.getElementById('editLoggedBy').value || null
     };
 
     // Try saving core fields first
