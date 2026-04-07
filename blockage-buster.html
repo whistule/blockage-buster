@@ -114,7 +114,7 @@
     text-transform: uppercase; letter-spacing: 0.06em;
     color: white; white-space: nowrap;
   }
-  .bb-card-stripe-num { transform: rotate(180deg); }
+  .bb-card-stripe-num { transform: rotate(180deg); font-size: 0.75rem; letter-spacing: 0.08em; }
   .bb-card-stripe-name { transform: rotate(180deg); }
 
   .bb-card-body { padding: 12px 14px 44px; flex: 1; min-width: 0; position: relative; }
@@ -546,7 +546,7 @@
         '<span class="bb-card-stripe-text bb-card-stripe-name">' + stripeName + '</span>' +
       '</div>' +
       '<div class="bb-card-body">' +
-        '<div class="bb-card-top"><span class="bb-card-num">#' + c.id + '</span>' + bell + '<span class="bb-pill ' + pillCls + '">' + pillText + '</span></div>' +
+        '<div class="bb-card-top">' + bell + '<span class="bb-pill ' + pillCls + '">' + pillText + '</span></div>' +
         '<div class="bb-card-title">' + (isBusted ? '<span style="color:#0098a0;margin-right:4px">&#10003;</span>' : '') + c.title + '</div>' +
         '<div class="bb-card-desc">' + c.desc + '</div>' +
         meta + bustedCheck +
