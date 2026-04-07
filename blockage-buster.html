@@ -536,8 +536,8 @@
     meta += '</div>';
 
     var bustedCheck = isBusted
-      ? '<div onclick="event.stopPropagation();unbustCard(\'' + c.id + '\')" style="position:absolute;bottom:8px;right:8px;display:flex;align-items:center;gap:6px;padding:6px 12px;background:#e6f7f7;border:2px solid #0098a0;border-radius:6px;cursor:pointer"><span style="width:22px;height:22px;border-radius:4px;background:#0098a0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:700">&#10003;</span><span style="font-size:0.8rem;color:#0098a0;font-weight:700;text-transform:uppercase;letter-spacing:0.05em">Busted</span></div>'
-      : '<div onclick="event.stopPropagation();bustCard(\'' + c.id + '\')" style="position:absolute;bottom:8px;right:8px;display:flex;align-items:center;gap:6px;padding:6px 12px;background:#f9fafb;border:2px solid #d1d5db;border-radius:6px;cursor:pointer" title="Mark as busted"><span style="width:22px;height:22px;border-radius:4px;border:2px solid #d1d5db;background:#fff"></span><span style="font-size:0.8rem;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:0.05em">Bust</span></div>';
+      ? '<div onclick="event.stopPropagation();unbustCard(\'' + c.id + '\')" style="position:absolute;bottom:8px;right:8px;width:28px;height:28px;background:#0098a0;border:2px solid #0098a0;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center" title="Reopen this blockage"><span style="color:#fff;font-size:16px;font-weight:700">&#10003;</span></div>'
+      : '<div onclick="event.stopPropagation();bustCard(\'' + c.id + '\')" style="position:absolute;bottom:8px;right:8px;width:28px;height:28px;background:#fff;border:2px solid #d1d5db;border-radius:6px;cursor:pointer" title="Mark as busted"></div>';
 
     var imgHTML = c.img ? '<img class="bb-card-img" src="' + c.img + '" alt="">' : '';
 
