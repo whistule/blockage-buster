@@ -546,10 +546,11 @@
         '<span class="bb-card-stripe-text bb-card-stripe-name">' + stripeName + '</span>' +
       '</div>' +
       '<div class="bb-card-body">' +
-        '<div class="bb-card-top">' + bell + '<span class="bb-pill ' + pillCls + '">' + pillText + '</span></div>' +
-        '<div class="bb-card-title">' + (isBusted ? '<span style="color:#0098a0;margin-right:4px">&#10003;</span>' : '') + c.title + '</div>' +
+        '<div class="bb-card-title">' + bell + (isBusted ? '<span style="color:#0098a0;margin-right:4px">&#10003;</span>' : '') + c.title + '</div>' +
         '<div class="bb-card-desc">' + c.desc + '</div>' +
-        meta + bustedCheck +
+        meta +
+        '<div style="margin-top:6px"><span class="bb-pill ' + pillCls + '">' + pillText + '</span></div>' +
+        bustedCheck +
       '</div>' +
       imgHTML +
     '</div>';
