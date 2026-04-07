@@ -598,8 +598,8 @@
 
     // Bust circle (for stripe)
     var bustCircle = isBusted
-      ? '<div onclick="event.stopPropagation();unbustCard(\'' + c.id + '\')" style="width:26px;height:26px;background:rgba(255,255,255,0.95);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0" title="Reopen"><span style="color:#0098a0;font-size:15px;font-weight:700">&#10003;</span></div>'
-      : '<div onclick="event.stopPropagation();bustCard(\'' + c.id + '\')" style="width:26px;height:26px;background:#fff;border:2px solid rgba(255,255,255,0.9);border-radius:50%;cursor:pointer;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.2)" title="Mark as busted"></div>';
+      ? '<div onclick="event.stopPropagation();unbustCard(\'' + c.id + '\')" style="width:20px;height:20px;background:rgba(255,255,255,0.95);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.2)" title="Reopen"><span style="color:#0098a0;font-size:12px;font-weight:700">&#10003;</span></div>'
+      : '<div onclick="event.stopPropagation();bustCard(\'' + c.id + '\')" style="width:20px;height:20px;background:#fff;border:2px solid rgba(255,255,255,0.9);border-radius:50%;cursor:pointer;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.2)" title="Mark as busted"></div>';
 
     // Alarm icon
     var alarmIcon = hasRemindAt
