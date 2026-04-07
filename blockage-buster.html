@@ -749,12 +749,14 @@
         var personStr = personName ? '<span class="bb-stage-person">' + personName + '</span>' : '';
         var ownerBadge = personType === 'external' ? '<span style="font-size:0.65rem;font-weight:700;padding:2px 6px;border-radius:3px;background:#c4622d;color:#fff;text-transform:uppercase;letter-spacing:0.05em">Them</span>' :
           personName ? '<span style="font-size:0.65rem;font-weight:700;padding:2px 6px;border-radius:3px;background:#3d6640;color:#fff;text-transform:uppercase;letter-spacing:0.05em">Us</span>' : '';
-        var checkbox = s.status === 'now' ? '<input type="checkbox" onclick="completeCurrentStage()" style="width:18px;height:18px;cursor:pointer;accent-color:#16a34a;flex-shrink:0" title="Complete this step">' : '';
-        timelineHTML += '<div class="bb-stage ' + cls + '">' +
+        var doneCheck = s.status === 'done' ? ' checked disabled' : '';
+        var checkbox = '<input type="checkbox" onclick="completeStep(\'' + s.id + '\')" style="width:18px;height:18px;cursor:pointer;accent-color:#16a34a;flex-shrink:0" title="Mark as done"' + doneCheck + '>';
+        var editBtn = '<span onclick="editStep(\'' + s.id + '\')" style="font-size:0.7rem;color:#9ca3af;cursor:pointer;margin-left:auto" title="Edit step">edit</span>';
+        timelineHTML += '<div class="bb-stage ' + cls + '" id="step-' + s.id + '">' +
           '<div class="bb-stage-led"></div>' +
-          '<div class="bb-stage-head">' + dateStr +
+          '<div class="bb-stage-head">' + checkbox + dateStr +
             '<span class="bb-stage-name">' + (s.name || '') + '</span>' +
-            personStr + ownerBadge + nowPill + checkbox +
+            personStr + ownerBadge + nowPill + editBtn +
           '</div>' +
         '</div>';
       });
@@ -882,7 +884,104 @@
     }
   };
 
-  // ── COMPLETE CURRENT STAGE ──
+  // ── COMPLETE A STEP ──
+  window.completeStep = async function(stepId) {
+    if (!currentCardId) return;
+    var card = cards.find(function(c) { return c.id === currentCardId; });
+    if (!card || !card.dbId) return;
+
+    await sb.from('stages').update({ status: 'done', completed_at: new Date().toISOString() }).eq('id', stepId);
+
+    // Check if there's a next upcoming step to promote to now
+    var { data: allStages } = await sb.from('stages').select('*').eq('card_id', card.dbId).order('sort_order');
+    var nextUpcoming = allStages ? allStages.find(function(s) { return s.status === 'upcoming'; }) : null;
+    if (nextUpcoming) {
+      await sb.from('stages').update({ status: 'now' }).eq('id', nextUpcoming.id);
+      var nextPersonType = nextUpcoming.person_id && contactsMap[nextUpcoming.person_id] ? contactsMap[nextUpcoming.person_id].type : 'internal';
+      await sb.from('cards').update({ stage: nextPersonType === 'external' ? 'onthem' : 'onus' }).eq('id', card.dbId);
+      showToast('Step complete — ' + nextUpcoming.name + ' is next');
+    } else {
+      var anyNow = allStages ? allStages.some(function(s) { return s.status === 'now' && s.id !== stepId; }) : false;
+      if (!anyNow) {
+        await sb.from('cards').update({ stage: 'busted' }).eq('id', card.dbId);
+        showToast('All steps complete — Busted!');
+      }
+    }
+    await loadData();
+    await renderDetail(currentCardId);
+  };
+
+  // ── EDIT A STEP ──
+  window.editStep = async function(stepId) {
+    var { data: step } = await sb.from('stages').select('*').eq('id', stepId).single();
+    if (!step) return;
+
+    var stagePersonOpts = '<option value="">—</option>';
+    var usContacts = [];
+    var themContacts = [];
+    Object.keys(contactsMap).forEach(function(id) {
+      var c = contactsMap[id];
+      if (c.type === 'external') themContacts.push({ id: id, name: c.name });
+      else usContacts.push({ id: id, name: c.name });
+    });
+    usContacts.sort(function(a,b) { return a.name.localeCompare(b.name); });
+    themContacts.sort(function(a,b) { return a.name.localeCompare(b.name); });
+    if (usContacts.length) {
+      stagePersonOpts += '<optgroup label="Us">';
+      usContacts.forEach(function(c) { stagePersonOpts += '<option value="' + c.id + '"' + (c.id === step.person_id ? ' selected' : '') + '>' + c.name + '</option>'; });
+      stagePersonOpts += '</optgroup>';
+    }
+    if (themContacts.length) {
+      stagePersonOpts += '<optgroup label="Them">';
+      themContacts.forEach(function(c) { stagePersonOpts += '<option value="' + c.id + '"' + (c.id === step.person_id ? ' selected' : '') + '>' + c.name + '</option>'; });
+      stagePersonOpts += '</optgroup>';
+    }
+
+    var statusOpts = ['upcoming', 'now', 'done'].map(function(s) {
+      return '<option value="' + s + '"' + (s === step.status ? ' selected' : '') + '>' + s.charAt(0).toUpperCase() + s.slice(1) + '</option>';
+    }).join('');
+
+    var el = document.getElementById('step-' + stepId);
+    if (!el) return;
+    el.innerHTML =
+      '<div style="padding:0.5rem;background:#f9fafb;border:1px solid #e5e7eb;border-radius:4px">' +
+        '<div class="bb-edit-row" style="margin-bottom:0.5rem">' +
+          '<div class="bb-edit-field" style="flex:2"><input class="bb-edit-input" id="stepEditName" value="' + (step.name || '').replace(/"/g, '&quot;') + '" style="font-size:0.9rem;font-family:inherit"></div>' +
+          '<div class="bb-edit-field"><select class="bb-edit-select" id="stepEditPerson">' + stagePersonOpts + '</select></div>' +
+          '<div class="bb-edit-field" style="flex:0"><select class="bb-edit-select" id="stepEditStatus">' + statusOpts + '</select></div>' +
+        '</div>' +
+        '<div style="display:flex;gap:0.5rem">' +
+          '<div class="bb-btn bb-btn--save" onclick="saveStep(\'' + stepId + '\')" style="flex:1;margin:0"><div class="bb-btn-indicator bb-btn-indicator--green"></div>Save</div>' +
+          '<div class="bb-btn" onclick="renderDetail(currentCardId)" style="flex:1;margin:0">Cancel</div>' +
+          '<div class="bb-btn bb-btn--delete" onclick="deleteStep(\'' + stepId + '\')" style="flex:0;margin:0"><div class="bb-btn-indicator bb-btn-indicator--red"></div>Delete</div>' +
+        '</div>' +
+      '</div>';
+  };
+
+  // ── SAVE STEP EDIT ──
+  window.saveStep = async function(stepId) {
+    var updates = {
+      name: document.getElementById('stepEditName').value.trim(),
+      person_id: document.getElementById('stepEditPerson').value || null,
+      status: document.getElementById('stepEditStatus').value
+    };
+    if (!updates.name) { showToast('Step name required'); return; }
+    await sb.from('stages').update(updates).eq('id', stepId);
+    showToast('Step updated');
+    await loadData();
+    await renderDetail(currentCardId);
+  };
+
+  // ── DELETE STEP ──
+  window.deleteStep = async function(stepId) {
+    if (!confirm('Delete this step?')) return;
+    await sb.from('stages').delete().eq('id', stepId);
+    showToast('Step deleted');
+    await loadData();
+    await renderDetail(currentCardId);
+  };
+
+  // ── COMPLETE CURRENT STAGE (legacy) ──
   window.completeCurrentStage = async function() {
     if (!currentCardId) return;
     var card = cards.find(function(c) { return c.id === currentCardId; });
