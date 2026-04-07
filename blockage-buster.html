@@ -998,7 +998,7 @@
     if (selectEl.value !== '__new__') return;
     var name = prompt('New contact name:');
     if (!name || !name.trim()) { selectEl.value = ''; return; }
-    var type = confirm('Is this person part of our team (Us)?\n\nOK = Us\nCancel = Them') ? 'internal' : 'external';
+    var type = confirm('Is this person external (Them)?\n\nOK = Them\nCancel = Us (our team)') ? 'external' : 'internal';
     var { data, error } = await sb.from('contacts').insert({ name: name.trim(), type: type }).select();
     if (error) { showToast('Error: ' + error.message); selectEl.value = ''; return; }
     if (data && data[0]) {
