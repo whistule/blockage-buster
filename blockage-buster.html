@@ -508,7 +508,8 @@
           why3: c.why3 || '',
           why4: c.why4 || '',
           why5: c.why5 || '',
-          remindAt: c.remind_at || null
+          remindAt: c.remind_at || null,
+          mood: c.mood || ''
         };
       });
     }
@@ -541,7 +542,7 @@
     if (isBusted) {
       meta += '<div class="bb-card-meta-row"><span class="bb-card-value" style="color:#0098a0;font-weight:600">All steps complete</span></div>';
     } else {
-      meta += '<div class="bb-card-meta-row"><span class="bb-card-label">Next step: </span><span class="bb-card-value">' + c.currentStep + '</span></div>';
+      meta += '<div class="bb-card-meta-row"><span class="bb-card-label">Next step: </span><span class="bb-card-value">' + c.currentStep + '</span><span onclick="event.stopPropagation();showMoodPicker(event,\'' + c.id + '\')" style="cursor:pointer;font-size:1.1rem;margin-left:auto" title="Set feeling">' + (c.mood || '&#128300;') + '</span></div>';
     }
     if (showStage) {
       meta += '<div class="bb-card-meta-row"><span class="bb-card-label">Status: </span><span class="bb-card-stage-pill" style="border-left:3px solid ' + stageColors[c.stage] + ';padding-left:6px;">' + stageLabels[c.stage] + '</span></div>';
@@ -1395,6 +1396,63 @@
     if (!card || !card.dbId) return;
     await sb.from('cards').update({ remind_at: null }).eq('id', card.dbId);
     showToast('Reminder cleared');
+    await loadData();
+  };
+
+  // ── MOOD EMOJI PICKER ──
+  window.showMoodPicker = function(e, cardId) {
+    e.stopPropagation();
+    var old = document.getElementById('moodPicker');
+    if (old) old.remove();
+
+    var picker = document.createElement('div');
+    picker.id = 'moodPicker';
+    picker.style.cssText = 'position:fixed;z-index:200;background:#fff;border:1px solid #d1d5db;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);padding:8px;display:flex;flex-wrap:wrap;gap:4px;max-width:200px';
+    picker.style.left = e.clientX + 'px';
+    picker.style.top = e.clientY + 'px';
+
+    var moods = ['😀','😐','😟','😤','🔥','💀','🤞','👍','👎','⏳','🚀','💡','🔧','📞','📧','❓'];
+    moods.forEach(function(emoji) {
+      var btn = document.createElement('span');
+      btn.textContent = emoji;
+      btn.style.cssText = 'font-size:1.4rem;cursor:pointer;padding:4px;border-radius:4px;line-height:1';
+      btn.onmouseover = function() { btn.style.background = '#f3f4f6'; };
+      btn.onmouseout = function() { btn.style.background = ''; };
+      btn.onclick = function(ev) {
+        ev.stopPropagation();
+        picker.remove();
+        setMood(cardId, emoji);
+      };
+      picker.appendChild(btn);
+    });
+
+    // Clear option
+    var clearBtn = document.createElement('span');
+    clearBtn.textContent = '✕';
+    clearBtn.style.cssText = 'font-size:0.9rem;cursor:pointer;padding:4px 8px;border-radius:4px;color:#9ca3af;line-height:1;display:flex;align-items:center';
+    clearBtn.onclick = function(ev) { ev.stopPropagation(); picker.remove(); setMood(cardId, ''); };
+    picker.appendChild(clearBtn);
+
+    document.body.appendChild(picker);
+
+    var rect = picker.getBoundingClientRect();
+    if (rect.right > window.innerWidth) picker.style.left = (window.innerWidth - rect.width - 8) + 'px';
+    if (rect.bottom > window.innerHeight) picker.style.top = (window.innerHeight - rect.height - 8) + 'px';
+
+    setTimeout(function() {
+      document.addEventListener('click', function handler(ev) {
+        if (picker.contains(ev.target)) return;
+        picker.remove();
+        document.removeEventListener('click', handler);
+      });
+    }, 10);
+  };
+
+  window.setMood = async function(cardId, emoji) {
+    var card = cards.find(function(c) { return c.id === cardId; });
+    if (!card || !card.dbId) return;
+    var { error } = await sb.from('cards').update({ mood: emoji }).eq('id', card.dbId);
+    if (error) { showToast('Error: ' + error.message); return; }
     await loadData();
   };
 
