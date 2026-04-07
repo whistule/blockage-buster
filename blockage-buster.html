@@ -534,6 +534,10 @@
     }
     meta += '</div>';
 
+    var bustedCheck = isBusted
+      ? '<div style="display:flex;align-items:center;gap:4px;margin-top:4px"><input type="checkbox" checked style="width:16px;height:16px;accent-color:#0098a0;cursor:pointer" onclick="event.stopPropagation();unbustCard(\'' + c.id + '\')" title="Reopen this blockage"><span style="font-size:0.7rem;color:#0098a0;font-weight:600">Busted</span></div>'
+      : '<div style="display:flex;align-items:center;gap:4px;margin-top:4px"><input type="checkbox" style="width:16px;height:16px;accent-color:#0098a0;cursor:pointer" onclick="event.stopPropagation();bustCard(\'' + c.id + '\')" title="Mark as busted"><span style="font-size:0.7rem;color:#9ca3af">Busted?</span></div>';
+
     var imgHTML = c.img ? '<img class="bb-card-img" src="' + c.img + '" alt="">' : '';
 
     return '<div class="bb-card" onclick="showDetail(\'' + c.id + '\')">' +
@@ -545,7 +549,7 @@
         '<div class="bb-card-top"><span class="bb-card-num">#' + c.id + '</span>' + bell + '<span class="bb-pill ' + pillCls + '">' + pillText + '</span></div>' +
         '<div class="bb-card-title">' + (isBusted ? '<span style="color:#0098a0;margin-right:4px">&#10003;</span>' : '') + c.title + '</div>' +
         '<div class="bb-card-desc">' + c.desc + '</div>' +
-        meta +
+        meta + bustedCheck +
       '</div>' +
       imgHTML +
     '</div>';
@@ -1213,6 +1217,23 @@
   };
 
   // ── DELETE CARD ──
+
+  // ── BUST / UNBUST CARD FROM BOARD VIEW ──
+  window.bustCard = async function(cardId) {
+    var card = cards.find(function(c) { return c.id === cardId; });
+    if (!card || !card.dbId) return;
+    await sb.from('cards').update({ stage: 'busted' }).eq('id', card.dbId);
+    showToast('Card #' + cardId + ' — Busted!');
+    await loadData();
+  };
+
+  window.unbustCard = async function(cardId) {
+    var card = cards.find(function(c) { return c.id === cardId; });
+    if (!card || !card.dbId) return;
+    await sb.from('cards').update({ stage: 'flagged' }).eq('id', card.dbId);
+    showToast('Card #' + cardId + ' reopened');
+    await loadData();
+  };
 
   window.deleteCard = async function() {
     if (!currentCardId) { showToast('No card selected'); return; }
