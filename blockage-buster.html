@@ -676,6 +676,7 @@
 
   // ── VIEW SWITCHING ──
   var currentCardId = null;
+  var autoSaveTimer = null;
 
   // ── RENDER DETAIL VIEW ──
   async function renderDetail(cardId) {
@@ -777,10 +778,25 @@
     '<textarea class="bb-edit-textarea" id="editWhy4" style="min-height:2.5rem;margin-bottom:0.5rem">' + (card.why4 || '').replace(/</g, '&lt;') + '</textarea>' +
     '<div class="bb-edit-label">5. Root cause</div>' +
     '<textarea class="bb-edit-textarea" id="editWhy5" style="min-height:2.5rem;margin-bottom:0.5rem">' + (card.why5 || '').replace(/</g, '&lt;') + '</textarea>' +
-    '<div class="bb-btn bb-btn--save" onclick="updateCard()" style="margin-top:1.5rem"><div class="bb-btn-indicator bb-btn-indicator--green"></div>Save Changes</div>' +
+    '<div class="bb-autosave-status" id="autosaveStatus" style="font-size:0.75rem;color:#9ca3af;text-align:center;margin-top:1.5rem"></div>' +
     '<div class="bb-btn bb-btn--delete" onclick="deleteCard()" style="margin-top:0.5rem"><div class="bb-btn-indicator bb-btn-indicator--red"></div>Delete Buster Card</div>';
 
     document.getElementById('bbDetailContent').innerHTML = html;
+
+    // Wire up autosave on all editable fields
+    var autoFields = ['editTitle', 'editDesc', 'editUrgency', 'editStage', 'editPerson',
+      'editWhy1', 'editWhy2', 'editWhy3', 'editWhy4', 'editWhy5'];
+    autoFields.forEach(function(id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      var evt = (el.tagName === 'SELECT') ? 'change' : 'input';
+      el.addEventListener(evt, function() {
+        clearTimeout(autoSaveTimer);
+        var status = document.getElementById('autosaveStatus');
+        if (status) status.textContent = 'Unsaved changes...';
+        autoSaveTimer = setTimeout(function() { updateCard(true); }, 1200);
+      });
+    });
   }
 
   // ── ADD STAGE ──
@@ -847,13 +863,13 @@
   };
 
   // ── UPDATE CARD ──
-  window.updateCard = async function() {
+  window.updateCard = async function(silent) {
     if (!currentCardId) return;
     var card = cards.find(function(c) { return c.id === currentCardId; });
     if (!card || !card.dbId) return;
 
     var title = document.getElementById('editTitle').value.trim();
-    if (!title) { showToast('Title is required'); return; }
+    if (!title) { if (!silent) showToast('Title is required'); return; }
 
     var updates = {
       title: title,
@@ -869,10 +885,20 @@
     };
 
     var { error } = await sb.from('cards').update(updates).eq('id', card.dbId);
-    if (error) { showToast('Error: ' + error.message); return; }
-    showToast('Card #' + currentCardId + ' updated');
+    var status = document.getElementById('autosaveStatus');
+    if (error) {
+      if (!silent) showToast('Error: ' + error.message);
+      if (status) status.textContent = 'Save failed';
+      return;
+    }
+    if (silent) {
+      if (status) status.textContent = 'Saved';
+      setTimeout(function() { if (status) status.textContent = ''; }, 2000);
+    } else {
+      showToast('Card #' + currentCardId + ' updated');
+    }
     await loadData();
-    renderDetail(currentCardId);
+    if (!silent) renderDetail(currentCardId);
   };
 
   window.showDetail = async function(cardId) {
