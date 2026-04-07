@@ -491,7 +491,12 @@
           currentStep: nowStage ? nowStage.name : '—',
           hasReminder: !!reminderByCard[c.id],
           img: c.image_url || '',
-          isSticky: c.is_sticky
+          isSticky: c.is_sticky,
+          why1: c.why1 || '',
+          why2: c.why2 || '',
+          why3: c.why3 || '',
+          why4: c.why4 || '',
+          why5: c.why5 || ''
         };
       });
     }
@@ -711,6 +716,18 @@
       '<div class="bb-edit-field"><div class="bb-edit-label">Stage</div><select class="bb-edit-select" id="editStage">' + stageSelect + '</select></div>' +
       '<div class="bb-edit-field"><div class="bb-edit-label">Person</div><select class="bb-edit-select" id="editPerson">' + personSelect + '</select></div>' +
     '</div>' +
+    '<div class="bb-heading" style="margin-top:2rem">5 Whys</div>' +
+    '<div style="font-size:0.75rem;color:#9ca3af;margin-bottom:0.75rem">Keep asking "why?" to find the root cause</div>' +
+    '<div class="bb-edit-label">1. Why is this a problem?</div>' +
+    '<textarea class="bb-edit-textarea" id="editWhy1" style="min-height:2.5rem;margin-bottom:0.5rem">' + (card.why1 || '').replace(/</g, '&lt;') + '</textarea>' +
+    '<div class="bb-edit-label">2. Why is that?</div>' +
+    '<textarea class="bb-edit-textarea" id="editWhy2" style="min-height:2.5rem;margin-bottom:0.5rem">' + (card.why2 || '').replace(/</g, '&lt;') + '</textarea>' +
+    '<div class="bb-edit-label">3. Why?</div>' +
+    '<textarea class="bb-edit-textarea" id="editWhy3" style="min-height:2.5rem;margin-bottom:0.5rem">' + (card.why3 || '').replace(/</g, '&lt;') + '</textarea>' +
+    '<div class="bb-edit-label">4. Why?</div>' +
+    '<textarea class="bb-edit-textarea" id="editWhy4" style="min-height:2.5rem;margin-bottom:0.5rem">' + (card.why4 || '').replace(/</g, '&lt;') + '</textarea>' +
+    '<div class="bb-edit-label">5. Root cause</div>' +
+    '<textarea class="bb-edit-textarea" id="editWhy5" style="min-height:2.5rem;margin-bottom:0.5rem">' + (card.why5 || '').replace(/</g, '&lt;') + '</textarea>' +
     '<div class="bb-btn bb-btn--save" onclick="updateCard()" style="margin-top:1.5rem"><div class="bb-btn-indicator bb-btn-indicator--green"></div>Save Changes</div>' +
     '<div class="bb-btn bb-btn--delete" onclick="deleteCard()" style="margin-top:0.5rem"><div class="bb-btn-indicator bb-btn-indicator--red"></div>Delete Buster Card</div>';
 
@@ -731,7 +748,12 @@
       description: document.getElementById('editDesc').value,
       urgency: document.getElementById('editUrgency').value,
       stage: document.getElementById('editStage').value,
-      person_id: document.getElementById('editPerson').value || null
+      person_id: document.getElementById('editPerson').value || null,
+      why1: document.getElementById('editWhy1').value,
+      why2: document.getElementById('editWhy2').value,
+      why3: document.getElementById('editWhy3').value,
+      why4: document.getElementById('editWhy4').value,
+      why5: document.getElementById('editWhy5').value
     };
 
     var { error } = await sb.from('cards').update(updates).eq('id', card.dbId);
