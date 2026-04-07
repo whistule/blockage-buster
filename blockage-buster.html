@@ -114,8 +114,9 @@
     text-transform: uppercase; letter-spacing: 0.06em;
     color: white; white-space: nowrap;
   }
-  .bb-card-stripe-num { transform: rotate(180deg); font-size: 0.75rem; letter-spacing: 0.08em; }
-  .bb-card-stripe-name { transform: rotate(180deg); }
+  .bb-card-stripe-num { transform: rotate(180deg); font-size: 0.9rem; letter-spacing: 0.08em; }
+  .bb-card-stripe-name { transform: rotate(180deg); font-size: 0.8rem; }
+  .bb-card-stripe-label { transform: rotate(180deg); font-size: 0.4rem; opacity: 0.7; letter-spacing: 0.1em; }
 
   .bb-card-body { padding: 12px 14px 44px; flex: 1; min-width: 0; position: relative; }
 
@@ -543,6 +544,7 @@
     return '<div class="bb-card" onclick="showDetail(\'' + c.id + '\')">' +
       '<div class="bb-card-stripe" style="background:' + borderColor + ';">' +
         '<span class="bb-card-stripe-text bb-card-stripe-num">#' + c.id + '</span>' +
+        '<span class="bb-card-stripe-text bb-card-stripe-label">' + (isBusted ? '' : 'WITH') + '</span>' +
         '<span class="bb-card-stripe-text bb-card-stripe-name">' + stripeName + '</span>' +
       '</div>' +
       '<div class="bb-card-body">' +
