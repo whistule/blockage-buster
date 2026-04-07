@@ -354,11 +354,6 @@
     </div>
 
     <div class="bb-form-group">
-      <label class="bb-form-label">Stuck with</label>
-      <select class="bb-form-select" id="ncPerson"></select>
-    </div>
-
-    <div class="bb-form-group">
       <label class="bb-form-label">Urgency</label>
       <select class="bb-form-select" id="ncUrgency">
         <option value="medium">Medium</option>
@@ -1022,15 +1017,6 @@
     // Set stage dropdown
     document.getElementById('ncStage').value = newCardStage;
     // Populate person dropdown from contacts
-    var sel = document.getElementById('ncPerson');
-    sel.innerHTML = '';
-    Object.keys(contactsMap).forEach(function(id) {
-      var c = contactsMap[id];
-      var opt = document.createElement('option');
-      opt.value = id;
-      opt.textContent = c.name + (c.type === 'external' ? ' (ext)' : '');
-      sel.appendChild(opt);
-    });
     // Clear form
     document.getElementById('ncTitle').value = '';
     document.getElementById('ncDesc').value = '';
@@ -1051,7 +1037,6 @@
       title: title,
       description: document.getElementById('ncDesc').value.trim(),
       stage: document.getElementById('ncStage').value,
-      person_id: document.getElementById('ncPerson').value,
       urgency: document.getElementById('ncUrgency').value
     }).select();
 
