@@ -487,7 +487,7 @@
     Object.keys(latestNoteByCard).forEach(function(cardId) {
       var ts = latestNoteTimeByCard[cardId];
       // No timestamp = note is on an active step, treat as fresh
-      if (!ts) { noteAgeByCard[cardId] = { label: 'active', fresh: true }; return; }
+      if (!ts) { noteAgeByCard[cardId] = { label: 'active', fresh: 'hot' }; return; }
       var diffMs = Date.now() - new Date(ts).getTime();
       var diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
       var diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
@@ -630,7 +630,7 @@
         '<div class="bb-card-title">' + (isBusted ? '<span style="color:#0098a0;margin-right:4px">&#10003;</span>' : '') + c.title + '</div>' +
         (c.img ? '<div style="display:flex;gap:10px"><div style="flex:1;min-width:0">' : '') +
         (c.latestNote
-          ? '<div class="bb-card-desc" style="' + (c.noteAge && c.noteAge.fresh === 'hot' ? 'background:#d9f99d;border-left:3px solid #65a30d;padding-left:8px;border-radius:2px' : (c.noteAge && c.noteAge.fresh === true ? 'background:#fef9c3;border-left:3px solid #eab308;padding-left:8px;border-radius:2px' : '')) + '">' +
+          ? '<div class="bb-card-desc" style="' + (!isBusted && c.noteAge && c.noteAge.fresh === 'hot' ? 'background:#d9f99d;border-left:3px solid #65a30d;padding-left:8px;border-radius:2px' : (!isBusted && c.noteAge && c.noteAge.fresh === true ? 'background:#fef9c3;border-left:3px solid #eab308;padding-left:8px;border-radius:2px' : '')) + '">' +
             (c.noteAge ? '<span style="font-size:0.55rem;font-weight:700;background:' + (c.noteAge.fresh === 'hot' ? '#65a30d' : c.noteAge.fresh === true ? '#eab308' : '#9ca3af') + ';color:#fff;padding:1px 5px;border-radius:3px;vertical-align:middle">' + c.noteAge.label + '</span> ' : '') +
             c.latestNote + '</div>'
           : '<div class="bb-card-desc">' + c.desc + '</div>') +
