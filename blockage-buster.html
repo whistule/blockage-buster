@@ -527,7 +527,7 @@
     if (isBusted) {
       meta += '<div class="bb-card-meta-row"><span class="bb-card-value" style="color:#0098a0;font-weight:600">All steps complete</span></div>';
     } else {
-      meta += '<div class="bb-card-meta-row"><span class="bb-card-label">Step: </span><span class="bb-card-value">' + c.currentStep + '</span></div>';
+      meta += '<div class="bb-card-meta-row"><span class="bb-card-label">Blocked at: </span><span class="bb-card-value">' + c.currentStep + '</span></div>';
     }
     if (showStage) {
       meta += '<div class="bb-card-meta-row"><span class="bb-card-label">Status: </span><span class="bb-card-stage-pill" style="border-left:3px solid ' + stageColors[c.stage] + ';padding-left:6px;">' + stageLabels[c.stage] + '</span></div>';
