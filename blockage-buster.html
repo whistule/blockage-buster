@@ -496,7 +496,7 @@
           why3: c.why3 || '',
           why4: c.why4 || '',
           why5: c.why5 || '',
-          snoozedUntil: c.snoozed_until || null
+          remindAt: c.remind_at || null
         };
       });
     }
@@ -537,10 +537,10 @@
     meta += '</div>';
 
     // Snooze state
-    var isSnoozed = c.snoozedUntil && new Date(c.snoozedUntil) > new Date();
-    var snoozeInfo = '';
-    if (isSnoozed) {
-      var wakeDate = new Date(c.snoozedUntil);
+    var hasRemindAt = c.remindAt && new Date(c.remindAt) > new Date();
+    var remindInfo = '';
+    if (hasRemindAt) {
+      var wakeDate = new Date(c.remindAt);
       var now = new Date();
       var diffMs = wakeDate - now;
       var diffHrs = Math.round(diffMs / (1000 * 60 * 60));
@@ -555,7 +555,7 @@
       } else if (diffDays < 14) wakeLabel = 'next wk';
       else wakeLabel = wakeDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
       var fullDate = wakeDate.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-      snoozeInfo = '<span style="font-size:0.65rem;color:#6b7280;display:flex;align-items:center;gap:3px;background:#f3f4f6;padding:2px 6px;border-radius:3px" title="Snoozed until ' + fullDate + '">&#128564; ' + wakeLabel + '</span>';
+      remindInfo = '<span style="font-size:0.65rem;color:#6b7280;display:flex;align-items:center;gap:3px;background:#f3f4f6;padding:2px 6px;border-radius:3px" title="Reminder set for ' + fullDate + '">&#128564; ' + wakeLabel + '</span>';
     }
 
     // Bust circle
@@ -564,21 +564,21 @@
       : '<div onclick="event.stopPropagation();bustCard(\'' + c.id + '\')" style="width:22px;height:22px;background:#fff;border:2px solid #d1d5db;border-radius:50%;cursor:pointer;flex-shrink:0" title="Mark as busted"></div>';
 
     // Alarm icon
-    var alarmIcon = isSnoozed
-      ? '<div onclick="event.stopPropagation();clearSnooze(\'' + c.id + '\')" style="cursor:pointer;font-size:1rem;opacity:0.7" title="Clear snooze">&#9200;</div>'
-      : '<div onclick="event.stopPropagation();showSnoozeMenu(event,\'' + c.id + '\')" style="cursor:pointer;font-size:1rem;opacity:0.4" title="Snooze this card">&#9200;</div>';
+    var alarmIcon = hasRemindAt
+      ? '<div onclick="event.stopPropagation();clearReminder(\'' + c.id + '\')" style="cursor:pointer;font-size:1rem;opacity:0.7" title="Clear reminder">&#9200;</div>'
+      : '<div onclick="event.stopPropagation();showRemindMenu(event,\'' + c.id + '\')" style="cursor:pointer;font-size:1rem;opacity:0.4" title="Snooze this card">&#9200;</div>';
 
     // Bottom menu bar
     var bottomBar = '<div class="bb-card-bar">' +
       '<span class="bb-pill ' + pillCls + '">' + pillText + '</span>' +
-      snoozeInfo +
+      remindInfo +
       '<div style="display:flex;align-items:center;gap:8px;margin-left:auto">' +
         alarmIcon + bustCircle +
       '</div>' +
     '</div>';
 
     var imgHTML = c.img ? '<img class="bb-card-img" src="' + c.img + '" alt="">' : '';
-    var cardOpacity = isSnoozed ? ' style="opacity:0.35"' : '';
+    var cardOpacity = hasRemindAt ? ' style="opacity:0.35"' : '';
 
     return '<div class="bb-card"' + cardOpacity + ' onclick="showDetail(\'' + c.id + '\')">' +
       '<div class="bb-card-stripe" style="background:' + borderColor + ';">' +
@@ -1261,13 +1261,13 @@
 
   // ── BUST / UNBUST CARD FROM BOARD VIEW ──
   // ── SNOOZE ──
-  window.showSnoozeMenu = function(e, cardId) {
+  window.showRemindMenu = function(e, cardId) {
     e.stopPropagation();
-    var old = document.getElementById('snoozeMenu');
+    var old = document.getElementById('remindMenu');
     if (old) old.remove();
 
     var menu = document.createElement('div');
-    menu.id = 'snoozeMenu';
+    menu.id = 'remindMenu';
     menu.style.cssText = 'position:fixed;z-index:200;background:#fff;border:1px solid #d1d5db;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.18);padding:12px;min-width:240px';
     menu.style.left = e.clientX + 'px';
     menu.style.top = e.clientY + 'px';
@@ -1295,7 +1295,7 @@
       btn.onclick = function(ev) {
         ev.stopPropagation();
         menu.remove();
-        snoozeCard(cardId, opt.hours);
+        remindCard(cardId, opt.hours);
       };
       quickRow.appendChild(btn);
     });
@@ -1331,7 +1331,7 @@
       var until = new Date(input.value);
       if (isNaN(until.getTime())) return;
       menu.remove();
-      snoozeCardUntil(cardId, until.toISOString());
+      remindCardUntil(cardId, until.toISOString());
     };
     btnRow.appendChild(setBtn);
 
@@ -1358,28 +1358,28 @@
     }, 10);
   };
 
-  window.snoozeCardUntil = async function(cardId, isoStr) {
+  window.remindCardUntil = async function(cardId, isoStr) {
     var card = cards.find(function(c) { return c.id === cardId; });
     if (!card || !card.dbId) return;
-    await sb.from('cards').update({ snoozed_until: isoStr }).eq('id', card.dbId);
+    await sb.from('cards').update({ remind_at: isoStr }).eq('id', card.dbId);
     var d = new Date(isoStr);
     showToast('Reminder set — ' + d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ' ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }));
     await loadData();
   };
 
-  window.snoozeCard = async function(cardId, hours) {
+  window.remindCard = async function(cardId, hours) {
     var card = cards.find(function(c) { return c.id === cardId; });
     if (!card || !card.dbId) return;
     var until = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
-    await sb.from('cards').update({ snoozed_until: until }).eq('id', card.dbId);
+    await sb.from('cards').update({ remind_at: until }).eq('id', card.dbId);
     showToast('Reminder set');
     await loadData();
   };
 
-  window.clearSnooze = async function(cardId) {
+  window.clearReminder = async function(cardId) {
     var card = cards.find(function(c) { return c.id === cardId; });
     if (!card || !card.dbId) return;
-    await sb.from('cards').update({ snoozed_until: null }).eq('id', card.dbId);
+    await sb.from('cards').update({ remind_at: null }).eq('id', card.dbId);
     showToast('Reminder cleared');
     await loadData();
   };
