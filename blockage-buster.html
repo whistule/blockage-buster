@@ -1263,111 +1263,85 @@
   // ── SNOOZE ──
   window.showSnoozeMenu = function(e, cardId) {
     e.stopPropagation();
-    // Remove existing menu
     var old = document.getElementById('snoozeMenu');
     if (old) old.remove();
 
     var menu = document.createElement('div');
     menu.id = 'snoozeMenu';
-    menu.style.cssText = 'position:fixed;z-index:200;background:#fff;border:1px solid #d1d5db;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);padding:4px 0;min-width:140px';
+    menu.style.cssText = 'position:fixed;z-index:200;background:#fff;border:1px solid #d1d5db;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.18);padding:12px;min-width:240px';
     menu.style.left = e.clientX + 'px';
     menu.style.top = e.clientY + 'px';
 
-    var options = [
-      { label: '1 hour', hours: 1 },
+    var label = document.createElement('div');
+    label.textContent = 'Remind me:';
+    label.style.cssText = 'font-size:0.75rem;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px';
+    menu.appendChild(label);
+
+    // Quick buttons
+    var quickRow = document.createElement('div');
+    quickRow.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px';
+    var quickOpts = [
       { label: 'Tomorrow', hours: 24 },
       { label: 'Next week', hours: 168 },
-      { label: '2 weeks', hours: 336 }
+      { label: '2 weeks', hours: 336 },
+      { label: '1 month', hours: 720 }
     ];
-
-    options.forEach(function(opt) {
-      var item = document.createElement('div');
-      item.textContent = opt.label;
-      item.style.cssText = 'padding:8px 16px;cursor:pointer;font-size:0.85rem;font-weight:500;color:#4b5563';
-      item.onmouseover = function() { item.style.background = '#f3f4f6'; };
-      item.onmouseout = function() { item.style.background = ''; };
-      item.onclick = function(ev) {
+    quickOpts.forEach(function(opt) {
+      var btn = document.createElement('div');
+      btn.textContent = opt.label;
+      btn.style.cssText = 'padding:6px 12px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:4px;cursor:pointer;font-size:0.8rem;font-weight:500;color:#4b5563';
+      btn.onmouseover = function() { btn.style.background = '#e5e7eb'; };
+      btn.onmouseout = function() { btn.style.background = '#f3f4f6'; };
+      btn.onclick = function(ev) {
         ev.stopPropagation();
         menu.remove();
         snoozeCard(cardId, opt.hours);
       };
-      menu.appendChild(item);
+      quickRow.appendChild(btn);
     });
+    menu.appendChild(quickRow);
 
     // Divider
     var divider = document.createElement('div');
-    divider.style.cssText = 'height:1px;background:#e5e7eb;margin:4px 0';
+    divider.style.cssText = 'height:1px;background:#e5e7eb;margin:0 0 10px';
     menu.appendChild(divider);
 
-    // Pick date & time option
-    var pickItem = document.createElement('div');
-    pickItem.style.cssText = 'padding:8px 16px;cursor:pointer;font-size:0.85rem;font-weight:500;color:#4b5563';
-    pickItem.textContent = 'Pick date & time...';
-    pickItem.onmouseover = function() { pickItem.style.background = '#f3f4f6'; };
-    pickItem.onmouseout = function() { pickItem.style.background = ''; };
-    pickItem.onclick = function(ev) {
+    // Date/time picker
+    var input = document.createElement('input');
+    input.type = 'datetime-local';
+    input.style.cssText = 'width:100%;font-size:0.9rem;padding:8px;border:1px solid #d1d5db;border-radius:4px;margin-bottom:8px;font-family:inherit;box-sizing:border-box';
+    var tmrw = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    tmrw.setHours(9, 0, 0, 0);
+    input.value = tmrw.toISOString().slice(0, 16);
+    input.onclick = function(ev) { ev.stopPropagation(); };
+    menu.appendChild(input);
+
+    // Set / Cancel buttons
+    var btnRow = document.createElement('div');
+    btnRow.style.cssText = 'display:flex;gap:6px';
+
+    var setBtn = document.createElement('div');
+    setBtn.textContent = 'Set reminder';
+    setBtn.style.cssText = 'flex:1;text-align:center;padding:8px;background:#0098a0;color:#fff;border-radius:4px;cursor:pointer;font-size:0.85rem;font-weight:600';
+    setBtn.onclick = function(ev) {
       ev.stopPropagation();
-      // Replace menu content with date picker
-      menu.innerHTML = '';
-      menu.style.padding = '12px';
-      menu.style.minWidth = '220px';
-
-      var label = document.createElement('div');
-      label.textContent = 'Snooze until:';
-      label.style.cssText = 'font-size:0.75rem;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px';
-      menu.appendChild(label);
-
-      var input = document.createElement('input');
-      input.type = 'datetime-local';
-      input.style.cssText = 'width:100%;font-size:0.9rem;padding:8px;border:1px solid #d1d5db;border-radius:4px;margin-bottom:8px;font-family:inherit';
-      // Default to tomorrow 9am
-      var tmrw = new Date(Date.now() + 24 * 60 * 60 * 1000);
-      tmrw.setHours(9, 0, 0, 0);
-      input.value = tmrw.toISOString().slice(0, 16);
-      menu.appendChild(input);
-
-      input.onclick = function(ev) { ev.stopPropagation(); };
-
-      var quickBtn = document.createElement('div');
-      quickBtn.textContent = 'Snooze 24hrs';
-      quickBtn.style.cssText = 'text-align:center;padding:8px;background:#f3f4f6;color:#4b5563;border-radius:4px;cursor:pointer;font-size:0.85rem;font-weight:500;border:1px solid #d1d5db;margin-bottom:6px';
-      quickBtn.onclick = function(ev) {
-        ev.stopPropagation();
-        menu.remove();
-        snoozeCard(cardId, 24);
-      };
-      menu.appendChild(quickBtn);
-
-      var btnRow = document.createElement('div');
-      btnRow.style.cssText = 'display:flex;gap:6px';
-
-      var setBtn = document.createElement('div');
-      setBtn.textContent = 'Set';
-      setBtn.style.cssText = 'flex:1;text-align:center;padding:8px;background:#0098a0;color:#fff;border-radius:4px;cursor:pointer;font-size:0.85rem;font-weight:600';
-      setBtn.onclick = function(ev) {
-        ev.stopPropagation();
-        var until = new Date(input.value);
-        if (isNaN(until.getTime())) { return; }
-        menu.remove();
-        snoozeCardUntil(cardId, until.toISOString());
-      };
-      btnRow.appendChild(setBtn);
-
-      var cancelBtn = document.createElement('div');
-      cancelBtn.textContent = 'Cancel';
-      cancelBtn.style.cssText = 'flex:1;text-align:center;padding:8px;background:#f3f4f6;color:#4b5563;border-radius:4px;cursor:pointer;font-size:0.85rem;font-weight:500;border:1px solid #d1d5db';
-      cancelBtn.onclick = function(ev) {
-        ev.stopPropagation();
-        menu.remove();
-      };
-      btnRow.appendChild(cancelBtn);
-      menu.appendChild(btnRow);
+      var until = new Date(input.value);
+      if (isNaN(until.getTime())) return;
+      menu.remove();
+      snoozeCardUntil(cardId, until.toISOString());
     };
-    menu.appendChild(pickItem);
+    btnRow.appendChild(setBtn);
+
+    var cancelBtn = document.createElement('div');
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.style.cssText = 'flex:1;text-align:center;padding:8px;background:#f3f4f6;color:#4b5563;border-radius:4px;cursor:pointer;font-size:0.85rem;font-weight:500;border:1px solid #d1d5db';
+    cancelBtn.onclick = function(ev) { ev.stopPropagation(); menu.remove(); };
+    btnRow.appendChild(cancelBtn);
+    menu.appendChild(btnRow);
 
     document.body.appendChild(menu);
 
-    // Reposition if menu goes off screen
+    // Reposition if off screen
     var rect = menu.getBoundingClientRect();
     if (rect.right > window.innerWidth) menu.style.left = (window.innerWidth - rect.width - 8) + 'px';
     if (rect.bottom > window.innerHeight) menu.style.top = (window.innerHeight - rect.height - 8) + 'px';
