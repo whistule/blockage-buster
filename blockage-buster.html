@@ -687,7 +687,7 @@
 
     // Load stages for this card
     var cardStages = [];
-    var { data: stagesData } = await sb.from('stages').select('*').eq('card_id', card.dbId).order('sort_order');
+    var { data: stagesData } = await sb.from('stages').select('*, contacts(name)').eq('card_id', card.dbId).order('sort_order');
     if (stagesData) cardStages = stagesData;
 
     var urgOpts = ['', 'low', 'medium', 'high', 'urgent'];
@@ -712,7 +712,7 @@
     // Build person options for stage form
     var stagePersonOpts = '<option value="">—</option>';
     Object.keys(contactsMap).forEach(function(id) {
-      stagePersonOpts += '<option value="' + contactsMap[id].name + '">' + contactsMap[id].name + '</option>';
+      stagePersonOpts += '<option value="' + id + '">' + contactsMap[id].name + '</option>';
     });
 
     // Build stages timeline
@@ -722,9 +722,11 @@
       timelineHTML = '<div class="bb-timeline">';
       cardStages.forEach(function(s) {
         var cls = s.status === 'done' ? 'bb-stage--done' : s.status === 'now' ? 'bb-stage--now' : 'bb-stage--upcoming';
-        var dateStr = s.completed_date ? '<span class="bb-stage-date">' + s.completed_date + '</span>' : '';
+        var dateVal = s.completed_at ? new Date(s.completed_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '';
+        var dateStr = dateVal ? '<span class="bb-stage-date">' + dateVal + '</span>' : '';
         var nowPill = s.status === 'now' ? '<span class="bb-stage-now-pill">Now</span>' : '';
-        var personStr = s.person ? '<span class="bb-stage-person">' + s.person + '</span>' : '';
+        var personName = (s.contacts && s.contacts.name) ? s.contacts.name : '';
+        var personStr = personName ? '<span class="bb-stage-person">' + personName + '</span>' : '';
         timelineHTML += '<div class="bb-stage ' + cls + '">' +
           '<div class="bb-stage-led"></div>' +
           '<div class="bb-stage-head">' + dateStr +
@@ -808,21 +810,20 @@
     var name = document.getElementById('newStageName').value.trim();
     if (!name) { showToast('Stage name is required'); return; }
 
-    var person = document.getElementById('newStagePerson').value;
+    var personId = document.getElementById('newStagePerson').value;
     var status = document.getElementById('newStageStatus').value;
 
     // Get next sort order
     var { data: existing } = await sb.from('stages').select('sort_order').eq('card_id', card.dbId).order('sort_order', { ascending: false }).limit(1);
     var nextOrder = (existing && existing.length > 0) ? (existing[0].sort_order || 0) + 1 : 1;
 
-    var today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
     var insert = {
       card_id: card.dbId,
       name: name,
-      person: person || null,
+      person_id: personId || null,
       status: status,
       sort_order: nextOrder,
-      completed_date: status === 'done' ? today : null
+      completed_at: status === 'done' ? new Date().toISOString() : null
     };
 
     var { error } = await sb.from('stages').insert(insert);
@@ -844,16 +845,14 @@
     var nowStage = allStages.find(function(s) { return s.status === 'now'; });
     if (!nowStage) { showToast('No current stage to complete'); return; }
 
-    var today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-
     // Mark current as done
-    await sb.from('stages').update({ status: 'done', completed_date: today }).eq('id', nowStage.id);
+    await sb.from('stages').update({ status: 'done', completed_at: new Date().toISOString() }).eq('id', nowStage.id);
 
     // Find next upcoming and promote to now
     var nextUpcoming = allStages.find(function(s) { return s.status === 'upcoming' && s.sort_order > nowStage.sort_order; });
     if (nextUpcoming) {
       await sb.from('stages').update({ status: 'now' }).eq('id', nextUpcoming.id);
-      showToast('Stage complete — ' + (nextUpcoming.person || nextUpcoming.name) + ' is up next');
+      showToast('Stage complete — ' + (nextUpcoming.name) + ' is up next');
     } else {
       showToast('All stages complete');
     }
