@@ -1311,7 +1311,7 @@
     input.type = 'datetime-local';
     input.style.cssText = 'width:100%;font-size:1.1rem;padding:12px;border:2px solid #0098a0;border-radius:6px;margin-bottom:8px;font-family:inherit;box-sizing:border-box;background:#f9fafb';
     var tmrw = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    tmrw.setHours(9, 0, 0, 0);
+    tmrw.setHours(10, 30, 0, 0);
     input.value = tmrw.toISOString().slice(0, 16);
     input.onclick = function(ev) { ev.stopPropagation(); };
     input.onfocus = function(ev) { ev.stopPropagation(); };
