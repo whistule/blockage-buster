@@ -465,6 +465,17 @@
       stages.forEach(function(s) { nowStageByCard[s.card_id] = s; });
     }
 
+    // Load latest note per card (from any step)
+    var { data: allStagesWithNotes } = await sb.from('stages').select('card_id, notes, sort_order').not('notes', 'is', null).order('sort_order', { ascending: false });
+    var latestNoteByCard = {};
+    if (allStagesWithNotes) {
+      allStagesWithNotes.forEach(function(s) {
+        if (s.notes && s.notes.trim() && !latestNoteByCard[s.card_id]) {
+          latestNoteByCard[s.card_id] = s.notes.trim();
+        }
+      });
+    }
+
     // Load reminders (pending)
     var { data: reminders } = await sb.from('reminders').select('*').eq('sent', false);
     var reminderByCard = {};
@@ -482,6 +493,7 @@
           dbId: c.id,
           title: c.title,
           desc: c.description || '',
+          latestNote: latestNoteByCard[c.id] || '',
           stage: c.stage,
           person: nowContact ? nowContact.name : (contact.name || 'Unassigned'),
           type: nowContact ? (nowContact.type || 'internal') : (contact.type || 'internal'),
@@ -588,7 +600,7 @@
       '<div class="bb-card-body">' +
         '<div class="bb-card-title">' + (isBusted ? '<span style="color:#0098a0;margin-right:4px">&#10003;</span>' : '') + c.title + '</div>' +
         (c.img ? '<div style="display:flex;gap:10px"><div style="flex:1;min-width:0">' : '') +
-        '<div class="bb-card-desc">' + c.desc + '</div>' +
+        '<div class="bb-card-desc">' + (c.latestNote || c.desc) + '</div>' +
         meta +
         (c.img ? '</div>' + imgHTML + '</div>' : '') +
         bottomBar +
