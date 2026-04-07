@@ -762,8 +762,9 @@
         var personStr = personName ? '<span class="bb-stage-person">' + personName + '</span>' : '';
         var ownerBadge = personType === 'external' ? '<span style="font-size:0.65rem;font-weight:700;padding:2px 6px;border-radius:3px;background:#c4622d;color:#fff;text-transform:uppercase;letter-spacing:0.05em">Them</span>' :
           personName ? '<span style="font-size:0.65rem;font-weight:700;padding:2px 6px;border-radius:3px;background:#3d6640;color:#fff;text-transform:uppercase;letter-spacing:0.05em">Us</span>' : '';
-        var doneCheck = s.status === 'done' ? ' checked disabled' : '';
-        var checkbox = '<input type="checkbox" onclick="event.stopPropagation();completeStep(\'' + s.id + '\')" style="width:18px;height:18px;cursor:pointer;accent-color:#16a34a;flex-shrink:0" title="Mark as done"' + doneCheck + '>';
+        var doneCheck = s.status === 'done' ? ' checked' : '';
+        var clickFn = s.status === 'done' ? 'uncompleteStep' : 'completeStep';
+        var checkbox = '<input type="checkbox" onclick="event.stopPropagation();' + clickFn + '(\'' + s.id + '\')" style="width:18px;height:18px;cursor:pointer;accent-color:#16a34a;flex-shrink:0" title="' + (s.status === 'done' ? 'Undo this step' : 'Mark as done') + '"' + doneCheck + '>';
         var editBtn = '<span onclick="event.stopPropagation();editStep(\'' + s.id + '\')" style="font-size:0.7rem;color:#9ca3af;cursor:pointer;margin-left:auto" title="Edit step">edit</span>';
         var notesPreview = s.notes ? '<div style="font-size:0.8rem;color:#6b7280;font-style:italic;margin-top:0.25rem;white-space:pre-wrap;line-height:1.4">' + (s.notes || '').replace(/</g, '&lt;').substring(0, 120) + (s.notes.length > 120 ? '...' : '') + '</div>' : '';
         timelineHTML += '<div class="bb-stage ' + cls + '" id="step-' + s.id + '">' +
@@ -903,6 +904,29 @@
   };
 
   // ── COMPLETE A STEP ──
+  // ── UNCOMPLETE A STEP ──
+  window.uncompleteStep = async function(stepId) {
+    if (!currentCardId) return;
+    var card = cards.find(function(c) { return c.id === currentCardId; });
+    if (!card || !card.dbId) return;
+
+    // Set step back to 'now' and clear completion date
+    await sb.from('stages').update({ status: 'now', completed_at: null }).eq('id', stepId);
+
+    // Update card stage based on this step's person type
+    var step = null;
+    var { data: s } = await sb.from('stages').select('*').eq('id', stepId).single();
+    if (s) step = s;
+    if (step && step.person_id && contactsMap[step.person_id]) {
+      var pType = contactsMap[step.person_id].type;
+      await sb.from('cards').update({ stage: pType === 'external' ? 'onthem' : 'onus' }).eq('id', card.dbId);
+    }
+
+    showToast('Step reopened');
+    await loadData();
+    await renderDetail(currentCardId);
+  };
+
   window.completeStep = async function(stepId) {
     if (!currentCardId) return;
     var card = cards.find(function(c) { return c.id === currentCardId; });
