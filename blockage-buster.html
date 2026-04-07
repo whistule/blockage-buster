@@ -601,7 +601,7 @@
       '<div class="bb-card-body">' +
         '<div class="bb-card-title">' + (isBusted ? '<span style="color:#0098a0;margin-right:4px">&#10003;</span>' : '') + c.title + '</div>' +
         (c.img ? '<div style="display:flex;gap:10px"><div style="flex:1;min-width:0">' : '') +
-        '<div class="bb-card-desc">' + (c.latestNote || c.desc) + '</div>' +
+        '<div class="bb-card-desc">' + (c.latestNote ? '<span style="font-weight:600;color:#6b7280;font-size:0.75rem">Latest info: </span>' + c.latestNote : c.desc) + '</div>' +
         meta +
         (c.img ? '</div>' + imgHTML + '</div>' : '') +
         bottomBar +
