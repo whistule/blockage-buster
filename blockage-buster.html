@@ -466,15 +466,30 @@
     }
 
     // Load latest note per card (from any step)
-    var { data: allStagesWithNotes } = await sb.from('stages').select('card_id, notes, sort_order').not('notes', 'is', null).order('sort_order', { ascending: false });
+    var { data: allStagesWithNotes } = await sb.from('stages').select('card_id, notes, sort_order, completed_at').not('notes', 'is', null).order('sort_order', { ascending: false });
     var latestNoteByCard = {};
+    var latestNoteTimeByCard = {};
     if (allStagesWithNotes) {
       allStagesWithNotes.forEach(function(s) {
         if (s.notes && s.notes.trim() && !latestNoteByCard[s.card_id]) {
           latestNoteByCard[s.card_id] = s.notes.trim();
+          latestNoteTimeByCard[s.card_id] = s.completed_at || null;
         }
       });
     }
+
+    // Track seen notes in localStorage to detect new ones
+    var seenNotes = {};
+    try { seenNotes = JSON.parse(localStorage.getItem('bb_seen_notes') || '{}'); } catch(e) {}
+    var noteIsNew = {};
+    Object.keys(latestNoteByCard).forEach(function(cardId) {
+      var note = latestNoteByCard[cardId];
+      if (seenNotes[cardId] !== note) noteIsNew[cardId] = true;
+    });
+    // Save current notes as seen
+    var newSeen = {};
+    Object.keys(latestNoteByCard).forEach(function(cardId) { newSeen[cardId] = latestNoteByCard[cardId]; });
+    localStorage.setItem('bb_seen_notes', JSON.stringify(newSeen));
 
     // Load reminders (pending)
     var { data: reminders } = await sb.from('reminders').select('*').eq('sent', false);
@@ -494,6 +509,7 @@
           title: c.title,
           desc: c.description || '',
           latestNote: latestNoteByCard[c.id] || '',
+          isNewNote: !!noteIsNew[c.id],
           stage: c.stage,
           person: nowContact ? nowContact.name : (contact.name || 'Unassigned'),
           type: nowContact ? (nowContact.type || 'internal') : (contact.type || 'internal'),
@@ -601,7 +617,12 @@
       '<div class="bb-card-body">' +
         '<div class="bb-card-title">' + (isBusted ? '<span style="color:#0098a0;margin-right:4px">&#10003;</span>' : '') + c.title + '</div>' +
         (c.img ? '<div style="display:flex;gap:10px"><div style="flex:1;min-width:0">' : '') +
-        '<div class="bb-card-desc">' + (c.latestNote ? '<span style="font-weight:600;color:#6b7280;font-size:0.75rem">Latest info: </span>' + c.latestNote : c.desc) + '</div>' +
+        (c.latestNote
+          ? '<div class="bb-card-desc" style="' + (c.isNewNote ? 'background:#fef9c3;border-left:3px solid #eab308;padding-left:8px;border-radius:2px' : '') + '">' +
+            '<span style="font-weight:600;color:#6b7280;font-size:0.75rem">Latest info: </span>' +
+            (c.isNewNote ? '<span style="font-size:0.55rem;font-weight:700;background:#eab308;color:#fff;padding:1px 5px;border-radius:3px;margin-left:4px;vertical-align:middle">NEW</span> ' : '') +
+            c.latestNote + '</div>'
+          : '<div class="bb-card-desc">' + c.desc + '</div>') +
         meta +
         (c.img ? '</div>' + imgHTML + '</div>' : '') +
         bottomBar +
