@@ -292,8 +292,9 @@
   .bb-stage-date { font-size: 0.75rem; font-weight: 600; color: #9ca3af; }
   .bb-stage-name { font-size: 0.95rem; font-weight: 500; color: #4b5563; }
   .bb-stage-now-pill { background: #1f2937; color: #10b981; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.05em; padding: 2px 8px; border-radius: 3px; text-transform: uppercase; }
-  .bb-stage--upcoming { opacity: 0.6; }
+  .bb-stage--upcoming { opacity: 0.6; transition: border-top 0.1s; }
   .bb-stage--upcoming .bb-stage-led { border-style: dashed; }
+  .bb-stage--upcoming[draggable="true"]:hover { opacity: 0.8; }
   .bb-stage-body { display: none; margin-top: 0.5rem; }
   .bb-stage-body--open { display: block; }
   .bb-stage-note { font-size: 0.85rem; color: #4b5563; font-style: italic; margin-bottom: 0.35rem; line-height: 1.4; }
@@ -948,11 +949,13 @@
         var doneCheck = s.status === 'done' ? ' checked' : '';
         var clickFn = s.status === 'done' ? 'uncompleteStep' : 'completeStep';
         var checkbox = '<input type="checkbox" onclick="event.stopPropagation();' + clickFn + '(\'' + s.id + '\')" style="width:18px;height:18px;cursor:pointer;accent-color:#16a34a;flex-shrink:0" title="' + (s.status === 'done' ? 'Undo this step' : 'Mark as done') + '"' + doneCheck + '>';
+        var dragHandle = s.status === 'upcoming' ? '<span style="font-size:0.8rem;color:#d1d5db;cursor:grab;margin-right:2px" title="Drag to reorder">&#9776;</span>' : '';
         var editBtn = '<span onclick="event.stopPropagation();editStep(\'' + s.id + '\')" style="font-size:0.7rem;color:#9ca3af;cursor:pointer;margin-left:auto" title="Edit step">edit</span>';
-        timelineHTML += '<div class="bb-stage ' + cls + '" id="step-' + s.id + '">' +
+        var dragAttrs = s.status === 'upcoming' ? ' draggable="true" ondragstart="stepDragStart(event,\'' + s.id + '\')" ondragover="stepDragOver(event)" ondrop="stepDrop(event,\'' + s.id + '\')" style="cursor:grab"' : '';
+        timelineHTML += '<div class="bb-stage ' + cls + '" id="step-' + s.id + '"' + dragAttrs + '>' +
           '<div class="bb-stage-led"></div>' +
           '<div style="flex:1;min-width:0">' +
-            '<div class="bb-stage-head">' + checkbox + dateStr +
+            '<div class="bb-stage-head">' + dragHandle + checkbox + dateStr +
               '<span class="bb-stage-name" style="font-weight:700;font-size:1rem">' + (s.name || '') + '</span>' +
               personBadge + nowPill + editBtn +
             '</div>' +
@@ -1575,6 +1578,66 @@
     showToast('Post-it saved');
     await loadData();
   };
+
+  // ── DRAG AND DROP REORDER UPCOMING STEPS ──
+  var dragStepId = null;
+
+  window.stepDragStart = function(e, stepId) {
+    dragStepId = stepId;
+    e.dataTransfer.effectAllowed = 'move';
+    e.target.style.opacity = '0.4';
+  };
+
+  window.stepDragOver = function(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    // Highlight drop target
+    var target = e.target.closest('.bb-stage');
+    if (target) target.style.borderTop = '2px solid #ea580c';
+  };
+
+  window.stepDrop = async function(e, targetStepId) {
+    e.preventDefault();
+    var target = e.target.closest('.bb-stage');
+    if (target) target.style.borderTop = '';
+    if (!dragStepId || dragStepId === targetStepId || !currentCardId) { dragStepId = null; return; }
+
+    var card = cards.find(function(c) { return c.id === currentCardId; });
+    if (!card || !card.dbId) { dragStepId = null; return; }
+
+    // Get all upcoming steps in current order
+    var { data: allStages } = await sb.from('stages').select('id, sort_order, status').eq('card_id', card.dbId).order('sort_order');
+    if (!allStages) { dragStepId = null; return; }
+
+    var upcoming = allStages.filter(function(s) { return s.status === 'upcoming'; });
+    var dragIdx = upcoming.findIndex(function(s) { return s.id === dragStepId; });
+    var targetIdx = upcoming.findIndex(function(s) { return s.id === targetStepId; });
+
+    if (dragIdx === -1 || targetIdx === -1) { dragStepId = null; return; }
+
+    // Reorder: remove dragged and insert at target position
+    var moved = upcoming.splice(dragIdx, 1)[0];
+    upcoming.splice(targetIdx, 0, moved);
+
+    // Update sort_order for all upcoming
+    var baseOrder = upcoming.length > 0 ? 100 : 1;
+    for (var i = 0; i < upcoming.length; i++) {
+      await sb.from('stages').update({ sort_order: baseOrder + i }).eq('id', upcoming[i].id);
+    }
+
+    dragStepId = null;
+    showToast('Steps reordered');
+    await renderDetail(currentCardId);
+  };
+
+  // Clean up drag visual on dragend
+  document.addEventListener('dragend', function() {
+    dragStepId = null;
+    document.querySelectorAll('.bb-stage').forEach(function(el) {
+      el.style.opacity = '';
+      el.style.borderTop = '';
+    });
+  });
 
   window.showPostitField = function() {
     var el = document.getElementById('postitToggle');
