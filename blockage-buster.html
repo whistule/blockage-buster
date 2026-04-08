@@ -1000,7 +1000,7 @@
     '</div>' +
     '<div id="addStepForm" style="display:none;margin:0.5rem 0 0.75rem;padding:0.75rem;background:#f0fdf4;border:1px solid #86efac;border-radius:6px">' +
       '<div class="bb-edit-row" style="margin-bottom:0">' +
-        '<div class="bb-edit-field" style="flex:2"><input class="bb-edit-input" id="newStageName" placeholder="Step name" style="font-size:0.9rem;font-family:inherit;background:#fff;border:1px solid #d1d5db;border-radius:4px;padding:6px"></div>' +
+        '<div class="bb-edit-field" style="flex:2"><input class="bb-edit-input" id="newStageName" placeholder="Step name" style="font-size:1.1rem;font-weight:700;font-family:inherit;background:#fff;border:1px solid #d1d5db;border-radius:4px;padding:8px"></div>' +
         '<div class="bb-edit-field"><select class="bb-edit-select" id="newStagePerson" onchange="handleNewPerson(this)">' + buildPersonSelect(null, true) + '</select></div>' +
         '<div class="bb-edit-field" style="flex:0"><select class="bb-edit-select" id="newStageStatus"><option value="upcoming">Upcoming</option><option value="now">Now</option><option value="done">Done</option></select></div>' +
       '</div>' +
@@ -1205,7 +1205,7 @@
     el.innerHTML =
       '<div style="padding:0.5rem;background:#f9fafb;border:1px solid #e5e7eb;border-radius:4px">' +
         '<div class="bb-edit-row" style="margin-bottom:0.5rem">' +
-          '<div class="bb-edit-field" style="flex:2"><input class="bb-edit-input" id="stepEditName" value="' + (step.name || '').replace(/"/g, '&quot;') + '" style="font-size:0.9rem;font-family:inherit"></div>' +
+          '<div class="bb-edit-field" style="flex:2"><input class="bb-edit-input" id="stepEditName" value="' + (step.name || '').replace(/"/g, '&quot;') + '" style="font-size:1.1rem;font-weight:700;font-family:inherit"></div>' +
           '<div class="bb-edit-field"><select class="bb-edit-select" id="stepEditPerson">' + stagePersonOpts + '</select></div>' +
           '<div class="bb-edit-field" style="flex:0"><select class="bb-edit-select" id="stepEditStatus">' + statusOpts + '</select></div>' +
         '</div>' +
