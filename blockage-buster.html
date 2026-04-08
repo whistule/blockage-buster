@@ -1607,30 +1607,21 @@
     var card = cards.find(function(c) { return c.id === currentCardId; });
     if (!card || !card.dbId) { dragStepId = null; return; }
 
-    // Get all upcoming steps in current order
-    var { data: allStages } = await sb.from('stages').select('id, sort_order, status').eq('card_id', card.dbId).order('sort_order');
-    if (!allStages) { dragStepId = null; return; }
+    // Get the two steps we're swapping
+    var { data: dragStep } = await sb.from('stages').select('id, sort_order').eq('id', dragStepId).single();
+    var { data: targetStep } = await sb.from('stages').select('id, sort_order').eq('id', targetStepId).single();
 
-    // Reverse to match display order (furthest out at top)
-    var upcoming = allStages.filter(function(s) { return s.status === 'upcoming'; }).reverse();
-    var dragIdx = upcoming.findIndex(function(s) { return s.id === dragStepId; });
-    var targetIdx = upcoming.findIndex(function(s) { return s.id === targetStepId; });
+    if (!dragStep || !targetStep) { dragStepId = null; return; }
 
-    if (dragIdx === -1 || targetIdx === -1) { dragStepId = null; return; }
+    // Swap their sort_orders
+    var tempOrder = dragStep.sort_order;
+    var { error: e1 } = await sb.from('stages').update({ sort_order: targetStep.sort_order }).eq('id', dragStep.id);
+    var { error: e2 } = await sb.from('stages').update({ sort_order: tempOrder }).eq('id', targetStep.id);
 
-    // Reorder: remove dragged and insert at target position
-    var moved = upcoming.splice(dragIdx, 1)[0];
-    upcoming.splice(targetIdx, 0, moved);
-
-    // Reverse back to ascending for sort_order assignment
-    upcoming.reverse();
-    var baseOrder = 100;
-    for (var i = 0; i < upcoming.length; i++) {
-      await sb.from('stages').update({ sort_order: baseOrder + i }).eq('id', upcoming[i].id);
-    }
+    if (e1 || e2) { showToast('Reorder failed'); console.error(e1, e2); }
+    else { showToast('Steps swapped'); }
 
     dragStepId = null;
-    showToast('Steps reordered');
     await renderDetail(currentCardId);
   };
 
