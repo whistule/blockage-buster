@@ -180,6 +180,26 @@
   @media (max-width: 767px) {
     body { max-width: 430px; }
     .bb-columns { display: none !important; }
+    .bb-fab { display: flex !important; }
+  }
+  .bb-fab {
+    display: none;
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 56px;
+    height: 56px;
+    background: #e20e0c;
+    color: #fff;
+    border-radius: 50%;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 300;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    z-index: 50;
+    line-height: 1;
   }
 
   /* ── VIEWS ── */
@@ -336,6 +356,8 @@
 <!-- ═══════════════════════════════════════════════ -->
 <!--              NEW CARD MODAL                     -->
 <!-- ═══════════════════════════════════════════════ -->
+
+<div class="bb-fab" onclick="openNewCard('flagged')">+</div>
 
 <div class="bb-modal-overlay" id="bbNewCardModal">
   <div class="bb-modal">
