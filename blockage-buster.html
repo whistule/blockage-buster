@@ -120,7 +120,7 @@
   .bb-card-stripe-who { transform: rotate(180deg); text-align: left; line-height: 1.3; margin-top: auto; }
 
   .bb-card-body { padding: 12px 14px 0; flex: 1; min-width: 0; position: relative; }
-  .bb-card-bar { display: flex; align-items: center; gap: 6px; padding: 3px 0; margin-top: 4px; border-top: 1px solid #e5e7eb; height: 28px; }
+  .bb-card-bar { display: flex; align-items: center; gap: 8px; padding: 6px 0; margin-top: 6px; border-top: 1px solid #e5e7eb; }
 
   .bb-card-img {
     width: 64px; min-width: 64px; height: 64px;
@@ -193,7 +193,8 @@
     .bb-card-title { font-size: 0.9rem !important; }
     .bb-card-desc { font-size: 0.75rem !important; -webkit-line-clamp: 1 !important; }
     .bb-card-meta { font-size: 0.7rem !important; }
-    .bb-card-bar { padding: 6px 0 !important; margin-top: 6px !important; }
+    .bb-card-bar { padding: 3px 0 !important; margin-top: 3px !important; height: 24px; }
+    .bb-card-bar .bb-pill { font-size: 0.5rem !important; padding: 2px 5px !important; }
   }
   .bb-hamburger {
     display: none;
@@ -664,10 +665,10 @@
     // Alarm icon
     var alarmIcon = hasRemindAt
       ? '<div onclick="event.stopPropagation();clearReminder(\'' + c.id + '\')" style="cursor:pointer;font-size:0.55rem;font-weight:600;color:#ef4444;background:#fde8e8;border:1px solid #ef4444;border-radius:3px;padding:2px 6px;opacity:1" title="Cancel reminder">&#10005;</div>'
-      : '<div onclick="event.stopPropagation();showRemindMenu(event,\'' + c.id + '\')" style="cursor:pointer;font-size:1rem;opacity:0.4" title="Set reminder">&#9200;</div>';
+      : '<div onclick="event.stopPropagation();showRemindMenu(event,\'' + c.id + '\')" style="cursor:pointer;font-size:1.2rem;opacity:0.4" title="Set reminder">&#9200;</div>';
 
     // Bottom menu bar
-    var moodEmoji = '<span onclick="event.stopPropagation();showMoodPicker(event,\'' + c.id + '\')" style="cursor:pointer;font-size:1.1rem;line-height:1" title="Set feeling">' + (c.mood || '&#128300;') + '</span>';
+    var moodEmoji = '<span onclick="event.stopPropagation();showMoodPicker(event,\'' + c.id + '\')" style="cursor:pointer;font-size:1.3rem;line-height:1" title="Set feeling">' + (c.mood || '&#128300;') + '</span>';
 
     // On Hold toggle
     var isOnHold = c.stage === 'onhold';
@@ -676,7 +677,7 @@
       : '<span onclick="event.stopPropagation();holdCard(\'' + c.id + '\',event)" style="cursor:pointer;font-size:0.9rem;opacity:0.3" title="Put on hold">&#9208;</span>';
 
     var bottomBar = '<div class="bb-card-bar">' +
-      '<span class="bb-pill ' + pillCls + '" style="font-size:0.55rem;padding:2px 7px">' + pillText + '</span>' +
+      '<span class="bb-pill ' + pillCls + '">' + pillText + '</span>' +
       remindInfo +
       '<div style="display:flex;align-items:center;gap:10px;margin-left:auto">' +
         moodEmoji + holdIcon + alarmIcon +
