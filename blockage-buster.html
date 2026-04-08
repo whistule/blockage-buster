@@ -924,19 +924,21 @@
         '<div class="bb-edit-field"><div class="bb-edit-label">Initially logged by</div><select class="bb-edit-select" id="editLoggedBy">' + loggedBySelect + '</select></div>' +
       '</div>' +
     '</div>' +
-    '<div class="bb-heading" style="margin-top:2rem">Resolution Steps</div>' +
-    timelineHTML +
-    completeBtn +
-    '<div style="margin-top:0.75rem;padding:0.75rem;background:#f9fafb;border:1px solid #e5e7eb;border-radius:4px">' +
-      '<div class="bb-edit-label" style="margin-bottom:0.5rem">Add a step</div>' +
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:2rem">' +
+      '<div class="bb-heading" style="margin:0;border:none;padding:0">Resolution Steps</div>' +
+      '<div onclick="var f=document.getElementById(\'addStepForm\');f.style.display=f.style.display===\'none\'?\'\':\'none\'" style="font-size:0.75rem;font-weight:700;color:#3d6640;cursor:pointer;padding:4px 10px;background:#dcfce7;border:1px solid #86efac;border-radius:4px">+ Add step</div>' +
+    '</div>' +
+    '<div id="addStepForm" style="display:none;margin:0.5rem 0 0.75rem;padding:0.75rem;background:#f0fdf4;border:1px solid #86efac;border-radius:6px">' +
       '<div class="bb-edit-row" style="margin-bottom:0">' +
-        '<div class="bb-edit-field" style="flex:2"><input class="bb-edit-input" id="newStageName" placeholder="Step name" style="font-size:0.9rem;font-family:inherit"></div>' +
+        '<div class="bb-edit-field" style="flex:2"><input class="bb-edit-input" id="newStageName" placeholder="Step name" style="font-size:0.9rem;font-family:inherit;background:#fff;border:1px solid #d1d5db;border-radius:4px;padding:6px"></div>' +
         '<div class="bb-edit-field"><select class="bb-edit-select" id="newStagePerson" onchange="handleNewPerson(this)">' + buildPersonSelect(null, true) + '</select></div>' +
         '<div class="bb-edit-field" style="flex:0"><select class="bb-edit-select" id="newStageStatus"><option value="upcoming">Upcoming</option><option value="now">Now</option><option value="done">Done</option></select></div>' +
       '</div>' +
-      '<textarea class="bb-edit-textarea" id="newStageNotes" placeholder="Notes (optional)" style="min-height:2rem;font-size:0.8rem;margin-top:0.5rem"></textarea>' +
+      '<textarea class="bb-edit-textarea" id="newStageNotes" placeholder="Notes (optional)" style="min-height:2rem;font-size:0.8rem;margin-top:0.5rem;background:#fff;border:1px solid #d1d5db;border-radius:4px;padding:6px"></textarea>' +
       '<div class="bb-btn" onclick="addStage()" style="margin-top:0.5rem"><div class="bb-btn-indicator bb-btn-indicator--green"></div>+ Add Step</div>' +
     '</div>' +
+    timelineHTML +
+    completeBtn +
     '<div class="bb-heading" style="margin-top:2rem">5 Whys</div>' +
     '<div style="font-size:0.75rem;color:#9ca3af;margin-bottom:0.75rem">Keep asking "why?" to find the root cause</div>' +
     '<div class="bb-edit-label">1. Why is this happening?</div>' +
