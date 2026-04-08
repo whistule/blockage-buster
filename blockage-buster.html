@@ -857,18 +857,22 @@
     var hasNow = cardStages.some(function(s) { return s.status === 'now'; });
     var timelineHTML = '';
     if (cardStages.length > 0) {
-      var hasDone = cardStages.some(function(s) { return s.status === 'done'; });
-      var hasUpcoming = cardStages.some(function(s) { return s.status === 'upcoming'; });
+      var nowStages = cardStages.filter(function(s) { return s.status === 'now'; });
+      var upcomingStages = cardStages.filter(function(s) { return s.status === 'upcoming'; });
+      var doneStages = cardStages.filter(function(s) { return s.status === 'done'; });
+
+      // Render in order: NOW first, then Planned, then History
+      var orderedStages = [].concat(nowStages, upcomingStages, doneStages);
       var prevStatus = '';
       timelineHTML = '<div class="bb-timeline">';
-      cardStages.forEach(function(s) {
+      orderedStages.forEach(function(s) {
         // Section dividers
         if (s.status !== prevStatus) {
-          if (s.status === 'done' && prevStatus === '') {
-            timelineHTML += '<div style="font-size:0.6rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.15em;margin-bottom:0.5rem;padding-left:0.25rem">History</div>';
-          }
-          if (s.status === 'upcoming' && prevStatus !== 'upcoming') {
+          if (s.status === 'upcoming') {
             timelineHTML += '<div style="font-size:0.6rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.15em;margin:0.75rem 0 0.5rem;padding-left:0.25rem">Planned</div>';
+          }
+          if (s.status === 'done') {
+            timelineHTML += '<div onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display===\'none\'?\'\':\'none\'" style="font-size:0.6rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.15em;margin:0.75rem 0 0.5rem;padding-left:0.25rem;cursor:pointer">History ▾</div><div>';
           }
           prevStatus = s.status;
         }
@@ -897,6 +901,8 @@
           '</div>' +
         '</div>';
       });
+      // Close history wrapper if it was opened
+      if (doneStages.length > 0) timelineHTML += '</div>';
       timelineHTML += '</div>';
     } else {
       timelineHTML = '<div style="font-size:0.85rem;color:#9ca3af;font-style:italic">No stages yet — add one below to start planning</div>';
