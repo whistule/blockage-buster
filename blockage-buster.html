@@ -181,7 +181,45 @@
     body { max-width: 430px; }
     .bb-columns { display: none !important; }
     .bb-fab { display: flex !important; }
+    /* Compress topbar */
+    .bb-topbar--main { padding: 0.6rem 0.75rem 0.6rem; flex-wrap: nowrap; gap: 0.5rem; }
+    .bb-topbar--main #homeBtn { width: 36px !important; height: 36px !important; }
+    .bb-topbar--main #homeBtn svg { width: 22px !important; height: 22px !important; }
+    .bb-topbar-title { font-size: 1.2rem; }
+    .bb-topbar-sub { display: none; }
+    .bb-view-toggle { display: none !important; }
+    .bb-hamburger { display: flex !important; }
+    /* Compress cards */
+    .bb-card-stripe { width: 28px !important; min-width: 28px !important; }
+    .bb-card-stripe-text { font-size: 0.45rem !important; }
+    .bb-card-stripe-num { font-size: 0.8rem !important; }
+    .bb-card-body { padding: 8px 10px 0 !important; }
+    .bb-card-title { font-size: 0.9rem !important; }
+    .bb-card-desc { font-size: 0.75rem !important; -webkit-line-clamp: 1 !important; }
+    .bb-card-meta { font-size: 0.7rem !important; }
+    .bb-card-bar { padding: 6px 0 !important; margin-top: 6px !important; }
   }
+  .bb-hamburger {
+    display: none;
+    width: 36px; height: 36px;
+    align-items: center; justify-content: center;
+    cursor: pointer; font-size: 1.3rem; color: #4b5563;
+    background: #fff; border: 1px solid #d1d5db; border-radius: 4px;
+    flex-shrink: 0; position: relative;
+  }
+  .bb-hamburger-menu {
+    display: none; position: absolute; top: 100%; right: 0;
+    background: #fff; border: 1px solid #d1d5db; border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 20;
+    min-width: 120px; margin-top: 4px;
+  }
+  .bb-hamburger-menu.open { display: block; }
+  .bb-hamburger-item {
+    padding: 10px 16px; font-size: 0.85rem; font-weight: 600;
+    cursor: pointer; color: #4b5563; text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .bb-hamburger-item:hover { background: #f3f4f6; }
+  .bb-hamburger-item--active { background: #4b5563; color: #fff; }
   .bb-fab {
     display: none;
     position: fixed;
@@ -421,11 +459,19 @@
       <div class="bb-topbar-sub">workshop app dashboard</div>
     </div>
     <div class="bb-view-toggle">
-
       <div class="bb-view-toggle-btn bb-view-toggle-btn--active" onclick="setViewMode('stage')">Stage</div>
       <div class="bb-view-toggle-btn" onclick="setViewMode('person')">Us</div>
       <div class="bb-view-toggle-btn" onclick="setViewMode('supplier')">Them</div>
       <div class="bb-view-toggle-btn" onclick="setViewMode('urgency')">Urgency</div>
+    </div>
+    <div class="bb-hamburger" onclick="this.querySelector('.bb-hamburger-menu').classList.toggle('open')">
+      &#9776;
+      <div class="bb-hamburger-menu" id="bbHamburgerMenu">
+        <div class="bb-hamburger-item" onclick="event.stopPropagation();setViewMode('stage');this.closest('.bb-hamburger-menu').classList.remove('open')">Stage</div>
+        <div class="bb-hamburger-item" onclick="event.stopPropagation();setViewMode('person');this.closest('.bb-hamburger-menu').classList.remove('open')">Us</div>
+        <div class="bb-hamburger-item" onclick="event.stopPropagation();setViewMode('supplier');this.closest('.bb-hamburger-menu').classList.remove('open')">Them</div>
+        <div class="bb-hamburger-item" onclick="event.stopPropagation();setViewMode('urgency');this.closest('.bb-hamburger-menu').classList.remove('open')">Urgency</div>
+      </div>
     </div>
     <div class="bb-topbar-rule"></div>
   </div>
@@ -1661,6 +1707,36 @@
   document.getElementById('bbNewCardModal').onclick = function(e) {
     if (e.target === this) closeNewCard();
   };
+
+  // ── SWIPE BETWEEN TABS (mobile) ──
+  var swipeStartX = null;
+  var swipeEl = document.getElementById('bbMobileCards');
+  if (swipeEl) {
+    swipeEl.addEventListener('touchstart', function(e) {
+      swipeStartX = e.touches[0].clientX;
+    }, { passive: true });
+    swipeEl.addEventListener('touchend', function(e) {
+      if (swipeStartX === null) return;
+      var diff = e.changedTouches[0].clientX - swipeStartX;
+      swipeStartX = null;
+      if (Math.abs(diff) < 60) return; // too short
+      // Get current tab order
+      var tabEls = document.querySelectorAll('#bbTabs .bb-tab[data-key]');
+      var keys = [];
+      tabEls.forEach(function(t) { keys.push(t.getAttribute('data-key')); });
+      var idx = keys.indexOf(activeTab);
+      if (idx === -1) return;
+      if (diff < 0 && idx < keys.length - 1) {
+        // Swipe left → next tab
+        activeTab = keys[idx + 1];
+        render();
+      } else if (diff > 0 && idx > 0) {
+        // Swipe right → prev tab
+        activeTab = keys[idx - 1];
+        render();
+      }
+    }, { passive: true });
+  }
 
   // ── INIT ──
   loadData();
