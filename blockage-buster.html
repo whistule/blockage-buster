@@ -539,7 +539,8 @@
           why4: c.why4 || '',
           why5: c.why5 || '',
           remindAt: c.remind_at || null,
-          mood: c.mood || ''
+          mood: c.mood || '',
+          postit: c.postit || ''
         };
       });
     }
@@ -640,10 +641,8 @@
       '<div class="bb-card-body">' +
         '<div class="bb-card-title">' + (isBusted ? '<span style="color:#0098a0;margin-right:4px">&#10003;</span>' : '') + c.title + '</div>' +
         (c.img ? '<div style="display:flex;gap:10px"><div style="flex:1;min-width:0">' : '') +
-        (c.latestNote
-          ? '<div class="bb-card-desc" style="' + (!isBusted && c.noteAge && c.noteAge.fresh === 'hot' ? 'background:#d9f99d;border-left:3px solid #65a30d;padding-left:8px;border-radius:2px' : (!isBusted && c.noteAge && c.noteAge.fresh === true ? 'background:#fef9c3;border-left:3px solid #eab308;padding-left:8px;border-radius:2px' : '')) + '">' +
-            (c.noteAge ? '<span style="font-size:0.55rem;font-weight:700;background:' + (c.noteAge.fresh === 'hot' ? '#65a30d' : c.noteAge.fresh === true ? '#eab308' : '#9ca3af') + ';color:#fff;padding:1px 5px;border-radius:3px;vertical-align:middle">' + c.noteAge.label + '</span> ' : '') +
-            c.latestNote + '</div>'
+        (c.postit
+          ? '<div class="bb-card-desc" style="background:#fef9c3;border-left:3px solid #eab308;padding-left:8px;border-radius:2px;font-style:italic">' + c.postit + '</div>'
           : '<div class="bb-card-desc">' + c.desc + '</div>') +
         meta +
         (c.img ? '</div>' + imgHTML + '</div>' : '') +
@@ -919,6 +918,8 @@
       '<input class="bb-edit-input" id="editTitle" value="' + (card.title || '').replace(/"/g, '&quot;') + '" style="font-size:1.2rem;background:#fff;border:1px solid #d1d5db;border-radius:4px;padding:8px;margin-bottom:10px">' +
       '<div class="bb-edit-label" style="margin-bottom:4px">Description</div>' +
       '<textarea class="bb-edit-textarea" id="editDesc" style="background:#fff;border:1px solid #d1d5db;border-radius:4px;padding:8px;min-height:3rem">' + (card.desc || '').replace(/</g, '&lt;') + '</textarea>' +
+      '<div class="bb-edit-label" style="margin-top:10px;margin-bottom:4px">Post-it note <span style="font-weight:400;color:#9ca3af">(shows on card)</span></div>' +
+      '<textarea class="bb-edit-textarea" id="editPostit" style="background:#fef9c3;border:1px solid #eab308;border-radius:4px;padding:8px;min-height:2rem;font-style:italic">' + (card.postit || '').replace(/</g, '&lt;') + '</textarea>' +
       '<div class="bb-edit-row" style="margin-top:10px">' +
         '<div class="bb-edit-field"><div class="bb-edit-label">Urgency</div><select class="bb-edit-select" id="editUrgency">' + urgSelect + '</select></div>' +
         '<div class="bb-edit-field"><div class="bb-edit-label">Initially logged by</div><select class="bb-edit-select" id="editLoggedBy">' + loggedBySelect + '</select></div>' +
@@ -958,7 +959,7 @@
     if (typeof twemoji !== 'undefined') twemoji.parse(document.getElementById('bbDetailContent'), { folder: 'svg', ext: '.svg' });
 
     // Wire up autosave on all editable fields
-    var autoFields = ['editTitle', 'editDesc', 'editUrgency', 'editLoggedBy',
+    var autoFields = ['editTitle', 'editDesc', 'editPostit', 'editUrgency', 'editLoggedBy',
       'editWhy1', 'editWhy2', 'editWhy3', 'editWhy4', 'editWhy5'];
     autoFields.forEach(function(id) {
       var el = document.getElementById(id);
@@ -1226,6 +1227,7 @@
     var updates = {
       title: title,
       description: document.getElementById('editDesc').value,
+      postit: document.getElementById('editPostit').value || null,
       urgency: document.getElementById('editUrgency').value,
       logged_by: document.getElementById('editLoggedBy').value || null
     };
