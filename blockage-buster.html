@@ -223,17 +223,19 @@
   /* Timeline */
   .bb-timeline { position: relative; padding-left: 2.5rem; }
   .bb-timeline::before { content: ''; position: absolute; left: 0.75rem; top: 0.75rem; bottom: 0.75rem; width: 1px; background: #e5e7eb; }
-  .bb-stage { position: relative; padding: 0.5rem 0 1rem; }
+  .bb-stage { position: relative; padding: 0.75rem 0 1rem; display: flex; gap: 0; }
   .bb-stage:last-child { padding-bottom: 0; }
-  .bb-stage-led { position: absolute; left: -1.75rem; top: 0.35rem; width: 1.25rem; height: 1.25rem; border-radius: 50%; border: 1px solid #6b7280; box-shadow: inset 0 -2px 4px rgba(0,0,0,0.2), inset 0 2px 4px rgba(255,255,255,0.3); background: linear-gradient(135deg, #f9fafb 0%, #e5e7eb 100%); }
+  .bb-stage-led { position: absolute; left: -1.75rem; top: 0.5rem; width: 1.25rem; height: 1.25rem; border-radius: 50%; border: 1px solid #6b7280; box-shadow: inset 0 -2px 4px rgba(0,0,0,0.2), inset 0 2px 4px rgba(255,255,255,0.3); background: linear-gradient(135deg, #f9fafb 0%, #e5e7eb 100%); }
   .bb-stage--done .bb-stage-led { background: linear-gradient(135deg, #86efac 0%, #16a34a 100%); }
-  .bb-stage--now .bb-stage-led { background: linear-gradient(135deg, #fdba74 0%, #ea580c 100%); width: 1.5rem; height: 1.5rem; left: -1.875rem; top: 0.2rem; }
-  .bb-stage-head { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; cursor: pointer; }
-  .bb-stage-date { font-size: 0.8rem; font-weight: 600; color: #4b5563; }
+  .bb-stage--done { opacity: 0.55; }
+  .bb-stage--now .bb-stage-led { background: linear-gradient(135deg, #fdba74 0%, #ea580c 100%); width: 1.5rem; height: 1.5rem; left: -1.875rem; top: 0.35rem; box-shadow: 0 0 8px rgba(234,88,12,0.4); }
+  .bb-stage--now { background: #fff8f1; border: 1px solid #fdba74; border-radius: 6px; padding: 0.75rem 0.75rem 0.75rem 0; margin-left: -0.5rem; padding-left: 0.5rem; }
+  .bb-stage-head { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+  .bb-stage-date { font-size: 0.75rem; font-weight: 600; color: #9ca3af; }
   .bb-stage-name { font-size: 0.95rem; font-weight: 500; color: #4b5563; }
-  .bb-stage-person { font-size: 0.85rem; font-weight: 400; color: #6b7280; }
   .bb-stage-now-pill { background: #1f2937; color: #10b981; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.05em; padding: 2px 8px; border-radius: 3px; text-transform: uppercase; }
-  .bb-stage--upcoming .bb-stage-name, .bb-stage--upcoming .bb-stage-person { opacity: 0.5; }
+  .bb-stage--upcoming { opacity: 0.6; }
+  .bb-stage--upcoming .bb-stage-led { border-style: dashed; }
   .bb-stage-body { display: none; margin-top: 0.5rem; }
   .bb-stage-body--open { display: block; }
   .bb-stage-note { font-size: 0.85rem; color: #4b5563; font-style: italic; margin-bottom: 0.35rem; line-height: 1.4; }
@@ -856,23 +858,22 @@
         var nowPill = s.status === 'now' ? '<span class="bb-stage-now-pill">Now</span>' : '';
         var personName = (s.contacts && s.contacts.name) ? s.contacts.name : '';
         var personType = s.person_id && contactsMap[s.person_id] ? contactsMap[s.person_id].type : '';
-        var personStr = personName ? '<span class="bb-stage-person">' + personName + '</span>' : '';
-        var ownerBadge = personType === 'external' ? '<span style="font-size:0.65rem;font-weight:700;padding:2px 6px;border-radius:3px;background:#c4622d;color:#fff;text-transform:uppercase;letter-spacing:0.05em">Them</span>' :
-          personName ? '<span style="font-size:0.65rem;font-weight:700;padding:2px 6px;border-radius:3px;background:#3d6640;color:#fff;text-transform:uppercase;letter-spacing:0.05em">Us</span>' : '';
+        var ownerColor = personType === 'external' ? '#c4622d' : '#3d6640';
+        var personBadge = personName ? '<span style="font-size:0.65rem;font-weight:700;padding:2px 6px;border-radius:3px;background:' + ownerColor + ';color:#fff;letter-spacing:0.03em">' + personName + '</span>' : '';
         var doneCheck = s.status === 'done' ? ' checked' : '';
         var clickFn = s.status === 'done' ? 'uncompleteStep' : 'completeStep';
         var checkbox = '<input type="checkbox" onclick="event.stopPropagation();' + clickFn + '(\'' + s.id + '\')" style="width:18px;height:18px;cursor:pointer;accent-color:#16a34a;flex-shrink:0" title="' + (s.status === 'done' ? 'Undo this step' : 'Mark as done') + '"' + doneCheck + '>';
         var editBtn = '<span onclick="event.stopPropagation();editStep(\'' + s.id + '\')" style="font-size:0.7rem;color:#9ca3af;cursor:pointer;margin-left:auto" title="Edit step">edit</span>';
-        var notesPreview = s.notes ? '<div style="font-size:0.8rem;color:#6b7280;font-style:italic;margin-top:0.25rem;white-space:pre-wrap;line-height:1.4">' + (s.notes || '').replace(/</g, '&lt;').substring(0, 120) + (s.notes.length > 120 ? '...' : '') + '</div>' : '';
         timelineHTML += '<div class="bb-stage ' + cls + '" id="step-' + s.id + '">' +
           '<div class="bb-stage-led"></div>' +
-          '<div class="bb-stage-head" onclick="toggleStepNotes(\'' + s.id + '\')" style="cursor:pointer">' + checkbox + dateStr +
-            '<span class="bb-stage-name">' + (s.name || '') + '</span>' +
-            personStr + ownerBadge + nowPill + editBtn +
-          '</div>' +
-          notesPreview +
-          '<div class="bb-stage-body" id="step-notes-' + s.id + '" style="display:none;margin-top:0.5rem">' +
-            '<textarea id="step-notes-input-' + s.id + '" class="bb-edit-textarea" style="min-height:3rem;font-size:0.85rem" placeholder="Add notes..." onblur="saveStepNotes(\'' + s.id + '\')">' + (s.notes || '').replace(/</g, '&lt;') + '</textarea>' +
+          '<div style="flex:1;min-width:0">' +
+            '<div class="bb-stage-head">' + checkbox + dateStr +
+              '<span class="bb-stage-name" style="font-weight:700;font-size:1rem">' + (s.name || '') + '</span>' +
+              personBadge + nowPill + editBtn +
+            '</div>' +
+            '<div style="margin-top:0.35rem">' +
+              '<textarea id="step-notes-input-' + s.id + '" class="bb-edit-textarea" style="min-height:2rem;font-size:0.8rem;font-style:italic;color:#6b7280" placeholder="Add notes..." onblur="saveStepNotes(\'' + s.id + '\')">' + (s.notes || '').replace(/</g, '&lt;') + '</textarea>' +
+            '</div>' +
           '</div>' +
         '</div>';
       });
@@ -905,6 +906,7 @@
         '<div class="bb-edit-field"><select class="bb-edit-select" id="newStagePerson" onchange="handleNewPerson(this)">' + buildPersonSelect(null, true) + '</select></div>' +
         '<div class="bb-edit-field" style="flex:0"><select class="bb-edit-select" id="newStageStatus"><option value="upcoming">Upcoming</option><option value="now">Now</option><option value="done">Done</option></select></div>' +
       '</div>' +
+      '<textarea class="bb-edit-textarea" id="newStageNotes" placeholder="Notes (optional)" style="min-height:2rem;font-size:0.8rem;margin-top:0.5rem"></textarea>' +
       '<div class="bb-btn" onclick="addStage()" style="margin-top:0.5rem"><div class="bb-btn-indicator bb-btn-indicator--green"></div>+ Add Step</div>' +
     '</div>' +
     '<div class="bb-heading" style="margin-top:2rem">5 Whys</div>' +
@@ -978,11 +980,13 @@
     var { data: existing } = await sb.from('stages').select('sort_order').eq('card_id', card.dbId).order('sort_order', { ascending: false }).limit(1);
     var nextOrder = (existing && existing.length > 0) ? (existing[0].sort_order || 0) + 1 : 1;
 
+    var newNotes = document.getElementById('newStageNotes').value || '';
     var insert = {
       card_id: card.dbId,
       name: name,
       person_id: personId || null,
       status: status,
+      notes: newNotes || null,
       sort_order: nextOrder,
       completed_at: status === 'done' ? new Date().toISOString() : null
     };
