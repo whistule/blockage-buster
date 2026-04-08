@@ -1609,7 +1609,8 @@
     var { data: allStages } = await sb.from('stages').select('id, sort_order, status').eq('card_id', card.dbId).order('sort_order');
     if (!allStages) { dragStepId = null; return; }
 
-    var upcoming = allStages.filter(function(s) { return s.status === 'upcoming'; });
+    // Reverse to match display order (furthest out at top)
+    var upcoming = allStages.filter(function(s) { return s.status === 'upcoming'; }).reverse();
     var dragIdx = upcoming.findIndex(function(s) { return s.id === dragStepId; });
     var targetIdx = upcoming.findIndex(function(s) { return s.id === targetStepId; });
 
@@ -1619,8 +1620,9 @@
     var moved = upcoming.splice(dragIdx, 1)[0];
     upcoming.splice(targetIdx, 0, moved);
 
-    // Update sort_order for all upcoming
-    var baseOrder = upcoming.length > 0 ? 100 : 1;
+    // Reverse back to ascending for sort_order assignment
+    upcoming.reverse();
+    var baseOrder = 100;
     for (var i = 0; i < upcoming.length; i++) {
       await sb.from('stages').update({ sort_order: baseOrder + i }).eq('id', upcoming[i].id);
     }
