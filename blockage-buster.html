@@ -863,7 +863,7 @@
       var doneStages = cardStages.filter(function(s) { return s.status === 'done'; });
 
       // Render in order: NOW first, then Planned, then History
-      var orderedStages = [].concat(nowStages, upcomingStages, doneStages);
+      var orderedStages = [].concat(upcomingStages.reverse(), nowStages, doneStages);
       var prevStatus = '';
       timelineHTML = '<div class="bb-timeline">';
       orderedStages.forEach(function(s) {
