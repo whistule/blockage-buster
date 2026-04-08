@@ -282,7 +282,7 @@
   .bb-timeline::before { content: ''; position: absolute; left: 0.75rem; top: 0.75rem; bottom: 0.75rem; width: 1px; background: #e5e7eb; }
   .bb-stage { position: relative; padding: 0.25rem 0 0.35rem; display: flex; gap: 0; }
   .bb-stage:last-child { padding-bottom: 0; }
-  .bb-stage-led { position: absolute; left: -1.75rem; top: 0.3rem; width: 1.25rem; height: 1.25rem; border-radius: 50%; border: 1px solid #6b7280; box-shadow: inset 0 -2px 4px rgba(0,0,0,0.2), inset 0 2px 4px rgba(255,255,255,0.3); background: linear-gradient(135deg, #f9fafb 0%, #e5e7eb 100%); }
+  .bb-stage-led { position: absolute; left: -1.75rem; top: 0.3rem; width: 1.25rem; height: 1.25rem; border-radius: 50%; border: 1px solid #6b7280; box-shadow: inset 0 -2px 4px rgba(0,0,0,0.2), inset 0 2px 4px rgba(255,255,255,0.3); background: linear-gradient(135deg, #f9fafb 0%, #e5e7eb 100%); display: flex; align-items: center; justify-content: center; z-index: 2; }
   .bb-stage--done .bb-stage-led { background: linear-gradient(135deg, #86efac 0%, #16a34a 100%); }
   .bb-stage--done { opacity: 0.55; }
   .bb-stage--now .bb-stage-led { background: linear-gradient(135deg, #fdba74 0%, #ea580c 100%); width: 1.5rem; height: 1.5rem; left: -1.875rem; top: 0.25rem; box-shadow: 0 0 10px rgba(234,88,12,0.5); animation: bb-pulse 2s infinite; }
@@ -946,16 +946,15 @@
         var personType = s.person_id && contactsMap[s.person_id] ? contactsMap[s.person_id].type : '';
         var personColor = s.person_id && contactsMap[s.person_id] && contactsMap[s.person_id].color ? contactsMap[s.person_id].color : (personType === 'external' ? '#c4622d' : '#3d6640');
         var personBadge = personName ? '<span style="font-size:0.65rem;font-weight:700;padding:2px 6px;border-radius:3px;background:' + personColor + ';color:#fff;letter-spacing:0.03em">' + personName + '</span>' : '';
-        var doneCheck = s.status === 'done' ? ' checked' : '';
         var clickFn = s.status === 'done' ? 'uncompleteStep' : 'completeStep';
-        var checkbox = '<input type="checkbox" onclick="event.stopPropagation();' + clickFn + '(\'' + s.id + '\')" style="width:18px;height:18px;cursor:pointer;accent-color:#16a34a;flex-shrink:0" title="' + (s.status === 'done' ? 'Undo this step' : 'Mark as done') + '"' + doneCheck + '>';
+        var ledTick = s.status === 'done' ? '<span style="color:#fff;font-size:0.6rem;font-weight:700">&#10003;</span>' : '';
         var dragHandle = s.status === 'upcoming' ? '<span style="font-size:0.8rem;color:#d1d5db;cursor:grab;margin-right:2px" title="Drag to reorder">&#9776;</span>' : '';
         var editBtn = '<span onclick="event.stopPropagation();editStep(\'' + s.id + '\')" style="font-size:0.7rem;color:#9ca3af;cursor:pointer;margin-left:auto" title="Edit step">edit</span>';
         var dragAttrs = s.status === 'upcoming' ? ' draggable="true" ondragstart="stepDragStart(event,\'' + s.id + '\')" ondragover="stepDragOver(event)" ondrop="stepDrop(event,\'' + s.id + '\')" style="cursor:grab"' : '';
         timelineHTML += '<div class="bb-stage ' + cls + '" id="step-' + s.id + '"' + dragAttrs + '>' +
-          '<div class="bb-stage-led"></div>' +
+          '<div class="bb-stage-led" onclick="event.stopPropagation();' + clickFn + '(\'' + s.id + '\')" style="cursor:pointer" title="' + (s.status === 'done' ? 'Undo' : 'Complete') + '">' + ledTick + '</div>' +
           '<div style="flex:1;min-width:0">' +
-            '<div class="bb-stage-head">' + dragHandle + checkbox + dateStr +
+            '<div class="bb-stage-head">' + dragHandle + dateStr +
               '<span class="bb-stage-name" style="font-weight:700;font-size:1rem">' + (s.name || '') + '</span>' +
               personBadge + nowPill + editBtn +
             '</div>' +
