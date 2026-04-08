@@ -976,9 +976,13 @@
 
     var completeBtn = '';
 
-    var html = '<div class="bb-detail-top">' +
+    var html = '<div class="bb-detail-top" style="flex-wrap:wrap">' +
       '<span class="bb-detail-num">#' + card.id + '</span>' +
       '<span class="bb-state" style="color:' + (stageColors[card.stage] || '#10b981') + '">' + stageLabels[card.stage] + '</span>' +
+      '<div style="display:flex;gap:8px;margin-left:auto;align-items:center">' +
+        '<select class="bb-edit-select" id="editUrgency" style="font-size:0.75rem;padding:4px 8px">' + urgSelect + '</select>' +
+        '<select class="bb-edit-select" id="editLoggedBy" style="font-size:0.75rem;padding:4px 8px">' + loggedBySelect + '</select>' +
+      '</div>' +
     '</div>' +
     '<div style="margin-bottom:1rem">' +
       '<div class="bb-edit-label" style="margin-bottom:4px">Title</div>' +
@@ -991,10 +995,6 @@
         : '<div id="postitToggle" style="margin-top:10px">' +
             '<div onclick="showPostitField()" style="font-size:0.85rem;font-weight:600;color:#365314;cursor:pointer;padding:8px 16px;background:#d9f99d;border:1px dashed #65a30d;border-radius:6px;display:inline-block">+ Add post-it</div>' +
           '</div>') +
-      '<div class="bb-edit-row" style="margin-top:10px">' +
-        '<div class="bb-edit-field"><div class="bb-edit-label">Urgency</div><select class="bb-edit-select" id="editUrgency">' + urgSelect + '</select></div>' +
-        '<div class="bb-edit-field"><div class="bb-edit-label">Initially logged by</div><select class="bb-edit-select" id="editLoggedBy">' + loggedBySelect + '</select></div>' +
-      '</div>' +
     '</div>' +
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:2rem">' +
       '<div class="bb-heading" style="margin:0;border:none;padding:0">Resolution Steps</div>' +
