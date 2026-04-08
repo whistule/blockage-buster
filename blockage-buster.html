@@ -132,7 +132,7 @@
   .bb-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.35rem; }
   .bb-card-num { font-size: 0.75rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.04em; }
   .bb-card-bell { font-size: 0.7rem; color: #6b7280; margin-left: auto; margin-right: 0.5rem; }
-  .bb-card-title { font-size: 1.05rem; font-weight: 600; color: #4b5563; margin-bottom: 0.3rem; }
+  .bb-card-title { font-size: 1rem; font-weight: 500; color: #6b7280; margin-bottom: 0.3rem; }
   .bb-card-desc { font-size: 0.9rem; color: #6b7280; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 0.6rem; }
   .bb-card-meta { display: flex; flex-direction: column; gap: 0.2rem; }
   .bb-card-meta-row { display: flex; gap: 0.3rem; align-items: baseline; }
@@ -630,7 +630,7 @@
     if (isBusted) {
       meta += '<div class="bb-card-meta-row"><span class="bb-card-value" style="color:#0098a0;font-weight:600">All steps complete</span></div>';
     } else {
-      meta += '<div class="bb-card-meta-row"><span class="bb-card-label">Next step: </span><span class="bb-card-value">' + c.currentStep + '</span></div>';
+      meta += '<div class="bb-card-meta-row"><span class="bb-card-label">Next step: </span><span class="bb-card-value" style="font-weight:700;font-size:1.05rem;color:#1f2937">' + c.currentStep + '</span></div>';
     }
     if (showStage) {
       meta += '<div class="bb-card-meta-row"><span class="bb-card-label">Status: </span><span class="bb-card-stage-pill" style="border-left:3px solid ' + stageColors[c.stage] + ';padding-left:6px;">' + stageLabels[c.stage] + '</span></div>';
