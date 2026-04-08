@@ -753,7 +753,12 @@
 
     // Sort cards within each group by urgency
     order.forEach(function(k) {
-      groups[k].sort(function(a, b) { return (urgencyOrder[a.urgency] || 4) - (urgencyOrder[b.urgency] || 4); });
+      groups[k].sort(function(a, b) {
+        var aBusted = (a.stage === 'busted' || a.stage === 'resolved') ? 1 : 0;
+        var bBusted = (b.stage === 'busted' || b.stage === 'resolved') ? 1 : 0;
+        if (aBusted !== bBusted) return aBusted - bBusted;
+        return (urgencyOrder[a.urgency] || 4) - (urgencyOrder[b.urgency] || 4);
+      });
     });
     return { groups: groups, order: order };
   }
