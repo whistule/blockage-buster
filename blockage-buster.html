@@ -1213,8 +1213,8 @@
         '<div class="bb-edit-label" style="margin-bottom:4px">Notes</div>' +
         '<textarea id="stepEditNotes" placeholder="Notes..." style="min-height:4rem;font-size:0.9rem;background:#fff;border:1px solid #d1d5db;border-radius:4px;padding:8px;margin-bottom:10px;width:100%;box-sizing:border-box;font-family:inherit;line-height:1.4">' + (step.notes || '').replace(/</g, '&lt;') + '</textarea>' +
         '<div style="display:flex;gap:0.5rem">' +
-          '<div class="bb-btn bb-btn--save" onclick="saveStep(\'' + stepId + '\')" style="flex:1;margin:0;padding:10px"><div class="bb-btn-indicator bb-btn-indicator--green"></div>Save</div>' +
-          '<div class="bb-btn" onclick="renderDetail(currentCardId)" style="flex:1;margin:0;padding:10px">Cancel</div>' +
+          '<div class="bb-btn bb-btn--save" onclick="event.stopPropagation();saveStep(\'' + stepId + '\')" style="flex:1;margin:0;padding:10px"><div class="bb-btn-indicator bb-btn-indicator--green"></div>Save</div>' +
+          '<div class="bb-btn" onclick="event.stopPropagation();renderDetail(currentCardId)" style="flex:1;margin:0;padding:10px">Cancel</div>' +
           '<div class="bb-btn bb-btn--delete" onclick="deleteStep(\'' + stepId + '\')" style="flex:0;margin:0;padding:10px"><div class="bb-btn-indicator bb-btn-indicator--red"></div>Delete</div>' +
         '</div>' +
       '</div>';
