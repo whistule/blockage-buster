@@ -642,7 +642,7 @@
         '<div class="bb-card-title">' + (isBusted ? '<span style="color:#0098a0;margin-right:4px">&#10003;</span>' : '') + c.title + '</div>' +
         (c.img ? '<div style="display:flex;gap:10px"><div style="flex:1;min-width:0">' : '') +
         (c.postit
-          ? '<div id="postit-card-' + c.id + '" class="bb-card-desc" onclick="event.stopPropagation();openCardPostit(\'' + c.id + '\',true)" style="background:#fef9c3;border-left:3px solid #eab308;padding-left:8px;border-radius:2px;font-style:italic;cursor:text">' + c.postit + '</div>'
+          ? '<div id="postit-card-' + c.id + '" class="bb-card-desc" onclick="event.stopPropagation();openCardPostit(\'' + c.id + '\',true)" style="background:#d9f99d;border-left:3px solid #65a30d;padding-left:8px;border-radius:2px;font-style:italic;cursor:text">' + c.postit + '</div>'
           : '<div class="bb-card-desc">' + c.desc + '</div>' +
             '<span onclick="event.stopPropagation();openCardPostit(\'' + c.id + '\')" style="position:absolute;top:6px;right:6px;font-size:1.3rem;cursor:pointer;opacity:0.25" title="Add a post-it">&#128204;</span>' +
             '<div id="postit-card-' + c.id + '"></div>') +
@@ -922,9 +922,9 @@
       '<textarea class="bb-edit-textarea" id="editDesc" style="background:#fff;border:1px solid #d1d5db;border-radius:4px;padding:8px;min-height:3rem">' + (card.desc || '').replace(/</g, '&lt;') + '</textarea>' +
       (card.postit
         ? '<div class="bb-edit-label" style="margin-top:10px;margin-bottom:4px">Post-it note <span style="font-weight:400;color:#9ca3af">(shows on card)</span></div>' +
-          '<textarea class="bb-edit-textarea" id="editPostit" style="background:#fef9c3;border:1px solid #eab308;border-radius:4px;padding:8px;min-height:2rem;font-style:italic">' + (card.postit || '').replace(/</g, '&lt;') + '</textarea>'
+          '<textarea class="bb-edit-textarea" id="editPostit" style="background:#d9f99d;border:1px solid #65a30d;border-radius:4px;padding:8px;min-height:2rem;font-style:italic">' + (card.postit || '').replace(/</g, '&lt;') + '</textarea>'
         : '<div id="postitToggle" style="margin-top:10px">' +
-            '<div onclick="showPostitField()" style="font-size:0.85rem;font-weight:600;color:#92400e;cursor:pointer;padding:8px 16px;background:#fef9c3;border:1px dashed #eab308;border-radius:6px;display:inline-block">+ Add post-it</div>' +
+            '<div onclick="showPostitField()" style="font-size:0.85rem;font-weight:600;color:#365314;cursor:pointer;padding:8px 16px;background:#d9f99d;border:1px dashed #65a30d;border-radius:6px;display:inline-block">+ Add post-it</div>' +
           '</div>') +
       '<div class="bb-edit-row" style="margin-top:10px">' +
         '<div class="bb-edit-field"><div class="bb-edit-label">Urgency</div><select class="bb-edit-select" id="editUrgency">' + urgSelect + '</select></div>' +
@@ -1488,7 +1488,7 @@
     if (!el) return;
     var card = cards.find(function(c) { return c.id === cardId; });
     if (!card) return;
-    el.innerHTML = '<textarea onclick="event.stopPropagation()" style="width:100%;background:#fef9c3;border:1px solid #eab308;border-radius:4px;padding:6px;min-height:2.5rem;font-size:0.8rem;font-style:italic;font-family:inherit;resize:vertical;box-sizing:border-box" placeholder="Write a note...">' + (card.postit || '') + '</textarea>' +
+    el.innerHTML = '<textarea onclick="event.stopPropagation()" style="width:100%;background:#d9f99d;border:1px solid #65a30d;border-radius:4px;padding:6px;min-height:2.5rem;font-size:0.8rem;font-style:italic;font-family:inherit;resize:vertical;box-sizing:border-box" placeholder="Write a note...">' + (card.postit || '') + '</textarea>' +
       '<div style="display:flex;gap:4px;margin-top:4px">' +
         '<div onclick="event.stopPropagation();saveCardPostit(\'' + cardId + '\')" style="font-size:0.7rem;font-weight:600;color:#fff;background:#3d6640;padding:4px 10px;border-radius:4px;cursor:pointer">Save</div>' +
         '<div onclick="event.stopPropagation();loadData()" style="font-size:0.7rem;font-weight:500;color:#6b7280;padding:4px 10px;cursor:pointer">Cancel</div>' +
@@ -1512,7 +1512,7 @@
     var el = document.getElementById('postitToggle');
     if (!el) return;
     el.innerHTML = '<div class="bb-edit-label" style="margin-bottom:4px">Post-it note <span style="font-weight:400;color:#9ca3af">(shows on card)</span></div>' +
-      '<textarea class="bb-edit-textarea" id="editPostit" style="background:#fef9c3;border:1px solid #eab308;border-radius:4px;padding:8px;min-height:2rem;font-style:italic" placeholder="Write a note..."></textarea>';
+      '<textarea class="bb-edit-textarea" id="editPostit" style="background:#d9f99d;border:1px solid #65a30d;border-radius:4px;padding:8px;min-height:2rem;font-style:italic" placeholder="Write a note..."></textarea>';
     var ta = document.getElementById('editPostit');
     if (ta) {
       ta.focus();
