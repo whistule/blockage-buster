@@ -697,7 +697,7 @@
         '<div class="bb-card-title">' + (isBusted ? '<span style="color:#0098a0;margin-right:4px">&#10003;</span>' : '') + c.title + '</div>' +
         (c.img ? '<div style="display:flex;gap:10px"><div style="flex:1;min-width:0">' : '') +
         (c.postit
-          ? '<div id="postit-card-' + c.id + '" class="bb-card-desc" onclick="event.stopPropagation();openCardPostit(\'' + c.id + '\',true)" style="background:#d9f99d;border-left:3px solid #65a30d;padding-left:8px;border-radius:2px;font-style:italic;cursor:text">' + c.postit + '</div>'
+          ? '<div id="postit-card-' + c.id + '" class="bb-card-desc" onclick="event.stopPropagation();openCardPostit(\'' + c.id + '\',true)" style="background:#d9f99d;border-left:3px solid #65a30d;padding-left:8px;border-radius:2px;font-style:italic;cursor:text;position:relative">' + c.postit + '<span onclick="event.stopPropagation();deletePostit(\'' + c.id + '\')" style="position:absolute;top:2px;right:4px;font-size:0.6rem;color:#65a30d;cursor:pointer;opacity:0.5;font-style:normal" title="Remove post-it">&#10005;</span></div>'
           : '<div class="bb-card-desc">' + c.desc + '</div>' +
             '<span onclick="event.stopPropagation();openCardPostit(\'' + c.id + '\')" style="position:absolute;top:6px;right:6px;font-size:0.9rem;cursor:pointer;opacity:0.45" title="Add a post-it">&#128204;</span>' +
             '<div id="postit-card-' + c.id + '"></div>') +
@@ -1552,6 +1552,14 @@
         '<div onclick="event.stopPropagation();loadData()" style="font-size:0.7rem;font-weight:500;color:#6b7280;padding:4px 10px;cursor:pointer">Cancel</div>' +
       '</div>';
     el.querySelector('textarea').focus();
+  };
+
+  window.deletePostit = async function(cardId) {
+    var card = cards.find(function(c) { return c.id === cardId; });
+    if (!card || !card.dbId) return;
+    await sb.from('cards').update({ postit: null }).eq('id', card.dbId);
+    showToast('Post-it removed');
+    await loadData();
   };
 
   window.saveCardPostit = async function(cardId) {
