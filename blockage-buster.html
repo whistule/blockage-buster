@@ -949,7 +949,7 @@
         var clickFn = s.status === 'done' ? 'uncompleteStep' : 'completeStep';
         var ledTick = s.status === 'done' ? '<span style="color:#fff;font-size:0.6rem;font-weight:700">&#10003;</span>' : '';
         var dragHandle = s.status === 'upcoming' ? '<span style="font-size:0.8rem;color:#d1d5db;cursor:grab;margin-right:2px" title="Drag to reorder">&#9776;</span>' : '';
-        var editBtn = '<span onclick="event.stopPropagation();editStep(\'' + s.id + '\')" style="font-size:0.7rem;color:#9ca3af;cursor:pointer;margin-left:auto" title="Edit step">edit</span>';
+        var editBtn = '<span onclick="event.stopPropagation();editStep(\'' + s.id + '\')" style="font-size:0.7rem;color:#4b5563;cursor:pointer;margin-left:auto;font-weight:600;text-decoration:underline" title="Edit step">edit</span>';
         var dragAttrs = s.status === 'upcoming' ? ' draggable="true" ondragstart="stepDragStart(event,\'' + s.id + '\')" ondragover="stepDragOver(event)" ondrop="stepDrop(event,\'' + s.id + '\')" style="cursor:grab"' : '';
         var dateLeft = dateVal ? '<span style="position:absolute;left:-4rem;top:0.3rem;font-size:0.55rem;font-weight:600;color:#9ca3af;text-align:right;width:2rem">' + dateVal + '</span>' : '';
         timelineHTML += '<div class="bb-stage ' + cls + '" id="step-' + s.id + '"' + dragAttrs + '>' +
