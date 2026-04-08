@@ -888,13 +888,15 @@
       '<span class="bb-detail-num">#' + card.id + '</span>' +
       '<span class="bb-state" style="color:' + (stageColors[card.stage] || '#10b981') + '">' + stageLabels[card.stage] + '</span>' +
     '</div>' +
-    '<div class="bb-heading">Title</div>' +
-    '<input class="bb-edit-input" id="editTitle" value="' + (card.title || '').replace(/"/g, '&quot;') + '">' +
-    '<div class="bb-heading">Description</div>' +
-    '<textarea class="bb-edit-textarea" id="editDesc">' + (card.desc || '').replace(/</g, '&lt;') + '</textarea>' +
-    '<div class="bb-edit-row" style="margin-top:1.5rem">' +
-      '<div class="bb-edit-field"><div class="bb-edit-label">Urgency</div><select class="bb-edit-select" id="editUrgency">' + urgSelect + '</select></div>' +
-      '<div class="bb-edit-field"><div class="bb-edit-label">Logged by</div><select class="bb-edit-select" id="editLoggedBy">' + loggedBySelect + '</select></div>' +
+    '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:12px;margin-bottom:1rem">' +
+      '<div class="bb-edit-label" style="margin-bottom:4px">Title</div>' +
+      '<input class="bb-edit-input" id="editTitle" value="' + (card.title || '').replace(/"/g, '&quot;') + '" style="font-size:1.2rem;background:#fff;border:1px solid #d1d5db;border-radius:4px;padding:8px;margin-bottom:10px">' +
+      '<div class="bb-edit-label" style="margin-bottom:4px">Description</div>' +
+      '<textarea class="bb-edit-textarea" id="editDesc" style="background:#fff;border:1px solid #d1d5db;border-radius:4px;padding:8px;min-height:3rem">' + (card.desc || '').replace(/</g, '&lt;') + '</textarea>' +
+      '<div class="bb-edit-row" style="margin-top:10px">' +
+        '<div class="bb-edit-field"><div class="bb-edit-label">Urgency</div><select class="bb-edit-select" id="editUrgency">' + urgSelect + '</select></div>' +
+        '<div class="bb-edit-field"><div class="bb-edit-label">Logged by</div><select class="bb-edit-select" id="editLoggedBy">' + loggedBySelect + '</select></div>' +
+      '</div>' +
     '</div>' +
     '<div class="bb-heading" style="margin-top:2rem">Resolution Steps</div>' +
     timelineHTML +
