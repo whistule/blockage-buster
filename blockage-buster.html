@@ -610,14 +610,19 @@
       : '<div onclick="event.stopPropagation();showRemindMenu(event,\'' + c.id + '\')" style="cursor:pointer;font-size:1.4rem;opacity:0.4" title="Set reminder">&#9200;</div>';
 
     // Bottom menu bar
-    // Mood emoji for bottom bar
     var moodEmoji = '<span onclick="event.stopPropagation();showMoodPicker(event,\'' + c.id + '\')" style="cursor:pointer;font-size:1.5rem;line-height:1" title="Set feeling">' + (c.mood || '&#128300;') + '</span>';
+
+    // On Hold toggle
+    var isOnHold = c.stage === 'onhold';
+    var holdIcon = isOnHold
+      ? '<span onclick="event.stopPropagation();unholdCard(\'' + c.id + '\')" style="cursor:pointer;font-size:0.65rem;font-weight:700;padding:3px 8px;background:#6b7280;color:#fff;border-radius:4px" title="Remove from On Hold">&#9208; ON HOLD</span>'
+      : '<span onclick="event.stopPropagation();holdCard(\'' + c.id + '\')" style="cursor:pointer;font-size:1.2rem;opacity:0.3" title="Put on hold">&#9208;</span>';
 
     var bottomBar = '<div class="bb-card-bar">' +
       '<span class="bb-pill ' + pillCls + '" style="font-size:0.7rem;padding:4px 10px">' + pillText + '</span>' +
       remindInfo +
       '<div style="display:flex;align-items:center;gap:10px;margin-left:auto">' +
-        moodEmoji + alarmIcon +
+        moodEmoji + holdIcon + alarmIcon +
       '</div>' +
     '</div>';
 
@@ -1499,6 +1504,29 @@
     if (!card || !card.dbId) return;
     var { error } = await sb.from('cards').update({ mood: emoji }).eq('id', card.dbId);
     if (error) { showToast('Error: ' + error.message); return; }
+    await loadData();
+  };
+
+  // ── ON HOLD ──
+  window.holdCard = async function(cardId) {
+    var card = cards.find(function(c) { return c.id === cardId; });
+    if (!card || !card.dbId) return;
+    await sb.from('cards').update({ stage: 'onhold' }).eq('id', card.dbId);
+    showToast('Card #' + cardId + ' on hold');
+    await loadData();
+  };
+
+  window.unholdCard = async function(cardId) {
+    var card = cards.find(function(c) { return c.id === cardId; });
+    if (!card || !card.dbId) return;
+    // Sync back to the correct column from steps
+    await syncCardStageFromSteps(card.dbId);
+    // If no steps, default to flagged
+    var updated = cards.find(function(c) { return c.id === cardId; });
+    if (!updated || updated.stage === 'onhold') {
+      await sb.from('cards').update({ stage: 'flagged' }).eq('id', card.dbId);
+    }
+    showToast('Card #' + cardId + ' off hold');
     await loadData();
   };
 
