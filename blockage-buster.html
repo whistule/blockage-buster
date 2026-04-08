@@ -246,7 +246,7 @@
   /* ── DETAIL VIEW ── */
   .bb-detail { padding: 0 1rem 2rem; }
   .bb-detail-top { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; flex-wrap: wrap; }
-  .bb-detail-num { font-size: 1.5rem; font-weight: 700; color: #9ca3af; }
+  .bb-detail-num { font-size: 2rem; font-weight: 700; color: #9ca3af; }
   .bb-state { background: #1f2937; color: #10b981; padding: 0.3rem 0.7rem; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; border-radius: 3px; }
   .bb-heading { font-size: 0.875rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; padding-bottom: 0.4rem; margin-bottom: 0.75rem; border-bottom: 1px solid #9ca3af; margin-top: 1.5rem; }
   .bb-heading:first-child { margin-top: 0; }
@@ -978,8 +978,8 @@
     var html = '<div class="bb-detail-top" style="flex-wrap:wrap">' +
       '<span class="bb-detail-num">#' + card.id + '</span>' +
       '<div style="display:flex;gap:8px;margin-left:auto;align-items:center">' +
-        '<select class="bb-edit-select" id="editUrgency" style="font-size:1rem;padding:8px 14px;font-weight:600">' + urgSelect + '</select>' +
         '<select class="bb-edit-select" id="editLoggedBy" style="font-size:1rem;padding:8px 14px;font-weight:600">' + loggedBySelect + '</select>' +
+        '<select class="bb-edit-select" id="editUrgency" style="font-size:1rem;padding:8px 14px;font-weight:600">' + urgSelect + '</select>' +
       '</div>' +
     '</div>' +
     '<div style="margin-bottom:1rem">' +
