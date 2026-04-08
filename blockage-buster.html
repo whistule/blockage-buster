@@ -977,9 +977,9 @@
 
     var html = '<div class="bb-detail-top" style="flex-wrap:wrap">' +
       '<span class="bb-detail-num">#' + card.id + '</span>' +
-      '<div style="display:flex;gap:8px;margin-left:auto;align-items:center">' +
-        '<select class="bb-edit-select" id="editLoggedBy" style="font-size:1rem;padding:8px 14px;font-weight:600">' + loggedBySelect + '</select>' +
-        '<select class="bb-edit-select" id="editUrgency" style="font-size:1rem;padding:8px 14px;font-weight:600">' + urgSelect + '</select>' +
+      '<div style="display:flex;gap:12px;margin-left:auto;align-items:center">' +
+        '<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:0.55rem;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:0.08em">Flagged by</span><select class="bb-edit-select" id="editLoggedBy" style="font-size:1rem;padding:8px 14px;font-weight:600">' + loggedBySelect + '</select></div>' +
+        '<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:0.55rem;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:0.08em">Urgency</span><select class="bb-edit-select" id="editUrgency" style="font-size:1rem;padding:8px 14px;font-weight:600">' + urgSelect + '</select></div>' +
       '</div>' +
     '</div>' +
     '<div style="margin-bottom:1rem">' +
