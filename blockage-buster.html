@@ -642,8 +642,10 @@
         '<div class="bb-card-title">' + (isBusted ? '<span style="color:#0098a0;margin-right:4px">&#10003;</span>' : '') + c.title + '</div>' +
         (c.img ? '<div style="display:flex;gap:10px"><div style="flex:1;min-width:0">' : '') +
         (c.postit
-          ? '<div class="bb-card-desc" style="background:#fef9c3;border-left:3px solid #eab308;padding-left:8px;border-radius:2px;font-style:italic">' + c.postit + '</div>'
-          : '<div class="bb-card-desc">' + c.desc + '<span style="display:inline-block;margin-left:6px;font-size:0.6rem;color:#eab308;opacity:0.6;vertical-align:middle" title="Add a post-it">&#128204;</span></div>') +
+          ? '<div id="postit-card-' + c.id + '" class="bb-card-desc" onclick="event.stopPropagation();openCardPostit(\'' + c.id + '\',true)" style="background:#fef9c3;border-left:3px solid #eab308;padding-left:8px;border-radius:2px;font-style:italic;cursor:text">' + c.postit + '</div>'
+          : '<div class="bb-card-desc">' + c.desc + '</div>' +
+            '<span onclick="event.stopPropagation();openCardPostit(\'' + c.id + '\')" style="position:absolute;top:6px;right:6px;font-size:1.3rem;cursor:pointer;opacity:0.25" title="Add a post-it">&#128204;</span>' +
+            '<div id="postit-card-' + c.id + '"></div>') +
         meta +
         (c.img ? '</div>' + imgHTML + '</div>' : '') +
         bottomBar +
@@ -1480,6 +1482,32 @@
   };
 
   // ── MOOD EMOJI PICKER ──
+  // ── INLINE CARD POSTIT ──
+  window.openCardPostit = function(cardId, hasExisting) {
+    var el = document.getElementById('postit-card-' + cardId);
+    if (!el) return;
+    var card = cards.find(function(c) { return c.id === cardId; });
+    if (!card) return;
+    el.innerHTML = '<textarea onclick="event.stopPropagation()" style="width:100%;background:#fef9c3;border:1px solid #eab308;border-radius:4px;padding:6px;min-height:2.5rem;font-size:0.8rem;font-style:italic;font-family:inherit;resize:vertical;box-sizing:border-box" placeholder="Write a note...">' + (card.postit || '') + '</textarea>' +
+      '<div style="display:flex;gap:4px;margin-top:4px">' +
+        '<div onclick="event.stopPropagation();saveCardPostit(\'' + cardId + '\')" style="font-size:0.7rem;font-weight:600;color:#fff;background:#3d6640;padding:4px 10px;border-radius:4px;cursor:pointer">Save</div>' +
+        '<div onclick="event.stopPropagation();loadData()" style="font-size:0.7rem;font-weight:500;color:#6b7280;padding:4px 10px;cursor:pointer">Cancel</div>' +
+      '</div>';
+    el.querySelector('textarea').focus();
+  };
+
+  window.saveCardPostit = async function(cardId) {
+    var el = document.getElementById('postit-card-' + cardId);
+    if (!el) return;
+    var ta = el.querySelector('textarea');
+    if (!ta) return;
+    var card = cards.find(function(c) { return c.id === cardId; });
+    if (!card || !card.dbId) return;
+    await sb.from('cards').update({ postit: ta.value || null }).eq('id', card.dbId);
+    showToast('Post-it saved');
+    await loadData();
+  };
+
   window.showPostitField = function() {
     var el = document.getElementById('postitToggle');
     if (!el) return;
