@@ -618,7 +618,7 @@
     var isOnHold = c.stage === 'onhold';
     var holdIcon = isOnHold
       ? '<span onclick="event.stopPropagation();unholdCard(\'' + c.id + '\')" style="cursor:pointer;font-size:0.65rem;font-weight:700;padding:3px 8px;background:#6b7280;color:#fff;border-radius:4px" title="Remove from On Hold">&#9208; ON HOLD</span>'
-      : '<span onclick="event.stopPropagation();holdCard(\'' + c.id + '\')" style="cursor:pointer;font-size:1.2rem;opacity:0.3" title="Put on hold">&#9208;</span>';
+      : '<span onclick="event.stopPropagation();holdCard(\'' + c.id + '\',event)" style="cursor:pointer;font-size:1.2rem;opacity:0.3" title="Put on hold">&#9208;</span>';
 
     var bottomBar = '<div class="bb-card-bar">' +
       '<span class="bb-pill ' + pillCls + '" style="font-size:0.7rem;padding:4px 10px">' + pillText + '</span>' +
@@ -1531,12 +1531,15 @@
   };
 
   // ── ON HOLD ──
-  window.holdCard = async function(cardId) {
+  window.holdCard = async function(cardId, fromEvent) {
     var card = cards.find(function(c) { return c.id === cardId; });
     if (!card || !card.dbId) return;
     await sb.from('cards').update({ stage: 'onhold' }).eq('id', card.dbId);
-    showToast('Card #' + cardId + ' on hold');
+    showToast('Card #' + cardId + ' on hold — set a reminder');
     await loadData();
+    // Force the reminder picker to open
+    var fakeEvent = fromEvent || { clientX: window.innerWidth / 2, clientY: window.innerHeight / 3, stopPropagation: function(){} };
+    showRemindMenu(fakeEvent, cardId);
   };
 
   window.unholdCard = async function(cardId) {
