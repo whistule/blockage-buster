@@ -1203,15 +1203,15 @@
     var el = document.getElementById('step-' + stepId);
     if (!el) return;
     el.innerHTML =
-      '<div style="padding:1rem;background:#f9fafb;border:2px solid #ea580c;border-radius:8px">' +
+      '<div style="padding:1rem;background:#f9fafb;border:2px solid #ea580c;border-radius:8px;margin-left:-4.5rem;width:calc(100% + 4.5rem);box-sizing:border-box">' +
         '<div class="bb-edit-label" style="margin-bottom:4px">Step name</div>' +
-        '<textarea class="bb-edit-textarea" id="stepEditName" style="font-size:1.2rem;font-weight:700;font-family:inherit;background:#fff;border:1px solid #d1d5db;border-radius:4px;padding:10px;width:100%;box-sizing:border-box;margin-bottom:10px;min-height:3.5rem;resize:vertical">' + (step.name || '').replace(/</g, '&lt;') + '</textarea>' +
-        '<div class="bb-edit-row" style="margin-bottom:10px">' +
-          '<div class="bb-edit-field"><div class="bb-edit-label" style="margin-bottom:4px">Assigned to</div><select class="bb-edit-select" id="stepEditPerson" style="font-size:0.95rem;padding:8px 12px;width:100%">' + stagePersonOpts + '</select></div>' +
-          '<div class="bb-edit-field"><div class="bb-edit-label" style="margin-bottom:4px">Status</div><select class="bb-edit-select" id="stepEditStatus" style="font-size:0.95rem;padding:8px 12px;width:100%">' + statusOpts + '</select></div>' +
+        '<textarea id="stepEditName" style="font-size:1.2rem;font-weight:700;font-family:inherit;background:#fff;border:1px solid #d1d5db;border-radius:4px;padding:10px;width:100%;box-sizing:border-box;margin-bottom:10px;min-height:3.5rem;resize:vertical;line-height:1.4">' + (step.name || '').replace(/</g, '&lt;') + '</textarea>' +
+        '<div style="display:flex;gap:10px;margin-bottom:10px">' +
+          '<div style="flex:1"><div class="bb-edit-label" style="margin-bottom:4px">Assigned to</div><select class="bb-edit-select" id="stepEditPerson" style="font-size:0.95rem;padding:8px 12px;width:100%;box-sizing:border-box">' + stagePersonOpts + '</select></div>' +
+          '<div style="flex:1"><div class="bb-edit-label" style="margin-bottom:4px">Status</div><select class="bb-edit-select" id="stepEditStatus" style="font-size:0.95rem;padding:8px 12px;width:100%;box-sizing:border-box">' + statusOpts + '</select></div>' +
         '</div>' +
         '<div class="bb-edit-label" style="margin-bottom:4px">Notes</div>' +
-        '<textarea class="bb-edit-textarea" id="stepEditNotes" placeholder="Notes..." style="min-height:4rem;font-size:0.9rem;background:#fff;border:1px solid #d1d5db;border-radius:4px;padding:8px;margin-bottom:10px;width:100%;box-sizing:border-box">' + (step.notes || '').replace(/</g, '&lt;') + '</textarea>' +
+        '<textarea id="stepEditNotes" placeholder="Notes..." style="min-height:4rem;font-size:0.9rem;background:#fff;border:1px solid #d1d5db;border-radius:4px;padding:8px;margin-bottom:10px;width:100%;box-sizing:border-box;font-family:inherit;line-height:1.4">' + (step.notes || '').replace(/</g, '&lt;') + '</textarea>' +
         '<div style="display:flex;gap:0.5rem">' +
           '<div class="bb-btn bb-btn--save" onclick="saveStep(\'' + stepId + '\')" style="flex:1;margin:0;padding:10px"><div class="bb-btn-indicator bb-btn-indicator--green"></div>Save</div>' +
           '<div class="bb-btn" onclick="renderDetail(currentCardId)" style="flex:1;margin:0;padding:10px">Cancel</div>' +
