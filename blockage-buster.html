@@ -644,7 +644,7 @@
         (c.postit
           ? '<div id="postit-card-' + c.id + '" class="bb-card-desc" onclick="event.stopPropagation();openCardPostit(\'' + c.id + '\',true)" style="background:#d9f99d;border-left:3px solid #65a30d;padding-left:8px;border-radius:2px;font-style:italic;cursor:text">' + c.postit + '</div>'
           : '<div class="bb-card-desc">' + c.desc + '</div>' +
-            '<span onclick="event.stopPropagation();openCardPostit(\'' + c.id + '\')" style="position:absolute;top:6px;right:6px;font-size:1.3rem;cursor:pointer;opacity:0.25" title="Add a post-it">&#128204;</span>' +
+            '<span onclick="event.stopPropagation();openCardPostit(\'' + c.id + '\')" style="position:absolute;top:6px;right:6px;font-size:0.9rem;cursor:pointer;opacity:0.45" title="Add a post-it">&#128204;</span>' +
             '<div id="postit-card-' + c.id + '"></div>') +
         meta +
         (c.img ? '</div>' + imgHTML + '</div>' : '') +
