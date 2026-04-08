@@ -184,6 +184,7 @@
     /* Compress topbar */
     .bb-topbar--main { padding: 0.6rem 0.75rem 0.6rem; gap: 0.5rem; }
     .bb-topbar-title { font-size: 1.2rem; }
+    .bb-topbar-sub { display: none; }
     .bb-view-toggle-btn { padding: 0.25rem 0.5rem; font-size: 0.6rem; }
     /* Compress cards */
     .bb-card-stripe { width: 28px !important; min-width: 28px !important; }
@@ -453,12 +454,13 @@
     </a>
     <div class="bb-topbar-brand">
       <div class="bb-topbar-title"><span class="bb-topbar-mk">MK</span><span class="bb-topbar-app">BLOCKAGE BUSTER</span></div>
-      <div class="bb-view-toggle" style="margin-top:4px">
-        <div class="bb-view-toggle-btn bb-view-toggle-btn--active" onclick="setViewMode('stage')">Stage</div>
-        <div class="bb-view-toggle-btn" onclick="setViewMode('person')">Us</div>
-        <div class="bb-view-toggle-btn" onclick="setViewMode('supplier')">Them</div>
-        <div class="bb-view-toggle-btn" onclick="setViewMode('urgency')">Urgency</div>
-      </div>
+      <div class="bb-topbar-sub">workshop app dashboard</div>
+    </div>
+    <div class="bb-view-toggle">
+      <div class="bb-view-toggle-btn bb-view-toggle-btn--active" onclick="setViewMode('stage')">Stage</div>
+      <div class="bb-view-toggle-btn" onclick="setViewMode('person')">Us</div>
+      <div class="bb-view-toggle-btn" onclick="setViewMode('supplier')">Them</div>
+      <div class="bb-view-toggle-btn" onclick="setViewMode('urgency')">Urgency</div>
     </div>
     <div class="bb-topbar-rule"></div>
   </div>
