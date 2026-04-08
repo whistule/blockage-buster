@@ -731,10 +731,8 @@
       tabsHTML += '<div class="bb-tab' + active + '" data-key="' + key + '">' + label + ' <span class="bb-tab-count">' + groups[key].length + '</span></div>';
     });
     if (viewMode === 'stage') tabsHTML += '<div class="bb-tab bb-tab--add">+ Column</div>';
-    // Add card button for mobile (in current tab)
-    if (viewMode === 'stage' && activeTab && activeTab !== 'busted') {
-      tabsHTML += '<div class="bb-tab-add-card" onclick="openNewCard(\'' + activeTab + '\')">+</div>';
-    }
+    // Add card button for mobile — always visible
+    tabsHTML += '<div class="bb-tab-add-card" onclick="openNewCard(\'' + (activeTab || 'flagged') + '\')" style="font-size:1.5rem;padding:0.3rem 1rem">+</div>';
     tabsEl.innerHTML = tabsHTML;
 
     // Wire tab clicks
