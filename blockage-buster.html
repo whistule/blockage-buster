@@ -600,6 +600,7 @@
           why5: c.why5 || '',
           remindAt: c.remind_at || null,
           mood: c.mood || '',
+          sortPos: c.sort_pos || 0,
           postit: c.postit || ''
         };
       });
@@ -691,7 +692,7 @@
     var imgHTML = c.img ? '<img class="bb-card-img" src="' + c.img + '" alt="">' : '';
     var cardOpacity = hasRemindAt ? ' style="opacity:0.35"' : '';
 
-    return '<div class="bb-card"' + cardOpacity + ' onclick="showDetail(\'' + c.id + '\')">' +
+    return '<div class="bb-card" data-card-id="' + c.id + '"' + cardOpacity + ' onclick="showDetail(\'' + c.id + '\')" draggable="true" ondragstart="cardDragStart(event,\'' + c.id + '\')" ondragover="cardDragOver(event)" ondrop="cardDrop(event,\'' + c.id + '\')">' +
       '<div class="bb-card-stripe" style="background:' + borderColor + ';">' +
         bustCircle +
         '<span class="bb-card-stripe-text bb-card-stripe-num">#' + c.id + '</span>' +
@@ -766,7 +767,9 @@
         var aBusted = (a.stage === 'busted' || a.stage === 'resolved') ? 1 : 0;
         var bBusted = (b.stage === 'busted' || b.stage === 'resolved') ? 1 : 0;
         if (aBusted !== bBusted) return aBusted - bBusted;
-        return (urgencyOrder[a.urgency] || 4) - (urgencyOrder[b.urgency] || 4);
+        var urgDiff = (urgencyOrder[a.urgency] || 4) - (urgencyOrder[b.urgency] || 4);
+        if (urgDiff !== 0) return urgDiff;
+        return (a.sortPos || 0) - (b.sortPos || 0);
       });
     });
     return { groups: groups, order: order };
@@ -1741,6 +1744,70 @@
     showToast('Card #' + cardId + ' off hold');
     await loadData();
   };
+
+  // ── DRAG REORDER CARDS ON BOARD ──
+  var dragCardId = null;
+
+  window.cardDragStart = function(e, cardId) {
+    dragCardId = cardId;
+    e.dataTransfer.effectAllowed = 'move';
+    e.target.style.opacity = '0.4';
+    // Prevent click from firing after drag
+    e.target.setAttribute('data-dragging', '1');
+  };
+
+  window.cardDragOver = function(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    document.querySelectorAll('.bb-card').forEach(function(el) { el.style.borderTop = ''; });
+    var target = e.target.closest('.bb-card');
+    if (target && target.getAttribute('data-card-id') !== dragCardId) {
+      target.style.borderTop = '3px solid #ea580c';
+    }
+  };
+
+  window.cardDrop = async function(e, targetCardId) {
+    e.preventDefault();
+    e.stopPropagation();
+    var target = e.target.closest('.bb-card');
+    if (target) target.style.borderTop = '';
+    if (!dragCardId || dragCardId === targetCardId) { dragCardId = null; return; }
+
+    var dragCard = cards.find(function(c) { return c.id === dragCardId; });
+    var targetCard = cards.find(function(c) { return c.id === targetCardId; });
+    if (!dragCard || !targetCard || !dragCard.dbId || !targetCard.dbId) { dragCardId = null; return; }
+
+    // Swap sort positions
+    var dragPos = dragCard.sortPos || 0;
+    var targetPos = targetCard.sortPos || 0;
+    // If same position, assign new ones
+    if (dragPos === targetPos) {
+      targetPos = dragPos + 1;
+    }
+    await sb.from('cards').update({ sort_pos: targetPos }).eq('id', dragCard.dbId);
+    await sb.from('cards').update({ sort_pos: dragPos }).eq('id', targetCard.dbId);
+
+    dragCardId = null;
+    await loadData();
+  };
+
+  document.addEventListener('dragend', function(e) {
+    dragCardId = null;
+    document.querySelectorAll('.bb-card').forEach(function(el) {
+      el.style.opacity = '';
+      el.style.borderTop = '';
+      el.removeAttribute('data-dragging');
+    });
+  });
+
+  // Prevent click from opening detail after a drag
+  document.addEventListener('click', function(e) {
+    var card = e.target.closest('.bb-card');
+    if (card && card.getAttribute('data-dragging') === '1') {
+      e.stopPropagation();
+      card.removeAttribute('data-dragging');
+    }
+  }, true);
 
   window.bustCard = async function(cardId) {
     var card = cards.find(function(c) { return c.id === cardId; });
