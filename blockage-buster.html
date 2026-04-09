@@ -767,7 +767,7 @@
         var aBusted = (a.stage === 'busted' || a.stage === 'resolved') ? 1 : 0;
         var bBusted = (b.stage === 'busted' || b.stage === 'resolved') ? 1 : 0;
         if (aBusted !== bBusted) return aBusted - bBusted;
-        var urgDiff = (urgencyOrder[a.urgency] || 4) - (urgencyOrder[b.urgency] || 4);
+        var urgDiff = (urgencyOrder[(a.urgency||'').toLowerCase()] !== undefined ? urgencyOrder[(a.urgency||'').toLowerCase()] : 4) - (urgencyOrder[(b.urgency||'').toLowerCase()] !== undefined ? urgencyOrder[(b.urgency||'').toLowerCase()] : 4);
         if (urgDiff !== 0) return urgDiff;
         return (a.sortPos || 0) - (b.sortPos || 0);
       });
