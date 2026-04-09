@@ -825,7 +825,8 @@
 
     // ── Desktop columns ──
     var colsEl = document.getElementById('bbDesktopCols');
-    colsEl.style.gridTemplateColumns = 'repeat(' + order.length + ', 1fr)';
+    var colWidths = order.map(function(k) { return (k === 'onhold' || k === 'busted') ? '0.5fr' : '1fr'; }).join(' ');
+    colsEl.style.gridTemplateColumns = colWidths;
     var colsHTML = '';
     order.forEach(function(key) {
       var label, stripeStyle;
