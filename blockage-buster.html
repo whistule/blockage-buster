@@ -989,7 +989,8 @@
       '<textarea class="bb-edit-textarea" id="editDesc" style="background:#fff;border:1px solid #d1d5db;border-radius:4px;padding:8px;min-height:3rem">' + (card.desc || '').replace(/</g, '&lt;') + '</textarea>' +
       (card.postit
         ? '<div class="bb-edit-label" style="margin-top:10px;margin-bottom:4px">Post-it note <span style="font-weight:400;color:#9ca3af">(shows on card)</span></div>' +
-          '<textarea class="bb-edit-textarea" id="editPostit" style="background:#d9f99d;border:1px solid #65a30d;border-radius:4px;padding:8px;min-height:2rem;font-style:italic">' + (card.postit || '').replace(/</g, '&lt;') + '</textarea>'
+          '<div style="font-size:0.6rem;color:#65a30d;margin-bottom:4px">Ctrl+B bold · Ctrl+I italic · Ctrl+U underline</div>' +
+          '<div contenteditable="true" id="editPostit" style="background:#d9f99d;border:1px solid #65a30d;border-radius:4px;padding:8px;min-height:2rem;font-style:italic;outline:none;line-height:1.5;font-family:inherit;font-size:0.9rem">' + (card.postit || '') + '</div>'
         : '<div id="postitToggle" style="margin-top:10px">' +
             '<div onclick="showPostitField()" style="font-size:0.85rem;font-weight:600;color:#365314;cursor:pointer;padding:8px 16px;background:#d9f99d;border:1px dashed #65a30d;border-radius:6px;display:inline-block">+ Add post-it</div>' +
           '</div>') +
@@ -1298,7 +1299,7 @@
     var updates = {
       title: title,
       description: document.getElementById('editDesc').value,
-      postit: document.getElementById('editPostit').value || null,
+      postit: (function() { var el = document.getElementById('editPostit'); return el ? (el.innerHTML || '').trim() || null : null; })(),
       urgency: document.getElementById('editUrgency').value,
       logged_by: document.getElementById('editLoggedBy').value || null
     };
@@ -1553,12 +1554,13 @@
     if (!el) return;
     var card = cards.find(function(c) { return c.id === cardId; });
     if (!card) return;
-    el.innerHTML = '<textarea onclick="event.stopPropagation()" style="width:100%;background:#d9f99d;border:1px solid #65a30d;border-radius:4px;padding:6px;min-height:2.5rem;font-size:0.8rem;font-style:italic;font-family:inherit;resize:vertical;box-sizing:border-box" placeholder="Write a note...">' + (card.postit || '') + '</textarea>' +
+    el.innerHTML = '<div style="font-size:0.55rem;color:#65a30d;margin-bottom:2px">Ctrl+B bold · Ctrl+I italic · Ctrl+U underline</div>' +
+      '<div contenteditable="true" id="postit-editor-' + cardId + '" onclick="event.stopPropagation()" style="width:100%;background:#d9f99d;border:1px solid #65a30d;border-radius:4px;padding:6px;min-height:2.5rem;font-size:0.8rem;font-style:italic;font-family:inherit;box-sizing:border-box;outline:none;line-height:1.4">' + (card.postit || '') + '</div>' +
       '<div style="display:flex;gap:4px;margin-top:4px">' +
         '<div onclick="event.stopPropagation();saveCardPostit(\'' + cardId + '\')" style="font-size:0.7rem;font-weight:600;color:#fff;background:#3d6640;padding:4px 10px;border-radius:4px;cursor:pointer">Save</div>' +
         '<div onclick="event.stopPropagation();loadData()" style="font-size:0.7rem;font-weight:500;color:#6b7280;padding:4px 10px;cursor:pointer">Cancel</div>' +
       '</div>';
-    el.querySelector('textarea').focus();
+    document.getElementById('postit-editor-' + cardId).focus();
   };
 
   window.deletePostit = async function(cardId) {
@@ -1570,13 +1572,13 @@
   };
 
   window.saveCardPostit = async function(cardId) {
-    var el = document.getElementById('postit-card-' + cardId);
-    if (!el) return;
-    var ta = el.querySelector('textarea');
-    if (!ta) return;
+    var ed = document.getElementById('postit-editor-' + cardId);
+    if (!ed) return;
     var card = cards.find(function(c) { return c.id === cardId; });
     if (!card || !card.dbId) return;
-    await sb.from('cards').update({ postit: ta.value || null }).eq('id', card.dbId);
+    var content = (ed.innerHTML || '').trim();
+    if (content === '<br>' || content === '') content = null;
+    await sb.from('cards').update({ postit: content }).eq('id', card.dbId);
     showToast('Post-it saved');
     await loadData();
   };
@@ -1639,11 +1641,12 @@
     var el = document.getElementById('postitToggle');
     if (!el) return;
     el.innerHTML = '<div class="bb-edit-label" style="margin-bottom:4px">Post-it note <span style="font-weight:400;color:#9ca3af">(shows on card)</span></div>' +
-      '<textarea class="bb-edit-textarea" id="editPostit" style="background:#d9f99d;border:1px solid #65a30d;border-radius:4px;padding:8px;min-height:2rem;font-style:italic" placeholder="Write a note..."></textarea>';
-    var ta = document.getElementById('editPostit');
-    if (ta) {
-      ta.focus();
-      ta.addEventListener('input', function() {
+      '<div style="font-size:0.6rem;color:#65a30d;margin-bottom:4px">Ctrl+B bold · Ctrl+I italic · Ctrl+U underline</div>' +
+      '<div contenteditable="true" id="editPostit" style="background:#d9f99d;border:1px solid #65a30d;border-radius:4px;padding:8px;min-height:2rem;font-style:italic;outline:none;line-height:1.5;font-family:inherit;font-size:0.9rem"></div>';
+    var ed = document.getElementById('editPostit');
+    if (ed) {
+      ed.focus();
+      ed.addEventListener('input', function() {
         clearTimeout(autoSaveTimer);
         var status = document.getElementById('autosaveStatus');
         if (status) status.textContent = 'Unsaved changes...';
