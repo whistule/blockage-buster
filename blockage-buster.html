@@ -749,10 +749,16 @@
       });
     } else {
       filtered.forEach(function(c) {
-        var key = c.person;
+        var isBusted = c.stage === 'busted' || c.stage === 'resolved';
+        var key = isBusted ? 'Completed' : c.person;
         if (!groups[key]) { groups[key] = []; order.push(key); }
         groups[key].push(c);
       });
+      // Move Completed to end
+      if (groups['Completed'] && order.indexOf('Completed') !== -1) {
+        order = order.filter(function(k) { return k !== 'Completed'; });
+        order.push('Completed');
+      }
     }
 
     // Sort cards within each group by urgency
