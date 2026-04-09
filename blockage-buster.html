@@ -624,7 +624,6 @@
     // Stripe always shows person colour
     var borderColor = personColors[c.person] || defaultPersonColor;
     if (isBusted) borderColor = '#0098a0';
-    else if (c.urgency === 'urgent') borderColor = '#ef4444';
 
     // Stripe text: person name at bottom (or 'Complete' if busted), card number at top
     var stripeName = isBusted ? 'Complete' : c.person;
