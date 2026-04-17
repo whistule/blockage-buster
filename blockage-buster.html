@@ -127,9 +127,19 @@
   .bb-card-stripe-num { writing-mode: horizontal-tb; transform: none; font-size: 0.7rem; letter-spacing: 0.04em; }
   .bb-card-stripe-who { transform: rotate(180deg); text-align: left; line-height: 1.3; margin-top: auto; }
 
-  .bb-card-body { padding: 12px 14px 8px; min-width: 0; position: relative; }
-  .bb-card-bottom { margin-top: 0.3rem; }
-  .bb-card-bar { display: flex; align-items: center; gap: 8px; height: 30px; border-top: 1px solid #e5e7eb; overflow: hidden; padding: 0; }
+  .bb-card-body { padding: 12px 14px 0; min-width: 0; position: relative; display: flex; flex-direction: column; flex: 1; }
+  .bb-card-bottom { margin-top: auto; }
+  .bb-card-bar {
+    display: flex; align-items: center; flex-wrap: nowrap;
+    gap: 8px; padding: 0 14px;
+    height: 36px; min-height: 36px; max-height: 36px;
+    margin: 0.3rem -14px 0;
+    border-top: 1px solid #e5e7eb;
+    background: #fafafa;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .bb-card-bar .bb-pill { flex-shrink: 0; }
 
   .bb-card-img {
     width: 64px; min-width: 64px; height: 64px;
@@ -203,7 +213,7 @@
     .bb-card-title { font-size: 0.9rem !important; }
     .bb-card-desc { font-size: 0.75rem !important; -webkit-line-clamp: 1 !important; }
     .bb-card-meta { font-size: 0.7rem !important; }
-    .bb-card-bar { height: 24px !important; }
+    .bb-card-bar { height: 30px !important; min-height: 30px !important; max-height: 30px !important; }
     .bb-card-bar .bb-pill { font-size: 0.5rem !important; padding: 2px 5px !important; }
   }
   .bb-hamburger {
