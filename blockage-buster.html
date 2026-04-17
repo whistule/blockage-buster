@@ -54,24 +54,24 @@
     text-transform: uppercase; letter-spacing: 0.02em; flex: 1;
   }
 
-  /* View toggle */
+  /* View toggle — tab style */
   .bb-view-toggle {
-    display: flex; gap: 0; border: 1px solid #d1d5db; border-radius: 4px; overflow: hidden;
+    display: flex; gap: 0; align-items: flex-end;
   }
   .bb-view-toggle-btn {
-    padding: 0.35rem 0.75rem; font-size: 0.7rem; font-weight: 600;
-    text-transform: uppercase; letter-spacing: 0.04em;
-    cursor: pointer; background: white; color: #6b7280;
-    border: none; border-right: 1px solid #d1d5db;
-    transition: background 0.15s, color 0.15s;
+    padding: 0.55rem 1.1rem 0.5rem; font-size: 0.85rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    cursor: pointer; background: transparent; color: #9ca3af;
+    border: none; border-bottom: 3px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
   }
+  .bb-view-toggle-btn:hover { color: #4b5563; }
+  .bb-view-toggle-btn--active { color: #1f2937; border-bottom-color: #ea580c; }
   @media (min-width: 900px) {
     .bb-view-toggle-btn {
-      padding: 0.5rem 1.5rem; font-size: 0.9rem; letter-spacing: 0.06em;
+      padding: 0.65rem 1.5rem 0.55rem; font-size: 1rem; letter-spacing: 0.08em;
     }
   }
-  .bb-view-toggle-btn:last-child { border-right: none; }
-  .bb-view-toggle-btn--active { background: #4b5563; color: white; }
 
   /* ── TABS (mobile) ── */
   .bb-tabs {
