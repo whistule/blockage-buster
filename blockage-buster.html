@@ -534,7 +534,7 @@
     var { data: dbCards } = await sb.from('cards').select('*, contacts!person_id(name, type, color)').order('buster_num');
 
     // Load stages for current step display
-    var { data: stages } = await sb.from('stages').select('*, contacts!person_id(name, type), secondary_contact:contacts!secondary_person_id(name, type)').eq('status', 'now');
+    var { data: stages } = await sb.from('stages').select('*, contacts!person_id(name, type), secondary_contact:contacts!secondary_person_id(name, type), additional_people').eq('status', 'now');
     var nowStageByCard = {};
     if (stages) {
       stages.forEach(function(s) { nowStageByCard[s.card_id] = s; });
@@ -584,6 +584,14 @@
         var nowStage = nowStageByCard[c.id];
         var nowContact = nowStage && nowStage.contacts ? nowStage.contacts : null;
         var nowSecondary = nowStage && nowStage.secondary_contact ? nowStage.secondary_contact : null;
+        // Resolve additional_people UUIDs → internal contact names (Us only, dedup)
+        var extraPeopleNames = [];
+        if (nowStage && Array.isArray(nowStage.additional_people)) {
+          nowStage.additional_people.forEach(function(pid) {
+            var ct = contactsMap[pid];
+            if (ct && ct.type !== 'external' && extraPeopleNames.indexOf(ct.name) === -1) extraPeopleNames.push(ct.name);
+          });
+        }
         return {
           id: String(c.buster_num).padStart(3, '0'),
           dbId: c.id,
@@ -596,6 +604,7 @@
           type: nowContact ? (nowContact.type || 'internal') : (contact.type || 'internal'),
           secondaryPerson: nowSecondary ? nowSecondary.name : '',
           secondaryType: nowSecondary ? (nowSecondary.type || 'internal') : '',
+          extraPeople: extraPeopleNames,
           urgency: c.urgency || '',
           currentStep: nowStage ? nowStage.name : '—',
           hasReminder: !!reminderByCard[c.id],
@@ -762,10 +771,19 @@
         var key = isBusted ? 'Completed' : c.person;
         if (!groups[key]) { groups[key] = []; order.push(key); }
         groups[key].push(c);
-        // Also place in secondary person's column when in "Us" view and secondary is internal
-        if (!isBusted && viewMode === 'person' && c.secondaryPerson && c.secondaryType === 'internal' && c.secondaryPerson !== c.person) {
+        if (isBusted) return;
+        // In "Us" view, also place in columns for each additional relevant internal person
+        if (viewMode === 'person' && Array.isArray(c.extraPeople)) {
+          c.extraPeople.forEach(function(name) {
+            if (!name || name === c.person) return;
+            if (!groups[name]) { groups[name] = []; order.push(name); }
+            if (groups[name].indexOf(c) === -1) groups[name].push(c);
+          });
+        }
+        // Back-compat: legacy secondary_person_id (still show if set)
+        if (viewMode === 'person' && c.secondaryPerson && c.secondaryType === 'internal' && c.secondaryPerson !== c.person) {
           if (!groups[c.secondaryPerson]) { groups[c.secondaryPerson] = []; order.push(c.secondaryPerson); }
-          groups[c.secondaryPerson].push(c);
+          if (groups[c.secondaryPerson].indexOf(c) === -1) groups[c.secondaryPerson].push(c);
         }
       });
       // Move Completed to end
@@ -1032,10 +1050,12 @@
         '<div class="bb-edit-field" style="flex:0"><select class="bb-edit-select" id="newStageStatus"><option value="upcoming">Upcoming</option><option value="now">Now</option><option value="done">Done</option></select></div>' +
       '</div>' +
       '<div id="newStageSecondaryWrap" style="display:none;margin-top:0.5rem">' +
-        '<div class="bb-edit-label" style="margin-bottom:4px">Secondary runner <span style="font-weight:400;color:#9ca3af">(optional — also shows in their Us column)</span></div>' +
-        '<select class="bb-edit-select" id="newStageSecondary" style="width:100%"><option value="">—</option>' +
-          usContacts.map(function(c) { return '<option value="' + c.id + '">' + c.name + '</option>'; }).join('') +
-        '</select>' +
+        '<div class="bb-edit-label" style="margin-bottom:4px">Also relevant to <span style="font-weight:400;color:#9ca3af">(appears in their Us column)</span></div>' +
+        '<div id="newStageExtraPeople" style="display:flex;flex-wrap:wrap;gap:0.5rem 1rem;padding:0.35rem 0">' +
+          usContacts.map(function(c) {
+            return '<label data-person-id="' + c.id + '" style="display:inline-flex;align-items:center;gap:4px;font-size:0.85rem;cursor:pointer"><input type="checkbox" value="' + c.id + '" style="margin:0"> ' + c.name + '</label>';
+          }).join('') +
+        '</div>' +
       '</div>' +
       '<textarea class="bb-edit-textarea" id="newStageNotes" placeholder="Notes (optional)" style="min-height:2rem;font-size:0.8rem;margin-top:0.5rem;background:#fff;border:1px solid #d1d5db;border-radius:4px;padding:6px"></textarea>' +
       '<div style="display:flex;justify-content:flex-end;gap:0.5rem;margin-top:0.5rem">' +
@@ -1112,25 +1132,36 @@
     if (btn) btn.style.display = '';
     // Clear inputs
     ['newStageName','newStageNotes'].forEach(function(id){ var el = document.getElementById(id); if (el) el.value = ''; });
-    var sec = document.getElementById('newStageSecondary'); if (sec) sec.value = '';
+    var extras = document.getElementById('newStageExtraPeople');
+    if (extras) Array.prototype.forEach.call(extras.querySelectorAll('input[type=checkbox]'), function(cb) { cb.checked = false; });
     var secWrap = document.getElementById('newStageSecondaryWrap'); if (secWrap) secWrap.style.display = 'none';
     var person = document.getElementById('newStagePerson'); if (person) person.value = '';
     var status = document.getElementById('newStageStatus'); if (status) status.value = 'upcoming';
   };
 
-  // Toggle the secondary-person field on the Add-step form based on primary
+  // Toggle the "Also relevant to" checkboxes on the Add-step form based on primary
   window.toggleNewSecondary = function() {
     var primary = document.getElementById('newStagePerson');
     var wrap = document.getElementById('newStageSecondaryWrap');
-    var sec = document.getElementById('newStageSecondary');
-    if (!primary || !wrap || !sec) return;
+    var container = document.getElementById('newStageExtraPeople');
+    if (!primary || !wrap || !container) return;
     var primaryId = primary.value;
     var primaryIsInternal = primaryId && primaryId !== '__new__' && contactsMap[primaryId] && contactsMap[primaryId].type !== 'external';
     wrap.style.display = primaryIsInternal ? '' : 'none';
-    if (!primaryIsInternal) sec.value = '';
-    Array.prototype.forEach.call(sec.options, function(o) {
-      o.disabled = (o.value && o.value === primaryId);
+    // Hide the primary's own checkbox + uncheck it if it was ticked
+    Array.prototype.forEach.call(container.querySelectorAll('label[data-person-id]'), function(lbl) {
+      if (lbl.getAttribute('data-person-id') === primaryId) {
+        lbl.style.display = 'none';
+        var cb = lbl.querySelector('input[type=checkbox]');
+        if (cb) cb.checked = false;
+      } else {
+        lbl.style.display = '';
+      }
     });
+    if (!primaryIsInternal) {
+      // Uncheck everything if primary is external/empty
+      Array.prototype.forEach.call(container.querySelectorAll('input[type=checkbox]'), function(cb) { cb.checked = false; });
+    }
   };
 
   window.addStage = async function() {
@@ -1145,11 +1176,17 @@
     if (personId === '__new__') { personId = ''; } // handled by handleNewPerson
     var status = document.getElementById('newStageStatus').value;
 
-    // Secondary person — only meaningful when primary is internal
-    var secondaryEl = document.getElementById('newStageSecondary');
-    var secondaryId = secondaryEl ? (secondaryEl.value || null) : null;
+    // Additional relevant people — only when primary is internal
     var primaryContact = personId ? contactsMap[personId] : null;
-    if (!primaryContact || primaryContact.type === 'external' || secondaryId === personId) secondaryId = null;
+    var additionalPeople = [];
+    if (primaryContact && primaryContact.type !== 'external') {
+      var extrasEl = document.getElementById('newStageExtraPeople');
+      if (extrasEl) {
+        Array.prototype.forEach.call(extrasEl.querySelectorAll('input[type=checkbox]:checked'), function(cb) {
+          if (cb.value && cb.value !== personId) additionalPeople.push(cb.value);
+        });
+      }
+    }
 
     // Derive ownership from contact type
     var ownership = 'us';
@@ -1164,7 +1201,7 @@
       card_id: card.dbId,
       name: name,
       person_id: personId || null,
-      secondary_person_id: secondaryId,
+      additional_people: additionalPeople,
       status: status,
       notes: newNotes || null,
       sort_order: nextOrder,
@@ -1276,13 +1313,14 @@
       stagePersonOpts += '</optgroup>';
     }
 
-    // Secondary person dropdown (Us only)
+    // "Also relevant to" checkboxes (Us only)
     var primaryIsInternal = step.person_id && contactsMap[step.person_id] && contactsMap[step.person_id].type !== 'external';
-    var secondaryPersonOpts = '<option value="">—</option>';
-    usContacts.forEach(function(c) {
-      if (c.id === step.person_id) return; // can't be same as primary
-      secondaryPersonOpts += '<option value="' + c.id + '"' + (c.id === step.secondary_person_id ? ' selected' : '') + '>' + c.name + '</option>';
-    });
+    var existingExtras = Array.isArray(step.additional_people) ? step.additional_people : [];
+    var extraCheckboxesHtml = usContacts.map(function(c) {
+      if (c.id === step.person_id) return '';
+      var checked = existingExtras.indexOf(c.id) !== -1 ? ' checked' : '';
+      return '<label data-person-id="' + c.id + '" style="display:inline-flex;align-items:center;gap:4px;font-size:0.85rem;cursor:pointer"><input type="checkbox" value="' + c.id + '"' + checked + ' style="margin:0"> ' + c.name + '</label>';
+    }).join('');
 
     var statusOpts = ['upcoming', 'now', 'done'].map(function(s) {
       return '<option value="' + s + '"' + (s === step.status ? ' selected' : '') + '>' + s.charAt(0).toUpperCase() + s.slice(1) + '</option>';
@@ -1299,8 +1337,8 @@
           '<div style="flex:1"><div class="bb-edit-label" style="margin-bottom:4px">Status</div><select class="bb-edit-select" id="stepEditStatus" style="font-size:0.95rem;padding:8px 12px;width:100%;box-sizing:border-box">' + statusOpts + '</select></div>' +
         '</div>' +
         '<div id="stepSecondaryWrap" style="margin-bottom:10px;' + (primaryIsInternal ? '' : 'display:none') + '">' +
-          '<div class="bb-edit-label" style="margin-bottom:4px">Secondary runner <span style="font-weight:400;color:#9ca3af">(also shows in their Us column)</span></div>' +
-          '<select class="bb-edit-select" id="stepEditSecondary" style="font-size:0.95rem;padding:8px 12px;width:100%;box-sizing:border-box">' + secondaryPersonOpts + '</select>' +
+          '<div class="bb-edit-label" style="margin-bottom:4px">Also relevant to <span style="font-weight:400;color:#9ca3af">(appears in their Us column)</span></div>' +
+          '<div id="stepEditExtraPeople" style="display:flex;flex-wrap:wrap;gap:0.5rem 1rem;padding:0.35rem 0;background:#fff;border:1px solid #d1d5db;border-radius:4px;padding:8px">' + extraCheckboxesHtml + '</div>' +
         '</div>' +
         '<div class="bb-edit-label" style="margin-bottom:4px">Notes</div>' +
         '<textarea id="stepEditNotes" placeholder="Notes..." style="min-height:4rem;font-size:0.9rem;background:#fff;border:1px solid #d1d5db;border-radius:4px;padding:8px;margin-bottom:10px;width:100%;box-sizing:border-box;font-family:inherit;line-height:1.4">' + (step.notes || '').replace(/</g, '&lt;') + '</textarea>' +
@@ -1312,32 +1350,47 @@
       '</div>';
   };
 
-  // Toggle visibility of secondary dropdown based on primary person type
+  // Toggle visibility of "Also relevant to" checkboxes based on primary person type
   window.toggleStepSecondary = function() {
     var primaryId = document.getElementById('stepEditPerson').value;
     var wrap = document.getElementById('stepSecondaryWrap');
-    var sec = document.getElementById('stepEditSecondary');
-    if (!wrap || !sec) return;
+    var container = document.getElementById('stepEditExtraPeople');
+    if (!wrap || !container) return;
     var primaryIsInternal = primaryId && contactsMap[primaryId] && contactsMap[primaryId].type !== 'external';
     wrap.style.display = primaryIsInternal ? '' : 'none';
-    if (!primaryIsInternal) sec.value = '';
-    // Hide whichever option matches primary to avoid selecting same person twice
-    Array.prototype.forEach.call(sec.options, function(o) {
-      o.disabled = (o.value && o.value === primaryId);
+    // Hide primary's own checkbox (and uncheck it if set)
+    Array.prototype.forEach.call(container.querySelectorAll('label[data-person-id]'), function(lbl) {
+      if (lbl.getAttribute('data-person-id') === primaryId) {
+        lbl.style.display = 'none';
+        var cb = lbl.querySelector('input[type=checkbox]');
+        if (cb) cb.checked = false;
+      } else {
+        lbl.style.display = '';
+      }
     });
+    if (!primaryIsInternal) {
+      Array.prototype.forEach.call(container.querySelectorAll('input[type=checkbox]'), function(cb) { cb.checked = false; });
+    }
   };
 
   // ── SAVE STEP EDIT ──
   window.saveStep = async function(stepId) {
     var primaryId = document.getElementById('stepEditPerson').value || null;
-    var secondaryId = document.getElementById('stepEditSecondary') ? (document.getElementById('stepEditSecondary').value || null) : null;
-    // Clear secondary if primary is external or empty or same as secondary
     var primaryContact = primaryId ? contactsMap[primaryId] : null;
-    if (!primaryContact || primaryContact.type === 'external' || secondaryId === primaryId) secondaryId = null;
+    // Collect checked additional people (Us only, not primary)
+    var additionalPeople = [];
+    if (primaryContact && primaryContact.type !== 'external') {
+      var extrasEl = document.getElementById('stepEditExtraPeople');
+      if (extrasEl) {
+        Array.prototype.forEach.call(extrasEl.querySelectorAll('input[type=checkbox]:checked'), function(cb) {
+          if (cb.value && cb.value !== primaryId) additionalPeople.push(cb.value);
+        });
+      }
+    }
     var updates = {
       name: document.getElementById('stepEditName').value.trim(),
       person_id: primaryId,
-      secondary_person_id: secondaryId,
+      additional_people: additionalPeople,
       status: document.getElementById('stepEditStatus').value,
       notes: document.getElementById('stepEditNotes').value
     };
