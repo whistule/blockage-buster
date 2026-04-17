@@ -1023,7 +1023,7 @@
     '</div>' +
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:2rem">' +
       '<div class="bb-heading" style="margin:0;border:none;padding:0">Resolution Steps</div>' +
-      '<div onclick="var f=document.getElementById(\'addStepForm\');f.style.display=f.style.display===\'none\'?\'\':\'none\'" style="font-size:0.9rem;font-weight:700;color:#fff;cursor:pointer;padding:8px 18px;background:#3d6640;border:none;border-radius:6px;box-shadow:0 2px 4px rgba(0,0,0,0.15)">+ Add step</div>' +
+      '<div id="addStepOpenBtn" onclick="openAddStepForm()" style="font-size:0.9rem;font-weight:700;color:#fff;cursor:pointer;padding:8px 18px;background:#3d6640;border:none;border-radius:6px;box-shadow:0 2px 4px rgba(0,0,0,0.15)">+ Add step</div>' +
     '</div>' +
     '<div id="addStepForm" style="display:none;margin:0.5rem 0 0.75rem;padding:0.75rem;background:#f0fdf4;border:1px solid #86efac;border-radius:6px">' +
       '<div class="bb-edit-row" style="margin-bottom:0">' +
@@ -1038,7 +1038,10 @@
         '</select>' +
       '</div>' +
       '<textarea class="bb-edit-textarea" id="newStageNotes" placeholder="Notes (optional)" style="min-height:2rem;font-size:0.8rem;margin-top:0.5rem;background:#fff;border:1px solid #d1d5db;border-radius:4px;padding:6px"></textarea>' +
-      '<div class="bb-btn" onclick="addStage()" style="margin-top:0.5rem"><div class="bb-btn-indicator bb-btn-indicator--green"></div>+ Add Step</div>' +
+      '<div style="display:flex;justify-content:flex-end;gap:0.5rem;margin-top:0.5rem">' +
+        '<div onclick="closeAddStepForm()" style="font-size:0.9rem;font-weight:600;color:#6b7280;cursor:pointer;padding:8px 14px;background:#fff;border:1px solid #d1d5db;border-radius:6px">Cancel</div>' +
+        '<div onclick="addStage()" style="font-size:0.9rem;font-weight:700;color:#fff;cursor:pointer;padding:8px 18px;background:#3d6640;border:none;border-radius:6px;box-shadow:0 2px 4px rgba(0,0,0,0.15)">Save step</div>' +
+      '</div>' +
     '</div>' +
     timelineHTML +
     completeBtn +
@@ -1092,6 +1095,28 @@
       await sb.from('cards').update({ stage: pType === 'external' ? 'onthem' : 'onus' }).eq('id', dbCardId);
     }
   }
+
+  // Open/close the Add-step form and hide the "+ Add step" open button when open
+  window.openAddStepForm = function() {
+    var form = document.getElementById('addStepForm');
+    var btn = document.getElementById('addStepOpenBtn');
+    if (form) form.style.display = '';
+    if (btn) btn.style.display = 'none';
+    var nameInput = document.getElementById('newStageName');
+    if (nameInput) nameInput.focus();
+  };
+  window.closeAddStepForm = function() {
+    var form = document.getElementById('addStepForm');
+    var btn = document.getElementById('addStepOpenBtn');
+    if (form) form.style.display = 'none';
+    if (btn) btn.style.display = '';
+    // Clear inputs
+    ['newStageName','newStageNotes'].forEach(function(id){ var el = document.getElementById(id); if (el) el.value = ''; });
+    var sec = document.getElementById('newStageSecondary'); if (sec) sec.value = '';
+    var secWrap = document.getElementById('newStageSecondaryWrap'); if (secWrap) secWrap.style.display = 'none';
+    var person = document.getElementById('newStagePerson'); if (person) person.value = '';
+    var status = document.getElementById('newStageStatus'); if (status) status.value = 'upcoming';
+  };
 
   // Toggle the secondary-person field on the Add-step form based on primary
   window.toggleNewSecondary = function() {
