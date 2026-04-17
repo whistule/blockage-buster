@@ -1637,40 +1637,59 @@
     divider.style.cssText = 'height:1px;background:#e5e7eb;margin:0 0 10px';
     menu.appendChild(divider);
 
+    // Or pick a date/time label
+    var customLabel = document.createElement('div');
+    customLabel.textContent = 'Or pick a date & time:';
+    customLabel.style.cssText = 'font-size:0.7rem;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px';
+    menu.appendChild(customLabel);
+
     // Date/time picker
     var input = document.createElement('input');
     input.type = 'datetime-local';
-    input.style.cssText = 'width:100%;font-size:1.1rem;padding:12px;border:2px solid #0098a0;border-radius:6px;margin-bottom:8px;font-family:inherit;box-sizing:border-box;background:#f9fafb';
+    input.style.cssText = 'width:100%;font-size:1.1rem;padding:12px;border:2px solid #0098a0;border-radius:6px;margin-bottom:10px;font-family:inherit;box-sizing:border-box;background:#f9fafb';
     var tmrw = new Date(Date.now() + 24 * 60 * 60 * 1000);
     tmrw.setHours(10, 30, 0, 0);
     input.value = tmrw.toISOString().slice(0, 16);
     input.onclick = function(ev) { ev.stopPropagation(); };
     input.onfocus = function(ev) { ev.stopPropagation(); };
+    // Commit on Enter
+    input.onkeydown = function(ev) {
+      if (ev.key === 'Enter') {
+        ev.preventDefault();
+        ev.stopPropagation();
+        submit();
+      }
+    };
     menu.appendChild(input);
-    // Auto-open the calendar picker
+    // Auto-open the calendar picker so the user lands straight in it
     setTimeout(function() { try { input.showPicker(); } catch(e) { input.focus(); } }, 100);
 
-    // Set / Cancel buttons
-    var btnRow = document.createElement('div');
-    btnRow.style.cssText = 'display:flex;gap:6px';
-
-    var setBtn = document.createElement('div');
-    setBtn.textContent = 'Set reminder';
-    setBtn.style.cssText = 'flex:1;text-align:center;padding:8px;background:#0098a0;color:#fff;border-radius:4px;cursor:pointer;font-size:0.85rem;font-weight:600';
-    setBtn.onclick = function(ev) {
-      ev.stopPropagation();
+    // Commit function shared by button + Enter
+    function submit() {
       var until = new Date(input.value);
       if (isNaN(until.getTime())) return;
       menu.remove();
       remindCardUntil(cardId, until.toISOString());
-    };
-    btnRow.appendChild(setBtn);
+    }
+
+    // Set / Cancel buttons — prominent, below input (always visible even with native picker open)
+    var btnRow = document.createElement('div');
+    btnRow.style.cssText = 'display:flex;gap:6px';
 
     var cancelBtn = document.createElement('div');
     cancelBtn.textContent = 'Cancel';
-    cancelBtn.style.cssText = 'flex:1;text-align:center;padding:8px;background:#f3f4f6;color:#4b5563;border-radius:4px;cursor:pointer;font-size:0.85rem;font-weight:500;border:1px solid #d1d5db';
+    cancelBtn.style.cssText = 'flex:0 0 auto;text-align:center;padding:12px 16px;background:#f3f4f6;color:#4b5563;border-radius:6px;cursor:pointer;font-size:0.9rem;font-weight:500;border:1px solid #d1d5db';
     cancelBtn.onclick = function(ev) { ev.stopPropagation(); menu.remove(); };
     btnRow.appendChild(cancelBtn);
+
+    var setBtn = document.createElement('div');
+    setBtn.textContent = '✓ Set reminder';
+    setBtn.style.cssText = 'flex:1;text-align:center;padding:12px;background:#0098a0;color:#fff;border-radius:6px;cursor:pointer;font-size:1rem;font-weight:700;box-shadow:0 2px 4px rgba(0,152,160,0.3)';
+    setBtn.onmouseover = function() { setBtn.style.background = '#00848b'; };
+    setBtn.onmouseout = function() { setBtn.style.background = '#0098a0'; };
+    setBtn.onclick = function(ev) { ev.stopPropagation(); submit(); };
+    btnRow.appendChild(setBtn);
+
     menu.appendChild(btnRow);
 
     document.body.appendChild(menu);
