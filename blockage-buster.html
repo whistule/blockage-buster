@@ -893,7 +893,7 @@
 
     // Load stages for this card
     var cardStages = [];
-    var { data: stagesData } = await sb.from('stages').select('*, contacts(name)').eq('card_id', card.dbId).order('sort_order');
+    var { data: stagesData } = await sb.from('stages').select('*, contacts!person_id(name)').eq('card_id', card.dbId).order('sort_order');
     if (stagesData) cardStages = stagesData;
 
     var urgOpts = ['', 'low', 'medium', 'high', 'urgent'];
