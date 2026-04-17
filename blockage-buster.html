@@ -1028,8 +1028,14 @@
     '<div id="addStepForm" style="display:none;margin:0.5rem 0 0.75rem;padding:0.75rem;background:#f0fdf4;border:1px solid #86efac;border-radius:6px">' +
       '<div class="bb-edit-row" style="margin-bottom:0">' +
         '<div class="bb-edit-field" style="flex:2"><input class="bb-edit-input" id="newStageName" placeholder="Step name" style="font-size:1.1rem;font-weight:700;font-family:inherit;background:#fff;border:1px solid #d1d5db;border-radius:4px;padding:8px"></div>' +
-        '<div class="bb-edit-field"><select class="bb-edit-select" id="newStagePerson" onchange="handleNewPerson(this)">' + buildPersonSelect(null, true) + '</select></div>' +
+        '<div class="bb-edit-field"><select class="bb-edit-select" id="newStagePerson" onchange="handleNewPerson(this);toggleNewSecondary()">' + buildPersonSelect(null, true) + '</select></div>' +
         '<div class="bb-edit-field" style="flex:0"><select class="bb-edit-select" id="newStageStatus"><option value="upcoming">Upcoming</option><option value="now">Now</option><option value="done">Done</option></select></div>' +
+      '</div>' +
+      '<div id="newStageSecondaryWrap" style="display:none;margin-top:0.5rem">' +
+        '<div class="bb-edit-label" style="margin-bottom:4px">Secondary runner <span style="font-weight:400;color:#9ca3af">(optional — also shows in their Us column)</span></div>' +
+        '<select class="bb-edit-select" id="newStageSecondary" style="width:100%"><option value="">—</option>' +
+          usContacts.map(function(c) { return '<option value="' + c.id + '">' + c.name + '</option>'; }).join('') +
+        '</select>' +
       '</div>' +
       '<textarea class="bb-edit-textarea" id="newStageNotes" placeholder="Notes (optional)" style="min-height:2rem;font-size:0.8rem;margin-top:0.5rem;background:#fff;border:1px solid #d1d5db;border-radius:4px;padding:6px"></textarea>' +
       '<div class="bb-btn" onclick="addStage()" style="margin-top:0.5rem"><div class="bb-btn-indicator bb-btn-indicator--green"></div>+ Add Step</div>' +
@@ -1087,6 +1093,21 @@
     }
   }
 
+  // Toggle the secondary-person field on the Add-step form based on primary
+  window.toggleNewSecondary = function() {
+    var primary = document.getElementById('newStagePerson');
+    var wrap = document.getElementById('newStageSecondaryWrap');
+    var sec = document.getElementById('newStageSecondary');
+    if (!primary || !wrap || !sec) return;
+    var primaryId = primary.value;
+    var primaryIsInternal = primaryId && primaryId !== '__new__' && contactsMap[primaryId] && contactsMap[primaryId].type !== 'external';
+    wrap.style.display = primaryIsInternal ? '' : 'none';
+    if (!primaryIsInternal) sec.value = '';
+    Array.prototype.forEach.call(sec.options, function(o) {
+      o.disabled = (o.value && o.value === primaryId);
+    });
+  };
+
   window.addStage = async function() {
     if (!currentCardId) return;
     var card = cards.find(function(c) { return c.id === currentCardId; });
@@ -1098,6 +1119,12 @@
     var personId = document.getElementById('newStagePerson').value;
     if (personId === '__new__') { personId = ''; } // handled by handleNewPerson
     var status = document.getElementById('newStageStatus').value;
+
+    // Secondary person — only meaningful when primary is internal
+    var secondaryEl = document.getElementById('newStageSecondary');
+    var secondaryId = secondaryEl ? (secondaryEl.value || null) : null;
+    var primaryContact = personId ? contactsMap[personId] : null;
+    if (!primaryContact || primaryContact.type === 'external' || secondaryId === personId) secondaryId = null;
 
     // Derive ownership from contact type
     var ownership = 'us';
@@ -1112,6 +1139,7 @@
       card_id: card.dbId,
       name: name,
       person_id: personId || null,
+      secondary_person_id: secondaryId,
       status: status,
       notes: newNotes || null,
       sort_order: nextOrder,
