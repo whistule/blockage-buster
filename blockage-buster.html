@@ -474,8 +474,8 @@
       </svg>
     </div>
     <div class="bb-view-toggle">
-      <div class="bb-view-toggle-btn bb-view-toggle-btn--active" onclick="setViewMode('stage')">Stage</div>
-      <div class="bb-view-toggle-btn" onclick="setViewMode('person')">Us</div>
+      <div class="bb-view-toggle-btn" onclick="setViewMode('stage')">Stage</div>
+      <div class="bb-view-toggle-btn bb-view-toggle-btn--active" onclick="setViewMode('person')">Us</div>
       <div class="bb-view-toggle-btn" onclick="setViewMode('supplier')">Them</div>
       <div class="bb-view-toggle-btn" onclick="setViewMode('urgency')">Urgency</div>
     </div>
@@ -519,7 +519,7 @@
   var personColors = {};
   var defaultPersonColor = '#6b7280';
 
-  var viewMode = 'stage';
+  var viewMode = 'person';
   var activeTab = null;
   var urgencyOrder = { urgent: 0, high: 1, medium: 2, low: 3, '': 4 };
 
