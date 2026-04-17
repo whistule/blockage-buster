@@ -853,7 +853,7 @@
 
     // ── Mobile cards ──
     var mobileEl = document.getElementById('bbMobileCards');
-    var showStage = (viewMode === 'person' || viewMode === 'supplier');
+    var showStage = false;
     if (groups[activeTab]) {
       mobileEl.innerHTML = groups[activeTab].map(function(c) { return cardHTML(c, showStage); }).join('');
     } else {
