@@ -710,7 +710,10 @@
 
     // Big mood emoji — absolutely positioned in the top-right of the meta zone,
     // so its space overlaps the "wasted" right side of the Next Step line.
-    var bigMood = '<span onclick="event.stopPropagation();showMoodPicker(event,\'' + c.id + '\')" style="cursor:pointer;font-size:2.1rem;line-height:1;position:absolute;right:0;top:50%;transform:translateY(-50%)" title="Set feeling">' + (c.mood || '&#128300;') + '</span>';
+    var moodContent = c.mood
+      ? c.mood
+      : '<span style="opacity:0.22;filter:grayscale(1)">&#128123;</span>'; // faded ghost placeholder
+    var bigMood = '<span onclick="event.stopPropagation();showMoodPicker(event,\'' + c.id + '\')" style="cursor:pointer;font-size:2.1rem;line-height:1;position:absolute;right:0;top:50%;transform:translateY(-50%)" title="' + (c.mood ? 'Change feeling' : 'Add a feeling') + '">' + moodContent + '</span>';
 
     // Wrap meta with a reserved right-padding zone where the emoji sits.
     var metaWithMood = '<div style="position:relative;margin-top:0.2rem;padding-right:2.4rem;min-height:2.2rem">' + meta + bigMood + '</div>';
