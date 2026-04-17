@@ -2018,31 +2018,55 @@
 
     var picker = document.createElement('div');
     picker.id = 'moodPicker';
-    picker.style.cssText = 'position:fixed;z-index:200;background:#fff;border:1px solid #d1d5db;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);padding:8px;display:flex;flex-wrap:wrap;gap:4px;max-width:200px';
+    picker.style.cssText = 'position:fixed;z-index:200;background:#fff;border:1px solid #d1d5db;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);padding:10px;max-width:320px;max-height:60vh;overflow-y:auto';
     picker.style.left = e.clientX + 'px';
     picker.style.top = e.clientY + 'px';
 
-    var moods = ['😀','😐','😟','😤','🔥','💀','🤞','👍','👎','⏳','🚀','💡','🔧','📞','📧','❓'];
-    moods.forEach(function(emoji) {
-      var btn = document.createElement('span');
-      btn.textContent = emoji;
-      btn.style.cssText = 'font-size:1.4rem;cursor:pointer;padding:4px;border-radius:4px;line-height:1';
-      btn.onmouseover = function() { btn.style.background = '#f3f4f6'; };
-      btn.onmouseout = function() { btn.style.background = ''; };
-      btn.onclick = function(ev) {
-        ev.stopPropagation();
-        picker.remove();
-        setMood(cardId, emoji);
-      };
-      picker.appendChild(btn);
+    var moodGroups = [
+      { label: 'Feelings', emojis: ['😀','🙂','😐','😟','😤','😩','😴','🤯','😎','🤩','🥹','🙃','😬','🤔','😅','🤒'] },
+      { label: 'Reactions', emojis: ['🔥','💀','💯','✨','⚡','💥','🎉','👀','🤞','👍','👎','🙌','👏','💪','🤝','🫡'] },
+      { label: 'Status', emojis: ['⏳','⌛','🚦','🛑','✅','❌','❓','❗','📌','🚧','🔒','🔓','⚠️','🕒','🔁','♻️'] },
+      { label: 'Work', emojis: ['🚀','💡','🔧','🛠️','🧪','🧰','📞','📧','📝','📋','📊','💰','🧾','🧠','🗂️','🖥️'] },
+      { label: 'Critters', emojis: ['🐸','🐢','🐙','🦄','🦖','🐝','🐞','🦋','🐳','🐧','🦊','🐺','🦁','🐯','🐼','🐨'] },
+      { label: 'Misc', emojis: ['🍕','☕','🎯','🎲','🎨','🧩','🎵','🏁','🏆','🎁','🌈','🌟','⭐','🍀','🧲','🧨'] }
+    ];
+
+    moodGroups.forEach(function(group) {
+      var heading = document.createElement('div');
+      heading.textContent = group.label;
+      heading.style.cssText = 'font-size:0.65rem;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.08em;margin:6px 2px 4px;border-top:1px solid #f3f4f6;padding-top:6px';
+      if (picker.children.length === 0) { heading.style.borderTop = 'none'; heading.style.paddingTop = '0'; heading.style.marginTop = '0'; }
+      picker.appendChild(heading);
+
+      var row = document.createElement('div');
+      row.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px';
+      group.emojis.forEach(function(emoji) {
+        var btn = document.createElement('span');
+        btn.textContent = emoji;
+        btn.style.cssText = 'font-size:1.4rem;cursor:pointer;padding:4px;border-radius:4px;line-height:1';
+        btn.onmouseover = function() { btn.style.background = '#f3f4f6'; };
+        btn.onmouseout = function() { btn.style.background = ''; };
+        btn.onclick = function(ev) {
+          ev.stopPropagation();
+          picker.remove();
+          setMood(cardId, emoji);
+        };
+        row.appendChild(btn);
+      });
+      picker.appendChild(row);
     });
 
     // Clear option
+    var clearRow = document.createElement('div');
+    clearRow.style.cssText = 'display:flex;justify-content:flex-end;margin-top:8px;padding-top:6px;border-top:1px solid #e5e7eb';
     var clearBtn = document.createElement('span');
-    clearBtn.textContent = '✕';
-    clearBtn.style.cssText = 'font-size:0.9rem;cursor:pointer;padding:4px 8px;border-radius:4px;color:#9ca3af;line-height:1;display:flex;align-items:center';
+    clearBtn.textContent = '✕  clear';
+    clearBtn.style.cssText = 'font-size:0.75rem;cursor:pointer;padding:4px 8px;border-radius:4px;color:#9ca3af';
+    clearBtn.onmouseover = function() { clearBtn.style.background = '#f3f4f6'; clearBtn.style.color = '#ef4444'; };
+    clearBtn.onmouseout  = function() { clearBtn.style.background = ''; clearBtn.style.color = '#9ca3af'; };
     clearBtn.onclick = function(ev) { ev.stopPropagation(); picker.remove(); setMood(cardId, ''); };
-    picker.appendChild(clearBtn);
+    clearRow.appendChild(clearBtn);
+    picker.appendChild(clearRow);
 
     document.body.appendChild(picker);
 
