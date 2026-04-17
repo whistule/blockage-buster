@@ -1657,33 +1657,136 @@
     customLabel.style.cssText = 'font-size:0.7rem;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px';
     menu.appendChild(customLabel);
 
-    // Date/time picker
-    var input = document.createElement('input');
-    input.type = 'datetime-local';
-    input.style.cssText = 'width:100%;font-size:1.1rem;padding:12px;border:2px solid #0098a0;border-radius:6px;margin-bottom:10px;font-family:inherit;box-sizing:border-box;background:#f9fafb';
-    var tmrw = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    tmrw.setHours(10, 30, 0, 0);
-    input.value = tmrw.toISOString().slice(0, 16);
-    input.onclick = function(ev) { ev.stopPropagation(); };
-    input.onfocus = function(ev) { ev.stopPropagation(); };
-    // Commit on Enter
-    input.onkeydown = function(ev) {
-      if (ev.key === 'Enter') {
-        ev.preventDefault();
+    // ── Inline calendar state ──
+    var selected = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    selected.setHours(10, 30, 0, 0);
+    var viewYear = selected.getFullYear();
+    var viewMonth = selected.getMonth(); // 0-11
+
+    // Calendar container
+    var cal = document.createElement('div');
+    cal.style.cssText = 'border:1px solid #e5e7eb;border-radius:8px;padding:10px;margin-bottom:10px;background:#fff;font-family:inherit';
+    menu.appendChild(cal);
+
+    var monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    var dayNames = ['Mo','Tu','We','Th','Fr','Sa','Su'];
+
+    function renderCalendar() {
+      cal.innerHTML = '';
+      // Header row
+      var header = document.createElement('div');
+      header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:8px';
+      var prev = document.createElement('div');
+      prev.textContent = '‹';
+      prev.style.cssText = 'cursor:pointer;padding:4px 10px;border-radius:4px;font-size:1.2rem;font-weight:700;color:#4b5563';
+      prev.onmouseover = function() { prev.style.background = '#f3f4f6'; };
+      prev.onmouseout = function() { prev.style.background = ''; };
+      prev.onclick = function(ev) {
         ev.stopPropagation();
-        submit();
+        viewMonth--; if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+        renderCalendar();
+      };
+      var title = document.createElement('div');
+      title.textContent = monthNames[viewMonth] + ' ' + viewYear;
+      title.style.cssText = 'font-weight:700;font-size:0.95rem;color:#1f2937';
+      var next = document.createElement('div');
+      next.textContent = '›';
+      next.style.cssText = 'cursor:pointer;padding:4px 10px;border-radius:4px;font-size:1.2rem;font-weight:700;color:#4b5563';
+      next.onmouseover = function() { next.style.background = '#f3f4f6'; };
+      next.onmouseout = function() { next.style.background = ''; };
+      next.onclick = function(ev) {
+        ev.stopPropagation();
+        viewMonth++; if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+        renderCalendar();
+      };
+      header.appendChild(prev);
+      header.appendChild(title);
+      header.appendChild(next);
+      cal.appendChild(header);
+
+      // Day-of-week row
+      var dowRow = document.createElement('div');
+      dowRow.style.cssText = 'display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px';
+      dayNames.forEach(function(d) {
+        var c = document.createElement('div');
+        c.textContent = d;
+        c.style.cssText = 'text-align:center;font-size:0.65rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.06em;padding:4px 0';
+        dowRow.appendChild(c);
+      });
+      cal.appendChild(dowRow);
+
+      // Days grid
+      var grid = document.createElement('div');
+      grid.style.cssText = 'display:grid;grid-template-columns:repeat(7,1fr);gap:2px';
+      // Determine first visible cell (Monday start)
+      var firstOfMonth = new Date(viewYear, viewMonth, 1);
+      var dow = (firstOfMonth.getDay() + 6) % 7; // 0=Mon..6=Sun
+      var today = new Date(); today.setHours(0,0,0,0);
+      for (var i = 0; i < 42; i++) {
+        var cellDate = new Date(viewYear, viewMonth, 1 - dow + i);
+        var isOtherMonth = cellDate.getMonth() !== viewMonth;
+        var isSelected = cellDate.getFullYear() === selected.getFullYear() && cellDate.getMonth() === selected.getMonth() && cellDate.getDate() === selected.getDate();
+        var isToday = cellDate.getTime() === today.getTime();
+        var cell = document.createElement('div');
+        cell.textContent = cellDate.getDate();
+        var bg = isSelected ? '#0098a0' : 'transparent';
+        var col = isSelected ? '#fff' : (isOtherMonth ? '#d1d5db' : (isToday ? '#ea580c' : '#1f2937'));
+        var bord = isToday && !isSelected ? '2px solid #ea580c' : '2px solid transparent';
+        cell.style.cssText = 'text-align:center;padding:7px 0;font-size:0.85rem;cursor:pointer;border-radius:4px;background:' + bg + ';color:' + col + ';border:' + bord + ';font-weight:' + (isSelected || isToday ? '700' : '500');
+        (function(d) {
+          cell.onclick = function(ev) {
+            ev.stopPropagation();
+            selected = new Date(d.getFullYear(), d.getMonth(), d.getDate(), selected.getHours(), selected.getMinutes(), 0, 0);
+            viewYear = selected.getFullYear();
+            viewMonth = selected.getMonth();
+            renderCalendar();
+          };
+        })(cellDate);
+        if (!isSelected) {
+          cell.onmouseover = function() { this.style.background = '#f3f4f6'; };
+          cell.onmouseout = function() {
+            var r = this;
+            // don't clear selection colour
+            var isSel = r.style.color === 'rgb(255, 255, 255)';
+            if (!isSel) r.style.background = 'transparent';
+          };
+        }
+        grid.appendChild(cell);
       }
-    };
-    menu.appendChild(input);
-    // Auto-open the calendar picker so the user lands straight in it
-    setTimeout(function() { try { input.showPicker(); } catch(e) { input.focus(); } }, 100);
+      cal.appendChild(grid);
+
+      // Time row
+      var timeRow = document.createElement('div');
+      timeRow.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px;padding-top:8px;border-top:1px solid #f3f4f6';
+      var timeLabel = document.createElement('span');
+      timeLabel.textContent = 'Time:';
+      timeLabel.style.cssText = 'font-size:0.75rem;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.06em';
+      var timeInput = document.createElement('input');
+      timeInput.type = 'time';
+      var hh = String(selected.getHours()).padStart(2, '0');
+      var mm = String(selected.getMinutes()).padStart(2, '0');
+      timeInput.value = hh + ':' + mm;
+      timeInput.style.cssText = 'padding:6px 10px;font-size:0.95rem;border:1px solid #d1d5db;border-radius:4px;font-family:inherit';
+      timeInput.onclick = function(ev) { ev.stopPropagation(); };
+      timeInput.onchange = function(ev) {
+        ev.stopPropagation();
+        var parts = timeInput.value.split(':');
+        if (parts.length === 2) {
+          selected.setHours(parseInt(parts[0], 10) || 0, parseInt(parts[1], 10) || 0, 0, 0);
+        }
+      };
+      timeRow.appendChild(timeLabel);
+      timeRow.appendChild(timeInput);
+      cal.appendChild(timeRow);
+    }
+
+    renderCalendar();
 
     // Commit function shared by button + Enter
     function submit() {
-      var until = new Date(input.value);
-      if (isNaN(until.getTime())) return;
+      if (isNaN(selected.getTime())) return;
       menu.remove();
-      remindCardUntil(cardId, until.toISOString());
+      remindCardUntil(cardId, selected.toISOString());
     }
 
     // Set / Cancel buttons — prominent, below input (always visible even with native picker open)
