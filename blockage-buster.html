@@ -65,6 +65,11 @@
     border: none; border-right: 1px solid #d1d5db;
     transition: background 0.15s, color 0.15s;
   }
+  @media (min-width: 900px) {
+    .bb-view-toggle-btn {
+      padding: 0.5rem 1.5rem; font-size: 0.9rem; letter-spacing: 0.06em;
+    }
+  }
   .bb-view-toggle-btn:last-child { border-right: none; }
   .bb-view-toggle-btn--active { background: #4b5563; color: white; }
 
@@ -465,6 +470,7 @@
       <div class="bb-view-toggle-btn" onclick="setViewMode('supplier')">Them</div>
       <div class="bb-view-toggle-btn" onclick="setViewMode('urgency')">Urgency</div>
     </div>
+    <div id="bbGeneralAdd" onclick="openNewCard('flagged')" style="display:none;cursor:pointer;background:#ea580c;color:#fff;font-weight:700;font-size:0.8rem;padding:0.35rem 0.75rem;border-radius:4px;white-space:nowrap">+ New Buster</div>
     <div class="bb-topbar-rule"></div>
   </div>
 
@@ -528,7 +534,7 @@
     var { data: dbCards } = await sb.from('cards').select('*, contacts!person_id(name, type, color)').order('buster_num');
 
     // Load stages for current step display
-    var { data: stages } = await sb.from('stages').select('*, contacts!person_id(name, type)').eq('status', 'now');
+    var { data: stages } = await sb.from('stages').select('*, contacts!person_id(name, type), secondary_contact:contacts!secondary_person_id(name, type)').eq('status', 'now');
     var nowStageByCard = {};
     if (stages) {
       stages.forEach(function(s) { nowStageByCard[s.card_id] = s; });
@@ -577,6 +583,7 @@
         var contact = c.contacts || {};
         var nowStage = nowStageByCard[c.id];
         var nowContact = nowStage && nowStage.contacts ? nowStage.contacts : null;
+        var nowSecondary = nowStage && nowStage.secondary_contact ? nowStage.secondary_contact : null;
         return {
           id: String(c.buster_num).padStart(3, '0'),
           dbId: c.id,
@@ -587,6 +594,8 @@
           stage: c.stage,
           person: nowContact ? nowContact.name : (contact.name || 'Unassigned'),
           type: nowContact ? (nowContact.type || 'internal') : (contact.type || 'internal'),
+          secondaryPerson: nowSecondary ? nowSecondary.name : '',
+          secondaryType: nowSecondary ? (nowSecondary.type || 'internal') : '',
           urgency: c.urgency || '',
           currentStep: nowStage ? nowStage.name : '—',
           hasReminder: !!reminderByCard[c.id],
@@ -753,6 +762,11 @@
         var key = isBusted ? 'Completed' : c.person;
         if (!groups[key]) { groups[key] = []; order.push(key); }
         groups[key].push(c);
+        // Also place in secondary person's column when in "Us" view and secondary is internal
+        if (!isBusted && viewMode === 'person' && c.secondaryPerson && c.secondaryType === 'internal' && c.secondaryPerson !== c.person) {
+          if (!groups[c.secondaryPerson]) { groups[c.secondaryPerson] = []; order.push(c.secondaryPerson); }
+          groups[c.secondaryPerson].push(c);
+        }
       });
       // Move Completed to end
       if (groups['Completed'] && order.indexOf('Completed') !== -1) {
@@ -786,6 +800,9 @@
     document.querySelectorAll('.bb-view-toggle-btn').forEach(function(b) {
       b.classList.toggle('bb-view-toggle-btn--active', b.textContent.trim() === modeMap[viewMode]);
     });
+    // Show general add button on non-stage views
+    var generalAdd = document.getElementById('bbGeneralAdd');
+    if (generalAdd) generalAdd.style.display = (viewMode !== 'stage') ? '' : 'none';
 
     // Set first tab if needed
     if (!activeTab || !groups[activeTab]) activeTab = order[0];
@@ -957,7 +974,7 @@
         var personBadge = personName ? '<span style="font-size:0.65rem;font-weight:700;padding:2px 6px;border-radius:3px;background:' + personColor + ';color:#fff;letter-spacing:0.03em">' + personName + '</span>' : '';
         var clickFn = s.status === 'done' ? 'uncompleteStep' : 'completeStep';
         var ledTick = s.status === 'done' ? '<span style="color:#fff;font-size:0.6rem;font-weight:700">&#10003;</span>' : '';
-        var dragHandle = s.status === 'upcoming' ? '<span style="font-size:0.8rem;color:#d1d5db;cursor:grab;margin-right:2px" title="Drag to reorder">&#9776;</span>' : '';
+        var dragHandle = s.status === 'upcoming' ? '<span class="step-drag-handle" data-step-id="' + s.id + '" style="font-size:0.8rem;color:#d1d5db;cursor:grab;margin-right:2px;touch-action:none" title="Drag to reorder">&#9776;</span>' : '';
         var editBtn = '<span onclick="event.stopPropagation();editStep(\'' + s.id + '\')" style="font-size:0.7rem;color:#4b5563;cursor:pointer;margin-left:auto;font-weight:600;text-decoration:underline" title="Edit step">edit</span>';
         var dragAttrs = s.status === 'upcoming' ? ' draggable="true" ondragstart="stepDragStart(event,\'' + s.id + '\')" ondragover="stepDragOver(event)" ondrop="stepDrop(event,\'' + s.id + '\')" style="cursor:grab"' : '';
         var dateLeft = dateVal ? '<span style="position:absolute;left:-4rem;top:0.3rem;font-size:0.55rem;font-weight:600;color:#9ca3af;text-align:right;width:2rem">' + dateVal + '</span>' : '';
@@ -1206,6 +1223,14 @@
       stagePersonOpts += '</optgroup>';
     }
 
+    // Secondary person dropdown (Us only)
+    var primaryIsInternal = step.person_id && contactsMap[step.person_id] && contactsMap[step.person_id].type !== 'external';
+    var secondaryPersonOpts = '<option value="">—</option>';
+    usContacts.forEach(function(c) {
+      if (c.id === step.person_id) return; // can't be same as primary
+      secondaryPersonOpts += '<option value="' + c.id + '"' + (c.id === step.secondary_person_id ? ' selected' : '') + '>' + c.name + '</option>';
+    });
+
     var statusOpts = ['upcoming', 'now', 'done'].map(function(s) {
       return '<option value="' + s + '"' + (s === step.status ? ' selected' : '') + '>' + s.charAt(0).toUpperCase() + s.slice(1) + '</option>';
     }).join('');
@@ -1217,8 +1242,12 @@
         '<div class="bb-edit-label" style="margin-bottom:4px">Step name</div>' +
         '<textarea id="stepEditName" style="font-size:1.2rem;font-weight:700;font-family:inherit;background:#fff;border:1px solid #d1d5db;border-radius:4px;padding:10px;width:100%;box-sizing:border-box;margin-bottom:10px;min-height:3.5rem;resize:vertical;line-height:1.4">' + (step.name || '').replace(/</g, '&lt;') + '</textarea>' +
         '<div style="display:flex;gap:10px;margin-bottom:10px">' +
-          '<div style="flex:1"><div class="bb-edit-label" style="margin-bottom:4px">Assigned to</div><select class="bb-edit-select" id="stepEditPerson" style="font-size:0.95rem;padding:8px 12px;width:100%;box-sizing:border-box">' + stagePersonOpts + '</select></div>' +
+          '<div style="flex:1"><div class="bb-edit-label" style="margin-bottom:4px">Assigned to</div><select class="bb-edit-select" id="stepEditPerson" onchange="toggleStepSecondary()" style="font-size:0.95rem;padding:8px 12px;width:100%;box-sizing:border-box">' + stagePersonOpts + '</select></div>' +
           '<div style="flex:1"><div class="bb-edit-label" style="margin-bottom:4px">Status</div><select class="bb-edit-select" id="stepEditStatus" style="font-size:0.95rem;padding:8px 12px;width:100%;box-sizing:border-box">' + statusOpts + '</select></div>' +
+        '</div>' +
+        '<div id="stepSecondaryWrap" style="margin-bottom:10px;' + (primaryIsInternal ? '' : 'display:none') + '">' +
+          '<div class="bb-edit-label" style="margin-bottom:4px">Secondary runner <span style="font-weight:400;color:#9ca3af">(also shows in their Us column)</span></div>' +
+          '<select class="bb-edit-select" id="stepEditSecondary" style="font-size:0.95rem;padding:8px 12px;width:100%;box-sizing:border-box">' + secondaryPersonOpts + '</select>' +
         '</div>' +
         '<div class="bb-edit-label" style="margin-bottom:4px">Notes</div>' +
         '<textarea id="stepEditNotes" placeholder="Notes..." style="min-height:4rem;font-size:0.9rem;background:#fff;border:1px solid #d1d5db;border-radius:4px;padding:8px;margin-bottom:10px;width:100%;box-sizing:border-box;font-family:inherit;line-height:1.4">' + (step.notes || '').replace(/</g, '&lt;') + '</textarea>' +
@@ -1230,11 +1259,32 @@
       '</div>';
   };
 
+  // Toggle visibility of secondary dropdown based on primary person type
+  window.toggleStepSecondary = function() {
+    var primaryId = document.getElementById('stepEditPerson').value;
+    var wrap = document.getElementById('stepSecondaryWrap');
+    var sec = document.getElementById('stepEditSecondary');
+    if (!wrap || !sec) return;
+    var primaryIsInternal = primaryId && contactsMap[primaryId] && contactsMap[primaryId].type !== 'external';
+    wrap.style.display = primaryIsInternal ? '' : 'none';
+    if (!primaryIsInternal) sec.value = '';
+    // Hide whichever option matches primary to avoid selecting same person twice
+    Array.prototype.forEach.call(sec.options, function(o) {
+      o.disabled = (o.value && o.value === primaryId);
+    });
+  };
+
   // ── SAVE STEP EDIT ──
   window.saveStep = async function(stepId) {
+    var primaryId = document.getElementById('stepEditPerson').value || null;
+    var secondaryId = document.getElementById('stepEditSecondary') ? (document.getElementById('stepEditSecondary').value || null) : null;
+    // Clear secondary if primary is external or empty or same as secondary
+    var primaryContact = primaryId ? contactsMap[primaryId] : null;
+    if (!primaryContact || primaryContact.type === 'external' || secondaryId === primaryId) secondaryId = null;
     var updates = {
       name: document.getElementById('stepEditName').value.trim(),
-      person_id: document.getElementById('stepEditPerson').value || null,
+      person_id: primaryId,
+      secondary_person_id: secondaryId,
       status: document.getElementById('stepEditStatus').value,
       notes: document.getElementById('stepEditNotes').value
     };
@@ -1644,6 +1694,85 @@
       el.style.opacity = '';
       el.style.borderTop = '';
     });
+  });
+
+  // ── TOUCH DRAG AND DROP FOR STEP REORDER ──
+  var touchDragStepId = null;
+  var touchDragEl = null;
+  var touchClone = null;
+  var touchStartY = 0;
+  var touchMoved = false;
+
+  document.addEventListener('touchstart', function(e) {
+    var handle = e.target.closest('.step-drag-handle');
+    if (!handle) return;
+    var stepId = handle.getAttribute('data-step-id');
+    if (!stepId) return;
+    touchDragStepId = stepId;
+    touchDragEl = handle.closest('.bb-stage');
+    touchStartY = e.touches[0].clientY;
+    touchMoved = false;
+  }, { passive: true });
+
+  document.addEventListener('touchmove', function(e) {
+    if (!touchDragStepId || !touchDragEl) return;
+    var touch = e.touches[0];
+    // Only start visual drag after 5px movement to avoid interfering with taps
+    if (!touchMoved && Math.abs(touch.clientY - touchStartY) < 5) return;
+    if (!touchMoved) {
+      touchMoved = true;
+      touchDragEl.style.opacity = '0.4';
+      // Create a floating clone for visual feedback
+      touchClone = touchDragEl.cloneNode(true);
+      touchClone.style.position = 'fixed';
+      touchClone.style.pointerEvents = 'none';
+      touchClone.style.opacity = '0.7';
+      touchClone.style.zIndex = '9999';
+      touchClone.style.width = touchDragEl.offsetWidth + 'px';
+      touchClone.style.background = '#fff3cd';
+      touchClone.style.borderRadius = '4px';
+      touchClone.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
+      document.body.appendChild(touchClone);
+    }
+    e.preventDefault();
+    if (touchClone) {
+      touchClone.style.left = touchDragEl.getBoundingClientRect().left + 'px';
+      touchClone.style.top = (touch.clientY - 20) + 'px';
+    }
+    // Highlight drop target
+    document.querySelectorAll('.bb-stage').forEach(function(el) { el.style.borderTop = ''; });
+    var targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+    if (targetEl) {
+      var targetStage = targetEl.closest('.bb-stage');
+      if (targetStage && targetStage !== touchDragEl && targetStage.classList.contains('bb-stage--upcoming')) {
+        targetStage.style.borderTop = '2px solid #ea580c';
+      }
+    }
+  }, { passive: false });
+
+  document.addEventListener('touchend', function(e) {
+    if (!touchDragStepId) return;
+    // Clean up clone
+    if (touchClone) { touchClone.remove(); touchClone = null; }
+    // Reset opacity
+    if (touchDragEl) touchDragEl.style.opacity = '';
+    document.querySelectorAll('.bb-stage').forEach(function(el) { el.style.borderTop = ''; });
+
+    if (!touchMoved) { touchDragStepId = null; touchDragEl = null; return; }
+
+    // Find the drop target
+    var touch = e.changedTouches[0];
+    var targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+    var targetStage = targetEl ? targetEl.closest('.bb-stage') : null;
+    if (targetStage && targetStage !== touchDragEl && targetStage.classList.contains('bb-stage--upcoming')) {
+      var targetId = targetStage.id.replace('step-', '');
+      // Set dragStepId so stepDrop can read it, then call once
+      dragStepId = touchDragStepId;
+      stepDrop({ preventDefault: function(){} }, targetId);
+    }
+    touchDragStepId = null;
+    touchDragEl = null;
+    touchMoved = false;
   });
 
   window.showPostitField = function() {
