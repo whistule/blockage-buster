@@ -464,13 +464,13 @@
       <div class="bb-topbar-title"><span class="bb-topbar-mk">MK</span><span class="bb-topbar-app">BLOCKAGE BUSTER</span></div>
       <div class="bb-topbar-sub">build __BUILD_VERSION__</div>
     </div>
+    <div id="bbGeneralAdd" onclick="openNewCard('flagged')" title="New buster" style="cursor:pointer;background:#ea580c;color:#fff;font-weight:700;font-size:1.25rem;line-height:1;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,0.15);flex-shrink:0;user-select:none;margin-right:1rem">+</div>
     <div class="bb-view-toggle">
       <div class="bb-view-toggle-btn bb-view-toggle-btn--active" onclick="setViewMode('stage')">Stage</div>
       <div class="bb-view-toggle-btn" onclick="setViewMode('person')">Us</div>
       <div class="bb-view-toggle-btn" onclick="setViewMode('supplier')">Them</div>
       <div class="bb-view-toggle-btn" onclick="setViewMode('urgency')">Urgency</div>
     </div>
-    <div id="bbGeneralAdd" onclick="openNewCard('flagged')" style="display:none;cursor:pointer;background:#ea580c;color:#fff;font-weight:700;font-size:0.8rem;padding:0.35rem 0.75rem;border-radius:4px;white-space:nowrap">+ New Buster</div>
     <div class="bb-topbar-rule"></div>
   </div>
 
@@ -818,9 +818,6 @@
     document.querySelectorAll('.bb-view-toggle-btn').forEach(function(b) {
       b.classList.toggle('bb-view-toggle-btn--active', b.textContent.trim() === modeMap[viewMode]);
     });
-    // Show general add button on non-stage views
-    var generalAdd = document.getElementById('bbGeneralAdd');
-    if (generalAdd) generalAdd.style.display = (viewMode !== 'stage') ? '' : 'none';
 
     // Set first tab if needed
     if (!activeTab || !groups[activeTab]) activeTab = order[0];
