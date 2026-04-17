@@ -159,6 +159,14 @@
   .bb-card-value { font-size: 0.9rem; font-weight: 500; color: #4b5563; }
 
   /* ── PILLS ── */
+  /* Mood placeholder — faded ghost when no mood set */
+  .bb-mood-placeholder { opacity: 0.25; }
+  .bb-mood-placeholder img,
+  .bb-mood-placeholder .emoji {
+    opacity: 0.5;
+    filter: grayscale(1) brightness(1.1);
+  }
+
   .bb-pill { display: inline-block; font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 3px 8px; border-radius: 4px; color: white; white-space: nowrap; }
   .bb-pill--urgent { background: #ef4444; }
   .bb-pill--high { background: #f97316; }
@@ -710,10 +718,9 @@
 
     // Big mood emoji — absolutely positioned in the top-right of the meta zone,
     // so its space overlaps the "wasted" right side of the Next Step line.
-    var moodContent = c.mood
-      ? c.mood
-      : '<span style="opacity:0.22;filter:grayscale(1)">&#128123;</span>'; // faded ghost placeholder
-    var bigMood = '<span onclick="event.stopPropagation();showMoodPicker(event,\'' + c.id + '\')" style="cursor:pointer;font-size:2.1rem;line-height:1;position:absolute;right:0;top:50%;transform:translateY(-50%)" title="' + (c.mood ? 'Change feeling' : 'Add a feeling') + '">' + moodContent + '</span>';
+    var moodPlaceholderClass = c.mood ? '' : ' bb-mood-placeholder';
+    var moodContent = c.mood ? c.mood : '&#128123;'; // ghost
+    var bigMood = '<span onclick="event.stopPropagation();showMoodPicker(event,\'' + c.id + '\')" class="bb-mood' + moodPlaceholderClass + '" style="cursor:pointer;font-size:2.1rem;line-height:1;position:absolute;right:0;top:50%;transform:translateY(-50%)" title="' + (c.mood ? 'Change feeling' : 'Add a feeling') + '">' + moodContent + '</span>';
 
     // Wrap meta with a reserved right-padding zone where the emoji sits.
     var metaWithMood = '<div style="position:relative;margin-top:0.2rem;padding-right:2.4rem;min-height:2.2rem">' + meta + bigMood + '</div>';
