@@ -669,7 +669,8 @@
     if (isBusted) {
       meta += '<div class="bb-card-meta-row"><span class="bb-card-value" style="color:#0098a0;font-weight:600">All steps complete</span></div>';
     } else {
-      meta += '<div class="bb-card-meta-row" style="font-size:1rem"><span class="bb-card-label" style="font-weight:800;color:#1f2937;text-transform:uppercase;letter-spacing:0.05em">Next step: </span><span class="bb-card-value" style="font-weight:600;color:#1f2937">' + c.currentStep + '</span></div>';
+      // Inline Next Step label + value — label shrinks, value flows right after it
+      meta += '<div class="bb-card-meta-row" style="font-size:1rem;display:block"><span class="bb-card-label" style="font-weight:800;color:#1f2937;text-transform:uppercase;letter-spacing:0.05em;margin-right:0.4rem">Next step:</span><span class="bb-card-value" style="font-weight:600;color:#1f2937">' + c.currentStep + '</span></div>';
     }
     if (showStage) {
       meta += '<div class="bb-card-meta-row"><span class="bb-card-label">Status: </span><span class="bb-card-stage-pill" style="border-left:3px solid ' + stageColors[c.stage] + ';padding-left:6px;">' + stageLabels[c.stage] + '</span></div>';
@@ -708,11 +709,12 @@
       ? '<div onclick="event.stopPropagation();clearReminder(\'' + c.id + '\')" style="cursor:pointer;font-size:0.55rem;font-weight:600;color:#ef4444;background:#fde8e8;border:1px solid #ef4444;border-radius:3px;padding:2px 6px;opacity:1" title="Cancel reminder">&#10005;</div>'
       : '<div onclick="event.stopPropagation();showRemindMenu(event,\'' + c.id + '\')" style="cursor:pointer;font-size:1.2rem;opacity:0.4" title="Set reminder">&#9200;</div>';
 
-    // Big mood emoji — now sits to the right of the Next Step text, not in the bottom bar
-    var bigMood = '<span onclick="event.stopPropagation();showMoodPicker(event,\'' + c.id + '\')" style="cursor:pointer;font-size:2.6rem;line-height:1;flex-shrink:0;align-self:center" title="Set feeling">' + (c.mood || '&#128300;') + '</span>';
+    // Big mood emoji — absolutely positioned in the top-right of the meta zone,
+    // so its space overlaps the "wasted" right side of the Next Step line.
+    var bigMood = '<span onclick="event.stopPropagation();showMoodPicker(event,\'' + c.id + '\')" style="cursor:pointer;font-size:3rem;line-height:1;position:absolute;right:0;top:50%;transform:translateY(-50%)" title="Set feeling">' + (c.mood || '&#128300;') + '</span>';
 
-    // Wrap meta and the big mood side-by-side, with meta taking only the space it needs
-    var metaWithMood = '<div style="display:flex;align-items:center;gap:10px;margin-top:0.2rem"><div style="flex:1;min-width:0">' + meta + '</div>' + bigMood + '</div>';
+    // Wrap meta with a reserved right-padding zone where the emoji sits.
+    var metaWithMood = '<div style="position:relative;margin-top:0.2rem;padding-right:3.2rem;min-height:3rem">' + meta + bigMood + '</div>';
 
     // On Hold toggle
     var isOnHold = c.stage === 'onhold';
