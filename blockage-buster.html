@@ -103,6 +103,9 @@
     margin-bottom: 10px;
     cursor: pointer; transition: background 0.15s;
     display: flex; overflow: hidden; height: fit-content;
+    -webkit-user-select: none; user-select: none;
+    -webkit-touch-callout: none;
+    touch-action: pan-y;
   }
   .bb-card:active { background: #f9fafb; }
 
@@ -994,7 +997,7 @@
         var personBadge = personName ? '<span style="font-size:0.65rem;font-weight:700;padding:2px 6px;border-radius:3px;background:' + personColor + ';color:#fff;letter-spacing:0.03em">' + personName + '</span>' : '';
         var clickFn = s.status === 'done' ? 'uncompleteStep' : 'completeStep';
         var ledTick = s.status === 'done' ? '<span style="color:#fff;font-size:0.6rem;font-weight:700">&#10003;</span>' : '';
-        var dragHandle = s.status === 'upcoming' ? '<span class="step-drag-handle" data-step-id="' + s.id + '" style="font-size:0.8rem;color:#d1d5db;cursor:grab;margin-right:2px;touch-action:none" title="Drag to reorder">&#9776;</span>' : '';
+        var dragHandle = s.status === 'upcoming' ? '<span class="step-drag-handle" data-step-id="' + s.id + '" style="font-size:1.15rem;color:#9ca3af;cursor:grab;margin-right:4px;padding:4px 6px;touch-action:none;line-height:1" title="Drag to reorder">&#9776;</span>' : '';
         var editBtn = '<span onclick="event.stopPropagation();editStep(\'' + s.id + '\')" style="font-size:0.7rem;color:#4b5563;cursor:pointer;margin-left:auto;font-weight:600;text-decoration:underline" title="Edit step">edit</span>';
         var dragAttrs = s.status === 'upcoming' ? ' draggable="true" ondragstart="stepDragStart(event,\'' + s.id + '\')" ondragover="stepDragOver(event)" ondrop="stepDrop(event,\'' + s.id + '\')" style="cursor:grab"' : '';
         var dateLeft = dateVal ? '<span style="position:absolute;left:-4rem;top:0.3rem;font-size:0.55rem;font-weight:600;color:#9ca3af;text-align:right;width:2rem">' + dateVal + '</span>' : '';
@@ -1804,84 +1807,158 @@
     });
   });
 
-  // ── TOUCH DRAG AND DROP FOR STEP REORDER ──
-  var touchDragStepId = null;
-  var touchDragEl = null;
-  var touchClone = null;
-  var touchStartY = 0;
-  var touchMoved = false;
+  // ── UNIFIED TOUCH DRAG-DROP (cards + steps) ──
+  // Steps: start drag on the step drag-handle (near-immediate).
+  // Cards: start drag on long-press anywhere on the card (400ms hold).
+  (function() {
+    var LONG_PRESS_MS = 400;
+    var MOVE_CANCEL_THRESHOLD = 10; // px of movement before drag mode cancels long-press
+    var touch = {
+      type: null, id: null, el: null,
+      startX: 0, startY: 0,
+      dragging: false, clone: null, timer: null
+    };
 
-  document.addEventListener('touchstart', function(e) {
-    var handle = e.target.closest('.step-drag-handle');
-    if (!handle) return;
-    var stepId = handle.getAttribute('data-step-id');
-    if (!stepId) return;
-    touchDragStepId = stepId;
-    touchDragEl = handle.closest('.bb-stage');
-    touchStartY = e.touches[0].clientY;
-    touchMoved = false;
-  }, { passive: true });
+    function reset() {
+      if (touch.timer) { clearTimeout(touch.timer); touch.timer = null; }
+      if (touch.clone) { touch.clone.remove(); touch.clone = null; }
+      if (touch.el) touch.el.style.opacity = '';
+      document.querySelectorAll('.bb-card, .bb-stage').forEach(function(el) { el.style.borderTop = ''; });
+      touch.type = null; touch.id = null; touch.el = null; touch.dragging = false;
+      dragCardId = null; dragStepId = null;
+    }
 
-  document.addEventListener('touchmove', function(e) {
-    if (!touchDragStepId || !touchDragEl) return;
-    var touch = e.touches[0];
-    // Only start visual drag after 5px movement to avoid interfering with taps
-    if (!touchMoved && Math.abs(touch.clientY - touchStartY) < 5) return;
-    if (!touchMoved) {
-      touchMoved = true;
-      touchDragEl.style.opacity = '0.4';
-      // Create a floating clone for visual feedback
-      touchClone = touchDragEl.cloneNode(true);
-      touchClone.style.position = 'fixed';
-      touchClone.style.pointerEvents = 'none';
-      touchClone.style.opacity = '0.7';
-      touchClone.style.zIndex = '9999';
-      touchClone.style.width = touchDragEl.offsetWidth + 'px';
-      touchClone.style.background = '#fff3cd';
-      touchClone.style.borderRadius = '4px';
-      touchClone.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
-      document.body.appendChild(touchClone);
+    function enterDrag() {
+      if (!touch.el || touch.dragging) return;
+      touch.dragging = true;
+      touch.el.style.opacity = '0.4';
+      touch.el.setAttribute('data-dragging', '1');
+      touch.clone = touch.el.cloneNode(true);
+      var rect = touch.el.getBoundingClientRect();
+      touch.clone.style.position = 'fixed';
+      touch.clone.style.pointerEvents = 'none';
+      touch.clone.style.opacity = '0.85';
+      touch.clone.style.zIndex = '9999';
+      touch.clone.style.width = rect.width + 'px';
+      touch.clone.style.left = rect.left + 'px';
+      touch.clone.style.top = rect.top + 'px';
+      touch.clone.style.boxShadow = '0 6px 18px rgba(0,0,0,0.25)';
+      touch.clone.style.transform = 'rotate(-1deg) scale(1.02)';
+      document.body.appendChild(touch.clone);
+      // Set globals so the existing drop handlers can read them
+      if (touch.type === 'card') dragCardId = touch.id;
+      else if (touch.type === 'step') dragStepId = touch.id;
+      if (navigator.vibrate) { try { navigator.vibrate(25); } catch(_) {} }
     }
-    e.preventDefault();
-    if (touchClone) {
-      touchClone.style.left = touchDragEl.getBoundingClientRect().left + 'px';
-      touchClone.style.top = (touch.clientY - 20) + 'px';
-    }
-    // Highlight drop target
-    document.querySelectorAll('.bb-stage').forEach(function(el) { el.style.borderTop = ''; });
-    var targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
-    if (targetEl) {
-      var targetStage = targetEl.closest('.bb-stage');
-      if (targetStage && targetStage !== touchDragEl && targetStage.classList.contains('bb-stage--upcoming')) {
-        targetStage.style.borderTop = '2px solid #ea580c';
+
+    document.addEventListener('touchstart', function(e) {
+      // Ignore touches on form fields
+      if (e.target.closest('input, textarea, select, button, [contenteditable="true"]')) return;
+
+      // Step handle first (more specific)
+      var handle = e.target.closest('.step-drag-handle');
+      if (handle) {
+        var stepEl = handle.closest('.bb-stage');
+        var stepId = handle.getAttribute('data-step-id');
+        if (stepEl && stepId) {
+          reset();
+          touch.type = 'step';
+          touch.id = stepId;
+          touch.el = stepEl;
+          touch.startX = e.touches[0].clientX;
+          touch.startY = e.touches[0].clientY;
+          // Handle = explicit intent, enter drag mode almost immediately
+          touch.timer = setTimeout(enterDrag, 60);
+        }
+        return;
       }
-    }
-  }, { passive: false });
 
-  document.addEventListener('touchend', function(e) {
-    if (!touchDragStepId) return;
-    // Clean up clone
-    if (touchClone) { touchClone.remove(); touchClone = null; }
-    // Reset opacity
-    if (touchDragEl) touchDragEl.style.opacity = '';
-    document.querySelectorAll('.bb-stage').forEach(function(el) { el.style.borderTop = ''; });
+      // Card long-press
+      var card = e.target.closest('.bb-card');
+      if (card) {
+        var cardId = card.getAttribute('data-card-id');
+        if (cardId) {
+          reset();
+          touch.type = 'card';
+          touch.id = cardId;
+          touch.el = card;
+          touch.startX = e.touches[0].clientX;
+          touch.startY = e.touches[0].clientY;
+          touch.timer = setTimeout(enterDrag, LONG_PRESS_MS);
+        }
+      }
+    }, { passive: true });
 
-    if (!touchMoved) { touchDragStepId = null; touchDragEl = null; return; }
+    document.addEventListener('touchmove', function(e) {
+      if (!touch.type) return;
+      var t = e.touches[0];
+      var dx = t.clientX - touch.startX;
+      var dy = t.clientY - touch.startY;
+      var dist = Math.sqrt(dx*dx + dy*dy);
 
-    // Find the drop target
-    var touch = e.changedTouches[0];
-    var targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
-    var targetStage = targetEl ? targetEl.closest('.bb-stage') : null;
-    if (targetStage && targetStage !== touchDragEl && targetStage.classList.contains('bb-stage--upcoming')) {
-      var targetId = targetStage.id.replace('step-', '');
-      // Set dragStepId so stepDrop can read it, then call once
-      dragStepId = touchDragStepId;
-      stepDrop({ preventDefault: function(){} }, targetId);
-    }
-    touchDragStepId = null;
-    touchDragEl = null;
-    touchMoved = false;
-  });
+      if (!touch.dragging) {
+        // If the user moves before the long-press fires, it's a scroll — cancel drag.
+        if (dist > MOVE_CANCEL_THRESHOLD) reset();
+        return;
+      }
+
+      // Actively dragging: block scroll and track finger
+      e.preventDefault();
+      if (touch.clone) {
+        var rect = touch.el.getBoundingClientRect();
+        touch.clone.style.left = (t.clientX - rect.width / 2) + 'px';
+        touch.clone.style.top = (t.clientY - rect.height / 2) + 'px';
+      }
+
+      // Highlight drop target
+      var selector = touch.type === 'card' ? '.bb-card' : '.bb-stage';
+      document.querySelectorAll(selector).forEach(function(el) { el.style.borderTop = ''; });
+      // Temporarily hide clone so elementFromPoint sees the real grid
+      var prevDisplay = touch.clone ? touch.clone.style.display : '';
+      if (touch.clone) touch.clone.style.display = 'none';
+      var under = document.elementFromPoint(t.clientX, t.clientY);
+      if (touch.clone) touch.clone.style.display = prevDisplay;
+      if (under) {
+        var target = under.closest(selector);
+        if (target && target !== touch.el) {
+          if (touch.type === 'step' && !target.classList.contains('bb-stage--upcoming')) return;
+          target.style.borderTop = '3px solid #ea580c';
+        }
+      }
+    }, { passive: false });
+
+    document.addEventListener('touchend', function(e) {
+      if (!touch.type) return;
+      if (!touch.dragging) { reset(); return; }
+
+      var t = e.changedTouches[0];
+      var selector = touch.type === 'card' ? '.bb-card' : '.bb-stage';
+      if (touch.clone) touch.clone.style.display = 'none';
+      var under = document.elementFromPoint(t.clientX, t.clientY);
+      var target = under ? under.closest(selector) : null;
+
+      if (target && target !== touch.el) {
+        if (touch.type === 'card') {
+          var targetCardId = target.getAttribute('data-card-id');
+          if (targetCardId && typeof window.cardDrop === 'function') {
+            dragCardId = touch.id;
+            window.cardDrop({ preventDefault: function(){}, stopPropagation: function(){}, target: target }, targetCardId);
+          }
+        } else {
+          if (target.classList.contains('bb-stage--upcoming')) {
+            var targetStepId = target.id.replace('step-', '');
+            if (typeof window.stepDrop === 'function') {
+              dragStepId = touch.id;
+              window.stepDrop({ preventDefault: function(){}, target: target }, targetStepId);
+            }
+          }
+        }
+      }
+      reset();
+    });
+
+    document.addEventListener('touchcancel', reset);
+  })();
 
   window.showPostitField = function() {
     var el = document.getElementById('postitToggle');
