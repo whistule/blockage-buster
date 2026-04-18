@@ -1389,7 +1389,7 @@
         '<div class="bb-edit-label" style="margin-bottom:4px">Step name</div>' +
         '<textarea id="stepEditName" style="font-size:1.2rem;font-weight:700;font-family:inherit;background:#fff;border:1px solid #d1d5db;border-radius:4px;padding:10px;width:100%;box-sizing:border-box;margin-bottom:10px;min-height:3.5rem;resize:vertical;line-height:1.4">' + (step.name || '').replace(/</g, '&lt;') + '</textarea>' +
         '<div style="display:flex;gap:10px;margin-bottom:10px">' +
-          '<div style="flex:1"><div class="bb-edit-label" style="margin-bottom:4px">Assigned to</div><select class="bb-edit-select" id="stepEditPerson" onchange="toggleStepSecondary()" style="font-size:0.95rem;padding:8px 12px;width:100%;box-sizing:border-box">' + stagePersonOpts + '</select></div>' +
+          '<div style="flex:1"><div class="bb-edit-label" style="margin-bottom:4px">Step lead</div><select class="bb-edit-select" id="stepEditPerson" onchange="toggleStepSecondary()" style="font-size:0.95rem;padding:8px 12px;width:100%;box-sizing:border-box">' + stagePersonOpts + '</select></div>' +
           '<div style="flex:1"><div class="bb-edit-label" style="margin-bottom:4px">Status</div><select class="bb-edit-select" id="stepEditStatus" style="font-size:0.95rem;padding:8px 12px;width:100%;box-sizing:border-box">' + statusOpts + '</select></div>' +
         '</div>' +
         '<div id="stepSecondaryWrap" style="margin-bottom:10px;' + (primaryIsInternal ? '' : 'display:none') + '">' +
