@@ -825,6 +825,17 @@
         groups[key].push(c);
       });
     } else {
+      // Seed empty columns for every internal person in "Us" view so they appear even with no cards
+      if (viewMode === 'person') {
+        Object.keys(contactsMap).forEach(function(id) {
+          var ct = contactsMap[id];
+          if (ct && ct.type !== 'external' && ct.name && !groups[ct.name]) {
+            groups[ct.name] = [];
+            order.push(ct.name);
+          }
+        });
+        order.sort(function(a, b) { return a.localeCompare(b); });
+      }
       filtered.forEach(function(c) {
         var isBusted = c.stage === 'busted' || c.stage === 'resolved';
         var key = isBusted ? 'Completed' : c.person;
