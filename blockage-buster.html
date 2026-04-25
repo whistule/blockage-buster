@@ -108,6 +108,36 @@
     touch-action: pan-y;
   }
   .bb-card:active { background: #f9fafb; }
+  .bb-card--important {
+    border: 1.5px solid #1f2937;
+    box-shadow: 0 8px 18px rgba(31,41,55,0.4), 0 2px 5px rgba(0,0,0,0.12), inset 1px 1px 2px rgba(0,0,0,0.06);
+  }
+  .bb-importance-tag {
+    display: inline-block; flex-shrink: 0;
+    font-size: 0.55rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    padding: 3px 8px; border-radius: 3px;
+    cursor: pointer; white-space: nowrap;
+    background: #fff; color: #d1d5db;
+    border: 1px dashed #d1d5db;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+  }
+  .bb-importance-tag:hover { color: #4b5563; border-color: #6b7280; }
+  .bb-importance-tag--on {
+    background: #111827 !important; color: #fff !important;
+    border-color: #111827 !important; border-style: solid !important;
+  }
+  .bb-importance-info {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 16px; height: 16px; flex-shrink: 0;
+    border-radius: 50%; border: 1px solid #9ca3af;
+    color: #9ca3af; background: #fff;
+    font-size: 10px; font-weight: 700; line-height: 1;
+    cursor: pointer; margin-left: -3px;
+    font-family: Arial, sans-serif;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .bb-importance-info:hover { color: #4b5563; border-color: #4b5563; }
 
   /* Left info stripe */
   .bb-card-stripe {
@@ -133,7 +163,7 @@
     display: flex; align-items: center; flex-wrap: nowrap;
     gap: 8px; padding: 0 14px;
     height: 36px; min-height: 36px; max-height: 36px;
-    margin: 0.3rem -14px 0;
+    margin: 0.3rem -14px 0 -10px;
     border-top: 1px solid #e5e7eb;
     background: #fafafa;
     overflow: hidden;
@@ -151,7 +181,7 @@
   .bb-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.35rem; }
   .bb-card-num { font-size: 0.75rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.04em; }
   .bb-card-bell { font-size: 0.7rem; color: #6b7280; margin-left: auto; margin-right: 0.5rem; }
-  .bb-card-title { font-size: 1rem; font-weight: 500; color: #6b7280; margin-bottom: 0.3rem; }
+  .bb-card-title { font-size: 0.95rem; font-weight: 500; color: #6b7280; margin-bottom: 0.3rem; }
   .bb-card-desc { font-size: 0.9rem; color: #6b7280; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 0.6rem; }
   .bb-card-meta { display: flex; flex-direction: column; gap: 0.2rem; }
   .bb-card-meta-row { display: flex; gap: 0.3rem; align-items: baseline; }
@@ -208,17 +238,38 @@
     .bb-topbar--main { padding: 0.6rem 0.75rem 0.6rem; gap: 0.5rem; }
     .bb-topbar-title { font-size: 1.2rem; }
     .bb-topbar-sub { display: none; }
-    .bb-view-toggle-btn { padding: 0.25rem 0.5rem; font-size: 0.6rem; }
+    .bb-view-toggle-btn { padding: 0.4rem 0.65rem; font-size: 0.85rem; letter-spacing: 0.05em; }
+    /* Search collapses to icon-only on narrow; expands on tap */
+    #bbSearchWrap {
+      flex: 0 0 36px !important; min-width: 36px !important; width: 36px;
+      height: 36px; cursor: pointer;
+      border: 1px solid #d1d5db; border-radius: 8px; background: #fff;
+      margin-left: 0.5rem !important; transition: flex-basis 0.2s ease;
+    }
+    #bbSearchWrap.bb-search--open {
+      flex: 1 1 0 !important; min-width: 100px !important; width: auto;
+    }
+    #bbSearchWrap > svg { left: 50% !important; transform: translate(-50%, -50%) !important; }
+    #bbSearchWrap.bb-search--open > svg { left: 10px !important; transform: translateY(-50%) !important; }
+    #bbSearch { display: none !important; }
+    #bbSearchWrap.bb-search--open #bbSearch {
+      display: block !important; width: 100% !important;
+      padding: 0.4rem 0.5rem 0.4rem 1.8rem !important; font-size: 0.8rem !important;
+      height: 100%; box-sizing: border-box;
+    }
     /* Compress cards */
     .bb-card-stripe { width: 28px !important; min-width: 28px !important; }
     .bb-card-stripe-text { font-size: 0.45rem !important; }
     .bb-card-stripe-num { font-size: 0.8rem !important; }
     .bb-card-body { padding: 8px 10px 0 !important; }
-    .bb-card-title { font-size: 0.9rem !important; }
+    .bb-card-title { font-size: 0.88rem !important; }
     .bb-card-desc { font-size: 0.75rem !important; -webkit-line-clamp: 1 !important; }
     .bb-card-meta { font-size: 0.7rem !important; }
     .bb-card-bar { height: 30px !important; min-height: 30px !important; max-height: 30px !important; }
     .bb-card-bar .bb-pill { font-size: 0.5rem !important; padding: 2px 5px !important; }
+    /* Person tabs compress to fit all on screen */
+    .bb-tab { padding: 0.45rem 0.55rem !important; font-size: 0.7rem !important; letter-spacing: 0.03em !important; }
+    .bb-tab-count { display: none !important; }
   }
   .bb-hamburger {
     display: none;
@@ -452,7 +503,7 @@
       <select class="bb-form-select" id="ncUrgency">
         <option value="medium">Medium</option>
         <option value="low">Low</option>
-        <option value="high">High Priority</option>
+        <option value="high">Soon</option>
         <option value="urgent">Urgent</option>
       </select>
     </div>
@@ -481,31 +532,31 @@
       <div class="bb-topbar-title"><span class="bb-topbar-mk">MK</span><span class="bb-topbar-app">BLOCKAGE BUSTER</span></div>
       <div class="bb-topbar-sub">build __BUILD_VERSION__</div>
     </div>
-    <div id="bbGeneralAdd" onclick="openNewCard('flagged')" title="New buster" style="cursor:pointer;flex-shrink:0;user-select:none;margin-right:2.25rem;width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:#fff;border:2px solid #ea580c;transition:background 0.15s,transform 0.1s" onmouseover="this.style.background='#fff7ed'" onmouseout="this.style.background='#fff'" onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform=''">
+    <div id="bbGeneralAdd" onclick="openNewCard('flagged')" title="New buster" style="cursor:pointer;flex-shrink:0;user-select:none;width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:#fff;border:2px solid #ea580c;transition:background 0.15s,transform 0.1s" onmouseover="this.style.background='#fff7ed'" onmouseout="this.style.background='#fff'" onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform=''">
       <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#ea580c" stroke-width="2.5" stroke-linecap="round">
         <line x1="11" y1="4" x2="11" y2="18"/>
         <line x1="4" y1="11" x2="18" y2="11"/>
       </svg>
     </div>
-    <div class="bb-view-toggle">
-      <div class="bb-view-toggle-btn" onclick="setViewMode('stage')">Stage</div>
-      <div class="bb-view-toggle-btn bb-view-toggle-btn--active" onclick="setViewMode('person')">Us</div>
-      <div class="bb-view-toggle-btn" onclick="setViewMode('supplier')">Them</div>
-      <div class="bb-view-toggle-btn" onclick="setViewMode('urgency')">Urgency</div>
-    </div>
-    <div style="margin-left:1.25rem;position:relative;flex-shrink:0">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none">
-        <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-      </svg>
-      <input id="bbSearch" type="search" placeholder="Search busters..." oninput="handleSearch(this.value)" onkeydown="if(event.key==='Escape'){this.value='';handleSearch('');}" style="padding:0.5rem 0.75rem 0.5rem 2.1rem;font-size:0.9rem;border:1px solid #d1d5db;border-radius:8px;background:#fff;font-family:inherit;width:220px;outline:none;transition:border-color 0.15s,box-shadow 0.15s;box-sizing:border-box" onfocus="this.style.borderColor='#0098a0';this.style.boxShadow='0 0 0 3px rgba(0,152,160,0.1)'" onblur="this.style.borderColor='#d1d5db';this.style.boxShadow='none'">
-    </div>
-    <div id="bbWorkdaysBtn" onclick="openWorkdaysModal()" title="Working Days" style="margin-left:0.75rem;cursor:pointer;flex-shrink:0;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:#fff;border:1px solid #d1d5db;transition:background 0.15s,border-color 0.15s" onmouseover="this.style.background='#f9fafb';this.style.borderColor='#9ca3af'" onmouseout="this.style.background='#fff';this.style.borderColor='#d1d5db'">
+    <div id="bbWorkdaysBtn" onclick="openWorkdaysModal()" title="Working Days" style="cursor:pointer;flex-shrink:0;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:#fff;border:1px solid #d1d5db;transition:background 0.15s,border-color 0.15s" onmouseover="this.style.background='#f9fafb';this.style.borderColor='#9ca3af'" onmouseout="this.style.background='#fff';this.style.borderColor='#d1d5db'">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
         <rect x="3" y="5" width="18" height="16" rx="2"/>
         <line x1="3" y1="10" x2="21" y2="10"/>
         <line x1="8" y1="3" x2="8" y2="7"/>
         <line x1="16" y1="3" x2="16" y2="7"/>
       </svg>
+    </div>
+    <div class="bb-view-toggle">
+      <div class="bb-view-toggle-btn bb-view-toggle-btn--active" onclick="setViewMode('person')">Us</div>
+      <div class="bb-view-toggle-btn" onclick="setViewMode('stage')">Stage</div>
+      <div class="bb-view-toggle-btn" onclick="setViewMode('supplier')">Them</div>
+      <div class="bb-view-toggle-btn" onclick="setViewMode('urgency')">Urgency</div>
+    </div>
+    <div id="bbSearchWrap" onclick="openSearch()" style="margin-left:1.25rem;position:relative;flex-shrink:0">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none">
+        <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input id="bbSearch" type="search" placeholder="Search busters..." oninput="handleSearch(this.value)" onkeydown="if(event.key==='Escape'){this.value='';handleSearch('');this.blur();}" onblur="if(!this.value){document.getElementById('bbSearchWrap').classList.remove('bb-search--open');}this.style.borderColor='#d1d5db';this.style.boxShadow='none';" style="padding:0.5rem 0.75rem 0.5rem 2.1rem;font-size:0.9rem;border:1px solid #d1d5db;border-radius:8px;background:#fff;font-family:inherit;width:220px;outline:none;transition:border-color 0.15s,box-shadow 0.15s;box-sizing:border-box" onfocus="this.style.borderColor='#0098a0';this.style.boxShadow='0 0 0 3px rgba(0,152,160,0.1)'">
     </div>
     <div class="bb-topbar-rule"></div>
   </div>
@@ -669,7 +720,8 @@
           remindAt: c.remind_at || null,
           mood: c.mood || '',
           sortPos: c.sort_pos || 0,
-          postit: c.postit || ''
+          postit: c.postit || '',
+          important: !!c.important
         };
       });
     }
@@ -686,7 +738,7 @@
       pillCls = 'bb-pill--resolved';
       pillText = 'Busted';
     } else {
-      pillText = c.urgency === 'urgent' ? 'Urgent' : c.urgency === 'high' ? 'High Priority' : c.urgency === 'medium' ? 'Medium' : 'Low';
+      pillText = c.urgency === 'urgent' ? 'Urgent' : c.urgency === 'high' ? 'Soon' : c.urgency === 'medium' ? 'Medium' : 'Low';
     }
     var bell = c.hasReminder ? '<span class="bb-card-bell">🔔</span>' : '';
 
@@ -699,9 +751,9 @@
 
     var meta = '<div class="bb-card-meta">';
     if (isBusted) {
-      meta += '<div class="bb-card-meta-row"><span class="bb-card-value" style="color:#0098a0;font-weight:600">All steps complete</span></div>';
+      meta += '<div class="bb-card-meta-row"><span class="bb-card-value" style="color:#0098a0;font-weight:600">All actions complete</span></div>';
     } else {
-      meta += '<div class="bb-card-meta-row" style="font-size:1rem;gap:0.5rem"><span class="bb-card-label" style="font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.05em">Next step: </span><span class="bb-card-value" style="font-weight:600;color:#1f2937">' + c.currentStep + '</span></div>';
+      meta += '<div class="bb-card-meta-row" style="font-size:1rem;gap:0.5rem"><span class="bb-card-label" style="font-size:0.85rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.05em">Next action: </span><span class="bb-card-value" style="font-size:1rem;font-weight:600;color:#1f2937">' + c.currentStep + '</span></div>';
     }
     if (showStage) {
       meta += '<div class="bb-card-meta-row"><span class="bb-card-label">Status: </span><span class="bb-card-stage-pill" style="border-left:3px solid ' + stageColors[c.stage] + ';padding-left:6px;">' + stageLabels[c.stage] + '</span></div>';
@@ -743,7 +795,9 @@
     // Big mood emoji — absolutely positioned in the top-right of the meta zone,
     // so its space overlaps the "wasted" right side of the Next Step line.
     var moodContent;
-    if (c.mood) {
+    if (hasRemindAt) {
+      moodContent = '\uD83D\uDE34'; // 😴 snoozing
+    } else if (c.mood) {
       moodContent = c.mood;
     } else {
       // Clean ghost outline — SVG so twemoji leaves it alone
@@ -764,37 +818,51 @@
       ? '<span onclick="event.stopPropagation();unholdCard(\'' + c.id + '\')" style="cursor:pointer;font-size:0.5rem;font-weight:700;padding:2px 5px;background:#6b7280;color:#fff;border-radius:3px" title="Remove from On Hold">&#9208; HELD</span>'
       : '<span onclick="event.stopPropagation();holdCard(\'' + c.id + '\',event)" style="cursor:pointer;font-size:0.9rem;opacity:0.3" title="Put on hold">&#9208;</span>';
 
+    var importanceTag = (c.important
+      ? '<span class="bb-importance-tag bb-importance-tag--on" onclick="event.stopPropagation();toggleImportant(\'' + c.id + '\')" title="Remove importance">Important!</span>'
+      : '<span class="bb-importance-tag" onclick="event.stopPropagation();toggleImportant(\'' + c.id + '\')" title="Mark as important">+ important</span>')
+      + '<span onclick="showImportanceInfo(event)" class="bb-importance-info" title="What does Important mean?">?</span>';
+
+    var postitPin = c.postit
+      ? ''
+      : '<span onclick="event.stopPropagation();openCardPostit(\'' + c.id + '\')" style="font-size:1.1rem;cursor:pointer;opacity:0.6;line-height:1" title="Add a post-it">\uD83D\uDCCC</span>';
+
+    var topRight = '<div style="position:absolute;top:8px;right:10px;display:flex;align-items:center;gap:10px;z-index:5">' +
+      postitPin +
+    '</div>';
+
     var bottomBar = '<div class="bb-card-bar">' +
+      importanceTag +
       '<span class="bb-pill ' + pillCls + '">' + pillText + '</span>' +
-      remindInfo +
       '<div style="display:flex;align-items:center;gap:10px;margin-left:auto">' +
-        holdIcon + alarmIcon +
+        remindInfo + holdIcon + alarmIcon +
       '</div>' +
     '</div>';
 
     var imgHTML = c.img ? '<img class="bb-card-img" src="' + c.img + '" alt="">' : '';
     var cardOpacity = hasRemindAt ? ' style="opacity:0.35"' : '';
 
-    return '<div class="bb-card" data-card-id="' + c.id + '"' + cardOpacity + ' onclick="showDetail(\'' + c.id + '\')" draggable="true" ondragstart="cardDragStart(event,\'' + c.id + '\')" ondragover="cardDragOver(event)" ondrop="cardDrop(event,\'' + c.id + '\')">' +
+    var cardCls = 'bb-card' + (c.important ? ' bb-card--important' : '');
+    return '<div class="' + cardCls + '" data-card-id="' + c.id + '"' + cardOpacity + ' onclick="showDetail(\'' + c.id + '\')" draggable="true" ondragstart="cardDragStart(event,\'' + c.id + '\')" ondragover="cardDragOver(event)" ondrop="cardDrop(event,\'' + c.id + '\')">' +
       '<div class="bb-card-stripe" style="background:' + borderColor + ';">' +
         bustCircle +
         '<span class="bb-card-stripe-text bb-card-stripe-num">' + c.id + '</span>' +
         '<span class="bb-card-stripe-text bb-card-stripe-who">' + (isBusted ? '<span style="font-size:0.5rem;opacity:0.8">COMPLETE</span>' : '<span style="font-size:0.4rem;opacity:0.7;letter-spacing:0.1em;display:block">WITH</span><span style="font-size:0.8rem;display:block">' + stripeName + '</span>') + '</span>' +
       '</div>' +
       '<div class="bb-card-body">' +
-        '<div class="bb-card-title">' + (isBusted ? '<span style="color:#0098a0;margin-right:4px">&#10003;</span>' : '') + c.title + '</div>' +
+        topRight +
+        '<div class="bb-card-title" style="padding-right:64px">' + (isBusted ? '<span style="color:#0098a0;margin-right:4px">&#10003;</span>' : '') + c.title + '</div>' +
         (c.img ? '<div style="display:flex;gap:10px"><div style="flex:1;min-width:0">' : '') +
         (c.postit
           ? '<div id="postit-card-' + c.id + '" onclick="event.stopPropagation();openCardPostit(\'' + c.id + '\',true)" style="background:#d9f99d;border-left:3px solid #65a30d;padding:4px 8px;border-radius:2px;font-style:italic;cursor:text;position:relative;font-size:0.85rem;color:#365314;line-height:1.4;margin-top:5px;margin-bottom:0.4rem;white-space:pre-wrap">' + c.postit + '<span onclick="event.stopPropagation();deletePostit(\'' + c.id + '\')" style="position:absolute;top:2px;right:4px;font-size:0.6rem;color:#65a30d;cursor:pointer;opacity:0.5;font-style:normal" title="Remove post-it">&#10005;</span></div>'
-          : '<span onclick="event.stopPropagation();openCardPostit(\'' + c.id + '\')" style="position:absolute;top:8px;right:10px;font-size:1.1rem;cursor:pointer;opacity:0.6" title="Add a post-it">&#128204;</span>' +
-            '<div id="postit-card-' + c.id + '"></div>') +
+          : '<div id="postit-card-' + c.id + '"></div>') +
         (c.img ? '</div>' + imgHTML + '</div>' : '') +
         '<div class="bb-card-bottom">' + metaWithMood + bottomBar + '</div>' +
       '</div>' +
     '</div>';
   }
 
-  var urgencyLabels = { urgent: 'Urgent', high: 'High Priority', medium: 'Medium', low: 'Low', '': 'None' };
+  var urgencyLabels = { urgent: 'Urgent', high: 'Soon', medium: 'Medium', low: 'Low', '': 'None' };
   var urgencyColors = { urgent: '#ef4444', high: '#f97316', medium: '#22c55e', low: '#9ca3af', '': '#d1d5db' };
   var urgencyGroupOrder = ['urgent', 'high', 'medium', 'low', ''];
 
@@ -803,6 +871,12 @@
   window.handleSearch = function(v) {
     searchTerm = (v || '').trim().toLowerCase();
     render();
+  };
+  window.openSearch = function() {
+    var wrap = document.getElementById('bbSearchWrap');
+    var input = document.getElementById('bbSearch');
+    wrap.classList.add('bb-search--open');
+    setTimeout(function(){ input.focus(); }, 50);
   };
   function matchesSearch(c) {
     if (!searchTerm) return true;
@@ -862,6 +936,12 @@
           }
         });
         order.sort(function(a, b) { return a.localeCompare(b); });
+        // Pin Misha to second column (index 1)
+        var mishaIdx = order.indexOf('Misha');
+        if (mishaIdx !== -1 && mishaIdx !== 1 && order.length > 1) {
+          order.splice(mishaIdx, 1);
+          order.splice(1, 0, 'Misha');
+        }
       }
       filtered.forEach(function(c) {
         var isBusted = c.stage === 'busted' || c.stage === 'resolved';
@@ -896,6 +976,9 @@
         var aBusted = (a.stage === 'busted' || a.stage === 'resolved') ? 1 : 0;
         var bBusted = (b.stage === 'busted' || b.stage === 'resolved') ? 1 : 0;
         if (aBusted !== bBusted) return aBusted - bBusted;
+        // Importance wins (Covey): priority cards float to top, urgency is tiebreak
+        var impDiff = (a.important ? 0 : 1) - (b.important ? 0 : 1);
+        if (impDiff !== 0) return impDiff;
         var urgDiff = (urgencyOrder[(a.urgency||'').toLowerCase()] !== undefined ? urgencyOrder[(a.urgency||'').toLowerCase()] : 4) - (urgencyOrder[(b.urgency||'').toLowerCase()] !== undefined ? urgencyOrder[(b.urgency||'').toLowerCase()] : 4);
         if (urgDiff !== 0) return urgDiff;
         return (a.sortPos || 0) - (b.sortPos || 0);
@@ -928,7 +1011,8 @@
       if (viewMode === 'stage') label = stageLabels[key] || key;
       else if (viewMode === 'urgency') label = urgencyLabels[key] || key;
       else label = key;
-      tabsHTML += '<div class="bb-tab' + active + '" data-key="' + key + '">' + label + ' <span class="bb-tab-count">' + groups[key].length + '</span></div>';
+      var tabColor = (viewMode === 'person' && personColors[key]) ? ' style="color:' + personColors[key] + '"' : '';
+      tabsHTML += '<div class="bb-tab' + active + '" data-key="' + key + '"' + tabColor + '>' + label + ' <span class="bb-tab-count">' + groups[key].length + '</span></div>';
     });
     if (viewMode === 'stage') tabsHTML += '<div class="bb-tab bb-tab--add">+ Column</div>';
     // Add card button for mobile — always visible
@@ -1009,7 +1093,7 @@
     if (stagesData) cardStages = stagesData;
 
     var urgOpts = ['', 'low', 'medium', 'high', 'urgent'];
-    var urgLabels = { '': 'None', low: 'Low', medium: 'Medium', high: 'High', urgent: 'Urgent' };
+    var urgLabels = { '': 'None', low: 'Low', medium: 'Medium', high: 'Soon', urgent: 'Urgent' };
     var stageOpts = stageOrder;
 
     var urgSelect = urgOpts.map(function(u) {
@@ -1087,7 +1171,7 @@
         var clickFn = s.status === 'done' ? 'uncompleteStep' : 'completeStep';
         var ledTick = s.status === 'done' ? '<span style="color:#fff;font-size:0.6rem;font-weight:700">&#10003;</span>' : '';
         var dragHandle = s.status === 'upcoming' ? '<span class="step-drag-handle" data-step-id="' + s.id + '" style="font-size:1.15rem;color:#9ca3af;cursor:grab;margin-right:4px;padding:4px 6px;touch-action:none;line-height:1" title="Drag to reorder">&#9776;</span>' : '';
-        var editBtn = '<span onclick="event.stopPropagation();editStep(\'' + s.id + '\')" style="font-size:0.7rem;color:#4b5563;cursor:pointer;margin-left:auto;font-weight:600;text-decoration:underline" title="Edit step">edit</span>';
+        var editBtn = '<span onclick="event.stopPropagation();editStep(\'' + s.id + '\')" style="font-size:0.7rem;color:#9ca3af;cursor:pointer;margin-left:auto;font-weight:600" title="More options">&#9881;</span>';
         var dragAttrs = s.status === 'upcoming' ? ' draggable="true" ondragstart="stepDragStart(event,\'' + s.id + '\')" ondragover="stepDragOver(event)" ondrop="stepDrop(event,\'' + s.id + '\')" style="cursor:grab"' : '';
         var dateLeft = dateVal ? '<span style="position:absolute;left:-4rem;top:0.3rem;font-size:0.55rem;font-weight:600;color:#9ca3af;text-align:right;width:2rem">' + dateVal + '</span>' : '';
         timelineHTML += '<div class="bb-stage ' + cls + '" id="step-' + s.id + '"' + dragAttrs + '>' +
@@ -1095,7 +1179,7 @@
           '<div class="bb-stage-led" onclick="event.stopPropagation();' + clickFn + '(\'' + s.id + '\')" style="cursor:pointer" title="' + (s.status === 'done' ? 'Undo' : 'Complete') + '">' + ledTick + '</div>' +
           '<div style="flex:1;min-width:0">' +
             '<div class="bb-stage-head">' + dragHandle +
-              '<span class="bb-stage-name" style="font-weight:700;font-size:1rem">' + (s.name || '') + '</span>' +
+              '<span class="bb-stage-name" contenteditable="true" data-step-id="' + s.id + '" onclick="event.stopPropagation()" onblur="saveStepTitle(\'' + s.id + '\',this)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur();}" style="font-weight:700;font-size:1rem;cursor:text;outline:none;padding:1px 3px;border-radius:3px" onfocus="this.style.background=\'#fef3c7\'" onblur2="this.style.background=\'\'">' + (s.name || '').replace(/</g, '&lt;') + '</span>' +
               personBadge + nowPill + editBtn +
             '</div>' +
             '<div style="margin-top:0.15rem">' +
@@ -1116,6 +1200,7 @@
     var html = '<div class="bb-detail-top" style="flex-wrap:wrap">' +
       '<span class="bb-detail-num">#' + card.id + '</span>' +
       '<div style="display:flex;gap:12px;margin-left:auto;align-items:center">' +
+        '<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:0.55rem;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:0.08em">Importance</span><div id="editImportance" data-important="' + (card.important ? 'true' : 'false') + '" onclick="toggleEditImportance()" class="bb-importance-tag' + (card.important ? ' bb-importance-tag--on' : '') + '" style="font-size:0.95rem;padding:10px 16px;font-weight:700;text-align:center;min-width:120px;line-height:1.2;border-width:2px;letter-spacing:0.06em' + (card.important ? '' : ';border-color:#6b7280;color:#6b7280') + '">' + (card.important ? 'Important!' : '+ important') + '</div></div>' +
         '<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:0.55rem;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:0.08em">Flagged by</span><select class="bb-edit-select" id="editLoggedBy" style="font-size:1rem;padding:8px 14px;font-weight:600">' + loggedBySelect + '</select></div>' +
         '<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:0.55rem;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:0.08em">Urgency</span><select class="bb-edit-select" id="editUrgency" style="font-size:1rem;padding:8px 14px;font-weight:600">' + urgSelect + '</select></div>' +
       '</div>' +
@@ -1134,12 +1219,12 @@
           '</div>') +
     '</div>' +
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:2rem">' +
-      '<div class="bb-heading" style="margin:0;border:none;padding:0">Resolution Steps</div>' +
-      '<div id="addStepOpenBtn" onclick="openAddStepForm()" style="font-size:0.9rem;font-weight:700;color:#fff;cursor:pointer;padding:8px 18px;background:#3d6640;border:none;border-radius:6px;box-shadow:0 2px 4px rgba(0,0,0,0.15)">+ Add step</div>' +
+      '<div class="bb-heading" style="margin:0;border:none;padding:0">Resolution Actions</div>' +
+      '<div id="addStepOpenBtn" onclick="openAddStepForm()" style="font-size:0.9rem;font-weight:700;color:#fff;cursor:pointer;padding:8px 18px;background:#3d6640;border:none;border-radius:6px;box-shadow:0 2px 4px rgba(0,0,0,0.15)">+ Add action</div>' +
     '</div>' +
     '<div id="addStepForm" style="display:none;margin:0.5rem 0 0.75rem;padding:0.75rem;background:#f0fdf4;border:1px solid #86efac;border-radius:6px">' +
       '<div class="bb-edit-row" style="margin-bottom:0">' +
-        '<div class="bb-edit-field" style="flex:2"><input class="bb-edit-input" id="newStageName" placeholder="Step name" style="font-size:1.1rem;font-weight:700;font-family:inherit;background:#fff;border:1px solid #d1d5db;border-radius:4px;padding:8px"></div>' +
+        '<div class="bb-edit-field" style="flex:2"><input class="bb-edit-input" id="newStageName" placeholder="Action name" style="font-size:1.1rem;font-weight:700;font-family:inherit;background:#fff;border:1px solid #d1d5db;border-radius:4px;padding:8px"></div>' +
         '<div class="bb-edit-field"><select class="bb-edit-select" id="newStagePerson" onchange="handleNewPerson(this);toggleNewSecondary()">' + buildPersonSelect(null, true) + '</select></div>' +
         '<div class="bb-edit-field" style="flex:0"><select class="bb-edit-select" id="newStageStatus"><option value="upcoming">Upcoming</option><option value="now">Now</option><option value="done">Done</option></select></div>' +
       '</div>' +
@@ -1154,7 +1239,7 @@
       '<textarea class="bb-edit-textarea" id="newStageNotes" placeholder="Notes (optional)" style="min-height:2rem;font-size:0.8rem;margin-top:0.5rem;background:#fff;border:1px solid #d1d5db;border-radius:4px;padding:6px"></textarea>' +
       '<div style="display:flex;justify-content:flex-end;gap:0.5rem;margin-top:0.5rem">' +
         '<div onclick="closeAddStepForm()" style="font-size:0.9rem;font-weight:600;color:#6b7280;cursor:pointer;padding:8px 14px;background:#fff;border:1px solid #d1d5db;border-radius:6px">Cancel</div>' +
-        '<div onclick="addStage()" style="font-size:0.9rem;font-weight:700;color:#fff;cursor:pointer;padding:8px 18px;background:#3d6640;border:none;border-radius:6px;box-shadow:0 2px 4px rgba(0,0,0,0.15)">Save step</div>' +
+        '<div onclick="addStage()" style="font-size:0.9rem;font-weight:700;color:#fff;cursor:pointer;padding:8px 18px;background:#3d6640;border:none;border-radius:6px;box-shadow:0 2px 4px rgba(0,0,0,0.15)">Save action</div>' +
       '</div>' +
     '</div>' +
     timelineHTML +
@@ -1305,7 +1390,7 @@
     var { error } = await sb.from('stages').insert(insert);
     if (error) { showToast('Error: ' + error.message); return; }
     await syncCardStageFromSteps(card.dbId);
-    showToast('Step added');
+    showToast('Action added');
     await loadData();
     await renderDetail(currentCardId);
   };
@@ -1335,7 +1420,7 @@
     if (!card || !card.dbId) return;
     await sb.from('stages').update({ status: 'now', completed_at: null }).eq('id', stepId);
     await syncCardStageFromSteps(card.dbId);
-    showToast('Step reopened');
+    showToast('Action reopened');
     await loadData();
     await renderDetail(currentCardId);
   };
@@ -1352,9 +1437,9 @@
     var nextUpcoming = allStages ? allStages.find(function(s) { return s.status === 'upcoming'; }) : null;
     if (nextUpcoming) {
       await sb.from('stages').update({ status: 'now' }).eq('id', nextUpcoming.id);
-      showToast('Step complete — ' + nextUpcoming.name + ' is next');
+      showToast('Action complete — ' + nextUpcoming.name + ' is next');
     } else {
-      showToast('All steps complete — Busted!');
+      showToast('All actions complete — Busted!');
     }
     await syncCardStageFromSteps(card.dbId);
     await loadData();
@@ -1372,6 +1457,21 @@
       var input = document.getElementById('step-notes-input-' + stepId);
       if (input) input.focus();
     }
+  };
+
+  // ── SAVE STEP TITLE (inline edit) ──
+  window.saveStepTitle = async function(stepId, el) {
+    el.style.background = '';
+    var newName = (el.textContent || '').trim();
+    if (!newName) { showToast('Action name required'); return; }
+    var { error } = await sb.from('stages').update({ name: newName }).eq('id', stepId);
+    if (error) { showToast('Error: ' + error.message); return; }
+    showToast('Action updated');
+    if (currentCardId) {
+      var card = cards.find(function(c) { return c.id === currentCardId; });
+      if (card && card.dbId) await syncCardStageFromSteps(card.dbId);
+    }
+    await loadData();
   };
 
   // ── SAVE STEP NOTES ──
@@ -1424,10 +1524,10 @@
     if (!el) return;
     el.innerHTML =
       '<div style="padding:1rem;background:#f9fafb;border:2px solid #ea580c;border-radius:8px;margin-left:-4.5rem;width:calc(100% + 4.5rem);box-sizing:border-box">' +
-        '<div class="bb-edit-label" style="margin-bottom:4px">Step name</div>' +
+        '<div class="bb-edit-label" style="margin-bottom:4px">Action name</div>' +
         '<textarea id="stepEditName" style="font-size:1.2rem;font-weight:700;font-family:inherit;background:#fff;border:1px solid #d1d5db;border-radius:4px;padding:10px;width:100%;box-sizing:border-box;margin-bottom:10px;min-height:3.5rem;resize:vertical;line-height:1.4">' + (step.name || '').replace(/</g, '&lt;') + '</textarea>' +
         '<div style="display:flex;gap:10px;margin-bottom:10px">' +
-          '<div style="flex:1"><div class="bb-edit-label" style="margin-bottom:4px">Step lead</div><select class="bb-edit-select" id="stepEditPerson" onchange="toggleStepSecondary()" style="font-size:0.95rem;padding:8px 12px;width:100%;box-sizing:border-box">' + stagePersonOpts + '</select></div>' +
+          '<div style="flex:1"><div class="bb-edit-label" style="margin-bottom:4px">Action lead</div><select class="bb-edit-select" id="stepEditPerson" onchange="toggleStepSecondary()" style="font-size:0.95rem;padding:8px 12px;width:100%;box-sizing:border-box">' + stagePersonOpts + '</select></div>' +
           '<div style="flex:1"><div class="bb-edit-label" style="margin-bottom:4px">Status</div><select class="bb-edit-select" id="stepEditStatus" style="font-size:0.95rem;padding:8px 12px;width:100%;box-sizing:border-box">' + statusOpts + '</select></div>' +
         '</div>' +
         '<div id="stepSecondaryWrap" style="margin-bottom:10px;' + (primaryIsInternal ? '' : 'display:none') + '">' +
@@ -1488,7 +1588,7 @@
       status: document.getElementById('stepEditStatus').value,
       notes: document.getElementById('stepEditNotes').value
     };
-    if (!updates.name) { showToast('Step name required'); return; }
+    if (!updates.name) { showToast('Action name required'); return; }
     await sb.from('stages').update(updates).eq('id', stepId);
 
     // Sync card position from steps
@@ -1497,16 +1597,16 @@
       if (card && card.dbId) await syncCardStageFromSteps(card.dbId);
     }
 
-    showToast('Step updated');
+    showToast('Action updated');
     await loadData();
     await renderDetail(currentCardId);
   };
 
   // ── DELETE STEP ──
   window.deleteStep = async function(stepId) {
-    if (!confirm('Delete this step?')) return;
+    if (!confirm('Delete this action?')) return;
     await sb.from('stages').delete().eq('id', stepId);
-    showToast('Step deleted');
+    showToast('Action deleted');
     await loadData();
     await renderDetail(currentCardId);
   };
@@ -1535,11 +1635,11 @@
       var nextPersonType = nextUpcoming.person_id && contactsMap[nextUpcoming.person_id] ? contactsMap[nextUpcoming.person_id].type : 'internal';
       var newBoardStage = nextPersonType === 'external' ? 'onthem' : 'onus';
       await sb.from('cards').update({ stage: newBoardStage }).eq('id', card.dbId);
-      showToast('Step complete — ' + (nextUpcoming.name) + ' is up next');
+      showToast('Action complete — ' + (nextUpcoming.name) + ' is up next');
     } else {
       // All steps done — move card to Busted
       await sb.from('cards').update({ stage: 'busted' }).eq('id', card.dbId);
-      showToast('All steps complete — Busted!');
+      showToast('All actions complete — Busted!');
     }
 
     await loadData();
@@ -1560,7 +1660,8 @@
       description: document.getElementById('editDesc').value,
       postit: (function() { var el = document.getElementById('editPostit'); return el ? (el.innerHTML || '').trim() || null : null; })(),
       urgency: document.getElementById('editUrgency').value,
-      logged_by: document.getElementById('editLoggedBy').value || null
+      logged_by: document.getElementById('editLoggedBy').value || null,
+      important: (function() { var el = document.getElementById('editImportance'); return el ? el.getAttribute('data-important') === 'true' : false; })()
     };
 
     // Try saving core fields first
@@ -2003,7 +2104,7 @@
     var { error: e2 } = await sb.from('stages').update({ sort_order: tempOrder }).eq('id', targetStep.id);
 
     if (e1 || e2) { showToast('Reorder failed'); console.error(e1, e2); }
-    else { showToast('Steps swapped'); }
+    else { showToast('Actions swapped'); }
 
     dragStepId = null;
     await renderDetail(currentCardId);
@@ -2373,6 +2474,50 @@
     await sb.from('cards').update({ stage: 'flagged' }).eq('id', card.dbId);
     showToast('Card #' + cardId + ' reopened');
     await loadData();
+  };
+
+  window.toggleEditImportance = function() {
+    var el = document.getElementById('editImportance');
+    if (!el) return;
+    var current = el.getAttribute('data-important') === 'true';
+    var newVal = !current;
+    el.setAttribute('data-important', newVal ? 'true' : 'false');
+    el.classList.toggle('bb-importance-tag--on', newVal);
+    el.textContent = newVal ? 'Important!' : '+ important';
+    var status = document.getElementById('autosaveStatus');
+    if (status) status.textContent = 'Unsaved changes...';
+    clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(function() { updateCard(true); }, 600);
+  };
+
+  window.showImportanceInfo = function(e) {
+    e.stopPropagation();
+    var existing = document.getElementById('bbImportanceInfo');
+    if (existing) { existing.remove(); return; }
+    var pop = document.createElement('div');
+    pop.id = 'bbImportanceInfo';
+    pop.style.cssText = 'position:fixed;z-index:300;background:#fff;border:1px solid #d1d5db;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,0.18);padding:14px 16px;max-width:280px;font-size:0.85rem;line-height:1.45;color:#4b5563';
+    var rect = e.currentTarget.getBoundingClientRect();
+    var leftPos = Math.max(10, Math.min(rect.left - 20, window.innerWidth - 295));
+    pop.style.left = leftPos + 'px';
+    pop.style.top = (rect.bottom + 8) + 'px';
+    pop.innerHTML = '<strong style="color:#111827;display:block;margin-bottom:6px;font-size:0.9rem">What does Important mean?</strong>Important tasks unlock something for us in the future. They beat urgent tasks &mdash; which is why they float to the top of the queue.';
+    document.body.appendChild(pop);
+    setTimeout(function() {
+      document.addEventListener('click', function close(ev) {
+        if (!pop.contains(ev.target)) { pop.remove(); document.removeEventListener('click', close); }
+      });
+    }, 50);
+  };
+
+  window.toggleImportant = async function(cardId) {
+    var card = cards.find(function(c) { return c.id === cardId; });
+    if (!card || !card.dbId) return;
+    var newVal = !card.important;
+    var { error } = await sb.from('cards').update({ important: newVal }).eq('id', card.dbId);
+    if (error) { showToast('Error: ' + error.message); return; }
+    card.important = newVal;
+    render();
   };
 
   window.deleteCard = async function() {
