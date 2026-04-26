@@ -11,7 +11,49 @@
 <script src="https://cdn.jsdelivr.net/npm/twemoji@14.0.2/dist/twemoji.min.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { height: 100%; background: #e5e7eb; font-family: 'Plus Jakarta Sans', sans-serif; color: #4b5563; }
+  html { height: 100%; background: #e5e7eb; }
+  body { font-family: 'Plus Jakarta Sans', sans-serif; color: #4b5563; }
+  .bb-section-panel { background: #fff; padding: 1rem 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid #e5e7eb; }
+  .bb-attach-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    cursor: pointer; user-select: none; flex-shrink: 0;
+    background: #fff; border: 1px dashed #9ca3af; color: #6b7280;
+    font-weight: 600; transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .bb-attach-btn:hover { background: #f9fafb; border-color: #4b5563; color: #1f2937; }
+  .bb-attach-btn--inline { width: auto; padding: 8px 14px; font-size: 0.85rem; border-radius: 6px; }
+  .bb-attach-btn--col { width: 44px; height: 100%; min-height: 32px; font-size: 1.4rem; border-radius: 4px; }
+  .bb-attach-btn--icon {
+    width: auto; padding: 0; background: transparent; border: none;
+    color: #9ca3af; font-size: 1.3rem; font-weight: 700;
+    margin-left: 6px; line-height: 1;
+  }
+  .bb-attach-btn--icon:hover { background: transparent; border: none; color: #4b5563; }
+  .bb-attach-display {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 8px; background: #f3f4f6; border: 1px solid #e5e7eb;
+    border-radius: 4px; font-size: 0.8rem; color: #4b5563;
+    text-decoration: none; max-width: 100%;
+  }
+  .bb-attach-display img { max-width: 28px; max-height: 28px; border-radius: 2px; object-fit: cover; }
+  .bb-attach-display .bb-attach-x {
+    cursor: pointer; color: #9ca3af; font-size: 0.7rem; margin-left: 4px;
+    width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+  }
+  .bb-attach-display .bb-attach-x:hover { background: #ef4444; color: #fff; }
+  .bb-attach-menu {
+    position: fixed; z-index: 200; background: #fff;
+    border: 1px solid #d1d5db; border-radius: 6px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+    padding: 4px; min-width: 140px;
+  }
+  .bb-attach-menu-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 12px; cursor: pointer; border-radius: 4px;
+    font-size: 0.9rem; color: #4b5563;
+  }
+  .bb-attach-menu-item:hover { background: #f3f4f6; }
   body { margin: 0 auto; background: #f5f7fa; min-height: 100vh; }
 
   /* ── TOP BAR ── */
@@ -22,9 +64,17 @@
   }
   .bb-topbar--main { flex-wrap: wrap; }
   .bb-topbar-back {
-    font-size: 1.5rem; cursor: pointer; color: #4b5563;
-    width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+    width: 44px; height: 44px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: #fff; border: 1.5px solid #9ca3af; border-radius: 50%;
+    cursor: pointer; color: #4b5563;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    transition: background 0.15s, border-color 0.15s, transform 0.1s;
   }
+  .bb-topbar-back:hover { background: #f3f4f6; border-color: #4b5563; }
+  .bb-topbar-back:active { transform: scale(0.95); }
+  .bb-topbar-back svg { width: 22px; height: 22px; }
+  .bb-topbar-title--sub { display: none !important; }
   .bb-logo {
     width: 48px; height: 52px; flex-shrink: 0;
   }
@@ -319,7 +369,7 @@
   /* ── DETAIL VIEW ── */
   .bb-detail { padding: 0 1rem 2rem; }
   .bb-detail-top { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; flex-wrap: wrap; }
-  .bb-detail-num { font-size: 2rem; font-weight: 700; color: #9ca3af; }
+  .bb-detail-num { font-size: 2rem; font-weight: 800; color: #fff; -webkit-text-stroke: 2px #4b5563; text-stroke: 2px #4b5563; paint-order: stroke fill; }
   .bb-state { background: #1f2937; color: #10b981; padding: 0.3rem 0.7rem; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; border-radius: 3px; }
   .bb-heading { font-size: 0.875rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; padding-bottom: 0.4rem; margin-bottom: 0.75rem; border-bottom: 1px solid #9ca3af; margin-top: 1.5rem; }
   .bb-heading:first-child { margin-top: 0; }
@@ -327,7 +377,7 @@
 
   /* Editable fields */
   .bb-edit-input {
-    width: 100%; font-family: 'Oswald', sans-serif; font-size: 1.25rem; font-weight: 600;
+    width: 100%; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.25rem; font-weight: 700;
     color: #1f2937; background: transparent; border: none; border-bottom: 2px solid #e5e7eb;
     padding: 0.4rem 0; outline: none; letter-spacing: 0.02em;
   }
@@ -351,15 +401,18 @@
   .bb-btn--save:active { background: #dcfce7; }
 
   /* Timeline */
-  .bb-timeline { position: relative; padding-left: 4.5rem; }
-  .bb-timeline::before { content: ''; position: absolute; left: 2.75rem; top: 0.75rem; bottom: 0.75rem; width: 1px; background: #e5e7eb; }
-  .bb-timeline::after { content: '▲'; position: absolute; left: 2.4rem; top: -2px; font-size: 0.6rem; color: #d1d5db; }
+  .bb-timeline { position: relative; padding-left: 7rem; }
+  .bb-timeline::before { content: ''; position: absolute; left: 3rem; top: 0.75rem; bottom: 1.25rem; width: 1px; background: #6b7280; }
+  .bb-timeline::after { content: '▼'; position: absolute; left: 2.45rem; bottom: 5px; font-size: 1.25rem; color: #6b7280; line-height: 1; }
   .bb-stage { position: relative; padding: 0.25rem 0 0.35rem; display: flex; gap: 0; }
+  .bb-stage::before { content: ''; position: absolute; left: -4rem; top: 0.85rem; width: 1.4rem; height: 1px; background: #9ca3af; }
   .bb-stage:last-child { padding-bottom: 0; }
-  .bb-stage-led { position: absolute; left: -1.85rem; top: 0.3rem; width: 1.25rem; height: 1.25rem; border-radius: 50%; border: 1px solid #6b7280; box-shadow: inset 0 -2px 4px rgba(0,0,0,0.2), inset 0 2px 4px rgba(255,255,255,0.3); background: linear-gradient(135deg, #f9fafb 0%, #e5e7eb 100%); display: flex; align-items: center; justify-content: center; z-index: 2; }
+  .bb-stage-led { position: absolute; left: -2.85rem; top: 0.3rem; width: 1.25rem; height: 1.25rem; border-radius: 50%; border: 1px solid #6b7280; box-shadow: inset 0 -2px 4px rgba(0,0,0,0.2), inset 0 2px 4px rgba(255,255,255,0.3); background: linear-gradient(135deg, #f9fafb 0%, #e5e7eb 100%); display: flex; align-items: center; justify-content: center; z-index: 2; }
   .bb-stage--done .bb-stage-led { background: linear-gradient(135deg, #86efac 0%, #16a34a 100%); }
-  .bb-stage--done { opacity: 0.55; }
-  .bb-stage--now .bb-stage-led { background: #fff; border: 3px solid #ea580c; width: 1.5rem; height: 1.5rem; left: -1.875rem; top: 0.25rem; box-shadow: 0 0 10px rgba(234,88,12,0.4); animation: bb-pulse 2s infinite; }
+  .bb-stage--done > div:not(.bb-stage-led) { opacity: 0.45; }
+  .bb-stage--done > span { opacity: 0.45; }
+  .bb-stage--done .bb-stage-name { text-decoration: line-through; color: #6b7280; }
+  .bb-stage--now .bb-stage-led { background: #fff; border: 3px solid #ea580c; width: 1.5rem; height: 1.5rem; left: -3.5rem; top: 0.25rem; box-shadow: 0 0 10px rgba(234,88,12,0.4); animation: bb-pulse 2s infinite; }
   @keyframes bb-pulse { 0%,100% { box-shadow: 0 0 6px rgba(234,88,12,0.4); } 50% { box-shadow: 0 0 14px rgba(234,88,12,0.7); } }
   .bb-stage--now { background: #fff8f1; border: 2px solid #ea580c; border-radius: 8px; padding: 0.4rem 0.5rem 0.4rem 0.35rem; margin-left: -0.5rem; margin-right: -0.25rem; position: relative; }
   .bb-stage--now::before { content: '▶ NOW'; position: absolute; top: -10px; left: 12px; font-size: 0.55rem; font-weight: 800; color: #fff; background: #ea580c; padding: 1px 8px; border-radius: 3px; letter-spacing: 0.1em; }
@@ -367,9 +420,12 @@
   .bb-stage-date { font-size: 0.75rem; font-weight: 600; color: #9ca3af; }
   .bb-stage-name { font-size: 0.95rem; font-weight: 500; color: #4b5563; }
   .bb-stage-now-pill { background: #1f2937; color: #10b981; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.05em; padding: 2px 8px; border-radius: 3px; text-transform: uppercase; }
-  .bb-stage--upcoming { opacity: 0.6; transition: border-top 0.1s; }
+  .bb-stage--upcoming { opacity: 0.75; transition: border-top 0.1s; }
   .bb-stage--upcoming .bb-stage-led { border-style: dashed; }
-  .bb-stage--upcoming[draggable="true"]:hover { opacity: 0.8; }
+  .bb-stage--upcoming[draggable="true"]:hover { opacity: 0.95; }
+  .bb-stage--add { padding: 0.5rem 0; opacity: 0.7; transition: opacity 0.15s; }
+  .bb-stage--add:hover, .bb-stage--add:focus-within { opacity: 1; }
+  .bb-stage--add .bb-stage-led { border-style: dashed; background: transparent; color: #9ca3af; font-size: 0.95rem; font-weight: 700; box-shadow: none; }
   .bb-stage-body { display: none; margin-top: 0.5rem; }
   .bb-stage-body--open { display: block; }
   .bb-stage-note { font-size: 0.85rem; color: #4b5563; font-style: italic; margin-bottom: 0.35rem; line-height: 1.4; }
@@ -469,7 +525,6 @@
 <!--              NEW CARD MODAL                     -->
 <!-- ═══════════════════════════════════════════════ -->
 
-<div class="bb-fab" onclick="openNewCard('flagged')">+</div>
 
 <div class="bb-modal-overlay" id="bbNewCardModal">
   <div class="bb-modal">
@@ -591,10 +646,7 @@
 <!-- ═══════════════════════════════════════════════ -->
 
 <div class="bb-view" id="bbDetail">
-  <div class="bb-topbar">
-    <div class="bb-topbar-back" onclick="showBoard()">&#8592;</div>
-    <div class="bb-topbar-title bb-topbar-title--sub" id="bbDetailTitle"></div>
-  </div>
+  <div id="bbDetailTitle" style="display:none"></div>
   <div class="bb-detail" id="bbDetailContent"></div>
 </div>
 
@@ -719,6 +771,9 @@
           why5: c.why5 || '',
           remindAt: c.remind_at || null,
           mood: c.mood || '',
+          attachmentUrl: c.attachment_url || '',
+          attachmentName: c.attachment_name || '',
+          attachmentType: c.attachment_type || '',
           sortPos: c.sort_pos || 0,
           postit: c.postit || '',
           important: !!c.important
@@ -1137,6 +1192,13 @@
       loggedBySelect += '<option value="' + c.id + '"' + (c.id === card.loggedBy ? ' selected' : '') + '>' + c.name + '</option>';
     });
 
+    // Default person for the new-action form: same as the most-recently-added action's person
+    var lastStagePersonId = null;
+    if (cardStages && cardStages.length > 0) {
+      var sortedByOrder = cardStages.slice().sort(function(a, b) { return (b.sort_order || 0) - (a.sort_order || 0); });
+      lastStagePersonId = sortedByOrder[0].person_id || null;
+    }
+
     // Build stages timeline
     var hasNow = cardStages.some(function(s) { return s.status === 'now'; });
     var timelineHTML = '';
@@ -1145,23 +1207,38 @@
       var upcomingStages = cardStages.filter(function(s) { return s.status === 'upcoming'; });
       var doneStages = cardStages.filter(function(s) { return s.status === 'done'; });
 
-      // Render in order: NOW first, then Planned, then History
-      var orderedStages = [].concat(upcomingStages.reverse(), nowStages, doneStages);
+      // Chronological: Done at top (faded), NOW middle, Upcoming below
+      var orderedStages = [].concat(doneStages, nowStages, upcomingStages);
       var prevStatus = '';
       timelineHTML = '<div class="bb-timeline">';
       orderedStages.forEach(function(s) {
         // Section dividers
         if (s.status !== prevStatus) {
-          if (s.status === 'upcoming') {
-            timelineHTML += '<div style="font-size:0.6rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.15em;margin:0.75rem 0 0.5rem;padding-left:0.25rem">Planned</div>';
+          // Close history wrapper when leaving 'done'
+          if (prevStatus === 'done' && s.status !== 'done') {
+            timelineHTML += '</div>';
           }
           if (s.status === 'done') {
-            timelineHTML += '<div onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display===\'none\'?\'\':\'none\'" style="font-size:0.6rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.15em;margin:0.75rem 0 0.5rem;padding-left:0.25rem;cursor:pointer">History ▾</div><div>';
+            timelineHTML += '<div onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display===\'none\'?\'\':\'none\'" style="font-size:0.6rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.15em;margin:0.25rem 0 0.5rem;padding-left:0.25rem;cursor:pointer">Completed ▾</div><div>';
+          }
+          if (s.status === 'upcoming') {
+            timelineHTML += '<div style="font-size:0.6rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.15em;margin:0.75rem 0 0.5rem;padding-left:0.25rem">Planned</div>';
           }
           prevStatus = s.status;
         }
         var cls = s.status === 'done' ? 'bb-stage--done' : s.status === 'now' ? 'bb-stage--now' : 'bb-stage--upcoming';
-        var dateVal = s.completed_at ? new Date(s.completed_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '';
+        var dateVal = '';
+        if (s.completed_at) {
+          dateVal = new Date(s.completed_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+        } else if (s.target_date) {
+          dateVal = new Date(s.target_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+        } else if (s.duration_value) {
+          var u = s.duration_unit || 'days';
+          var abbrev = u === 'hours' ? 'h' : u === 'weeks' ? 'w' : 'd';
+          dateVal = '~' + s.duration_value + abbrev;
+        } else if (s.created_at) {
+          dateVal = new Date(s.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+        }
         var dateStr = dateVal ? '<span class="bb-stage-date">' + dateVal + '</span>' : '';
         var nowPill = ''; // Now shown as ▶ NOW label on the box via CSS
         var personName = (s.contacts && s.contacts.name) ? s.contacts.name : '';
@@ -1171,10 +1248,10 @@
         var clickFn = s.status === 'done' ? 'uncompleteStep' : 'completeStep';
         var ledTick = s.status === 'done' ? '<span style="color:#fff;font-size:0.6rem;font-weight:700">&#10003;</span>' : '';
         var dragHandle = s.status === 'upcoming' ? '<span class="step-drag-handle" data-step-id="' + s.id + '" style="font-size:1.15rem;color:#9ca3af;cursor:grab;margin-right:4px;padding:4px 6px;touch-action:none;line-height:1" title="Drag to reorder">&#9776;</span>' : '';
-        var editBtn = '<span onclick="event.stopPropagation();editStep(\'' + s.id + '\')" style="font-size:0.7rem;color:#9ca3af;cursor:pointer;margin-left:auto;font-weight:600" title="More options">&#9881;</span>';
+        var editBtn = '<span onclick="event.stopPropagation();editStep(\'' + s.id + '\')" style="font-size:1.1rem;color:#9ca3af;cursor:pointer;margin-left:auto;font-weight:600;line-height:1" title="More options">&#9881;</span>';
         var dragAttrs = s.status === 'upcoming' ? ' draggable="true" ondragstart="stepDragStart(event,\'' + s.id + '\')" ondragover="stepDragOver(event)" ondrop="stepDrop(event,\'' + s.id + '\')" style="cursor:grab"' : '';
-        var dateLeft = dateVal ? '<span style="position:absolute;left:-4rem;top:0.3rem;font-size:0.55rem;font-weight:600;color:#9ca3af;text-align:right;width:2rem">' + dateVal + '</span>' : '';
-        timelineHTML += '<div class="bb-stage ' + cls + '" id="step-' + s.id + '"' + dragAttrs + '>' +
+        var dateLeft = dateVal ? '<span style="position:absolute;left:-7rem;top:0.55rem;font-size:0.65rem;font-weight:600;color:#9ca3af;text-align:right;width:2.5rem;line-height:1">' + dateVal + '</span>' : '';
+        timelineHTML += '<div class="bb-stage ' + cls + '" id="step-' + s.id + '"' + dragAttrs + ' ondblclick="editStep(\'' + s.id + '\')" title="Double-click for full edit">' +
           dateLeft +
           '<div class="bb-stage-led" onclick="event.stopPropagation();' + clickFn + '(\'' + s.id + '\')" style="cursor:pointer" title="' + (s.status === 'done' ? 'Undo' : 'Complete') + '">' + ledTick + '</div>' +
           '<div style="flex:1;min-width:0">' +
@@ -1182,30 +1259,59 @@
               '<span class="bb-stage-name" contenteditable="true" data-step-id="' + s.id + '" onclick="event.stopPropagation()" onblur="saveStepTitle(\'' + s.id + '\',this)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur();}" style="font-weight:700;font-size:1rem;cursor:text;outline:none;padding:1px 3px;border-radius:3px" onfocus="this.style.background=\'#fef3c7\'" onblur2="this.style.background=\'\'">' + (s.name || '').replace(/</g, '&lt;') + '</span>' +
               personBadge + nowPill + editBtn +
             '</div>' +
-            '<div style="margin-top:0.15rem">' +
-              '<textarea id="step-notes-input-' + s.id + '" class="bb-edit-textarea" style="min-height:1.5rem;font-size:0.75rem;font-style:italic;color:#6b7280;padding:2px 4px" placeholder="Add notes..." onblur="saveStepNotes(\'' + s.id + '\')">' + (s.notes || '').replace(/</g, '&lt;') + '</textarea>' +
+            '<div style="margin-top:0.15rem;display:flex;gap:6px;align-items:flex-start">' +
+              '<textarea id="step-notes-input-' + s.id + '" class="bb-edit-textarea" style="flex:1;min-height:1.5rem;font-size:0.75rem;font-style:italic;color:#6b7280;padding:2px 4px" placeholder="Add notes..." onblur="saveStepNotes(\'' + s.id + '\')">' + (s.notes || '').replace(/</g, '&lt;') + '</textarea>' +
+              (s.attachment_url
+                ? buildAttachDisplay(s.attachment_url, s.attachment_name, s.attachment_type, "removeAttachment('stages','" + s.id + "')")
+                : '<span class="bb-attach-btn--icon" onclick="event.stopPropagation();openAttachmentMenu(event,\'stages\',\'' + s.id + '\')" style="cursor:pointer" title="Add attachment">+</span>'
+              ) +
             '</div>' +
           '</div>' +
         '</div>';
       });
-      // Close history wrapper if it was opened
-      if (doneStages.length > 0) timelineHTML += '</div>';
-      timelineHTML += '</div>';
+      // Close history wrapper if loop ended on a done item (no transition out fired)
+      if (prevStatus === 'done') timelineHTML += '</div>';
     } else {
-      timelineHTML = '<div style="font-size:0.85rem;color:#9ca3af;font-style:italic">No stages yet — add one below to start planning</div>';
+      timelineHTML = '<div class="bb-timeline">';
+      timelineHTML += '<div style="font-size:0.85rem;color:#9ca3af;font-style:italic;margin-bottom:0.5rem">No actions yet &mdash; type the first one below.</div>';
     }
+    // Always: render the new-action form as the next entry on the timeline
+    timelineHTML += '<div class="bb-stage bb-stage--add" id="addStepForm">' +
+      '<div class="bb-stage-led">+</div>' +
+      '<div style="flex:1;min-width:0">' +
+        '<input class="bb-edit-input" id="newStageName" placeholder="+ Type a new action and press Enter…" onkeydown="if(event.key===\'Enter\'){event.preventDefault();addStage();}" style="font-size:0.95rem;font-weight:500;font-family:inherit;background:#fff;border:1px solid #e5e7eb;border-radius:4px;padding:7px;color:#4b5563;width:100%;box-sizing:border-box;margin-bottom:0.5rem">' +
+        '<div style="display:flex;gap:0.5rem;margin-bottom:0">' +
+          '<select class="bb-edit-select" id="newStagePerson" onchange="handleNewPerson(this);toggleNewSecondary()" style="flex:1;min-width:0">' + buildPersonSelect(lastStagePersonId, true) + '</select>' +
+          '<select class="bb-edit-select" id="newStageStatus" style="flex:1;min-width:0"><option value="upcoming">Upcoming</option><option value="now">Now</option><option value="done">Done</option></select>' +
+        '</div>' +
+        '<div id="newStageSecondaryWrap" style="display:none;margin-top:0.5rem">' +
+          '<div class="bb-edit-label" style="margin-bottom:4px">Also relevant to <span style="font-weight:400;color:#9ca3af">(appears in their Us column)</span></div>' +
+          '<div id="newStageExtraPeople" style="display:flex;flex-wrap:wrap;gap:0.5rem 1rem;padding:0.35rem 0">' +
+            usContacts.map(function(c) {
+              return '<label data-person-id="' + c.id + '" style="display:inline-flex;align-items:center;gap:4px;font-size:0.85rem;cursor:pointer"><input type="checkbox" value="' + c.id + '" style="margin:0"> ' + c.name + '</label>';
+            }).join('') +
+          '</div>' +
+        '</div>' +
+        '<textarea class="bb-edit-textarea" id="newStageNotes" placeholder="Notes (optional)" style="min-height:1.5rem;font-size:0.8rem;margin-top:0.5rem;background:#fff;border:1px solid #e5e7eb;border-radius:4px;padding:6px"></textarea>' +
+        '<div class="bb-btn bb-btn--save" onclick="addStage()" style="margin-top:0.5rem;padding:8px 14px;font-size:0.85rem"><div class="bb-btn-indicator bb-btn-indicator--green" style="width:0.85rem;height:1.6rem"></div>Add Action</div>' +
+      '</div>' +
+    '</div>';
+    timelineHTML += '</div>';
 
     var completeBtn = '';
 
     var html = '<div class="bb-detail-top" style="flex-wrap:wrap">' +
-      '<span class="bb-detail-num">#' + card.id + '</span>' +
-      '<div style="display:flex;gap:12px;margin-left:auto;align-items:center">' +
+      '<div style="display:flex;align-items:center;gap:0.85rem;flex-shrink:0">' +
+        '<span class="bb-detail-num" style="font-size:2.4rem;line-height:1">#' + card.id + '</span>' +
+        '<div class="bb-topbar-back" onclick="showBoard()" title="Back to board"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div>' +
+      '</div>' +
+      '<div style="display:flex;gap:12px;margin-left:auto;align-items:center;flex-wrap:wrap">' +
         '<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:0.55rem;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:0.08em">Importance</span><div id="editImportance" data-important="' + (card.important ? 'true' : 'false') + '" onclick="toggleEditImportance()" class="bb-importance-tag' + (card.important ? ' bb-importance-tag--on' : '') + '" style="font-size:0.95rem;padding:10px 16px;font-weight:700;text-align:center;min-width:120px;line-height:1.2;border-width:2px;letter-spacing:0.06em' + (card.important ? '' : ';border-color:#6b7280;color:#6b7280') + '">' + (card.important ? 'Important!' : '+ important') + '</div></div>' +
         '<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:0.55rem;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:0.08em">Flagged by</span><select class="bb-edit-select" id="editLoggedBy" style="font-size:1rem;padding:8px 14px;font-weight:600">' + loggedBySelect + '</select></div>' +
         '<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:0.55rem;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:0.08em">Urgency</span><select class="bb-edit-select" id="editUrgency" style="font-size:1rem;padding:8px 14px;font-weight:600">' + urgSelect + '</select></div>' +
       '</div>' +
     '</div>' +
-    '<div style="margin-bottom:1rem">' +
+    '<div class="bb-section-panel" style="margin-bottom:0.75rem">' +
       '<div class="bb-edit-label" style="margin-bottom:4px">Title</div>' +
       '<input class="bb-edit-input" id="editTitle" value="' + (card.title || '').replace(/"/g, '&quot;') + '" style="font-size:1.2rem;background:#fff;border:1px solid #d1d5db;border-radius:4px;padding:8px;margin-bottom:10px">' +
       '<div class="bb-edit-label" style="margin-bottom:4px">Description</div>' +
@@ -1213,49 +1319,50 @@
       (card.postit
         ? '<div class="bb-edit-label" style="margin-top:10px;margin-bottom:4px">Post-it note <span style="font-weight:400;color:#9ca3af">(shows on card)</span></div>' +
           '<div style="font-size:0.6rem;color:#65a30d;margin-bottom:4px">Ctrl+B bold · Ctrl+I italic · Ctrl+U underline</div>' +
-          '<div contenteditable="true" id="editPostit" style="background:#d9f99d;border:1px solid #65a30d;border-radius:4px;padding:8px;min-height:2rem;font-style:italic;outline:none;line-height:1.5;font-family:inherit;font-size:0.9rem">' + (card.postit || '') + '</div>'
-        : '<div id="postitToggle" style="margin-top:10px">' +
-            '<div onclick="showPostitField()" style="font-size:0.85rem;font-weight:600;color:#365314;cursor:pointer;padding:8px 16px;background:#d9f99d;border:1px dashed #65a30d;border-radius:6px;display:inline-block">+ Add post-it</div>' +
+          '<div contenteditable="true" id="editPostit" style="background:#d9f99d;border:1px solid #65a30d;border-radius:4px;padding:8px;min-height:2rem;font-style:italic;outline:none;line-height:1.5;font-family:inherit;font-size:0.9rem">' + (card.postit || '') + '</div>' +
+          '<div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
+            (card.attachmentUrl
+              ? buildAttachDisplay(card.attachmentUrl, card.attachmentName, card.attachmentType, "removeAttachment('cards','" + card.dbId + "')")
+              : '<div class="bb-attach-btn bb-attach-btn--inline" onclick="openAttachmentMenu(event,\'cards\',\'' + card.dbId + '\')">+ Attachment</div>'
+            ) +
+          '</div>'
+        : '<div id="postitToggle" style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
+            '<div onclick="showPostitField()" style="font-size:0.85rem;font-weight:600;color:#365314;cursor:pointer;padding:8px 16px;background:#d9f99d;border:1px dashed #65a30d;border-radius:6px">+ Add post-it</div>' +
+            (card.attachmentUrl
+              ? buildAttachDisplay(card.attachmentUrl, card.attachmentName, card.attachmentType, "removeAttachment('cards','" + card.dbId + "')")
+              : '<div class="bb-attach-btn bb-attach-btn--inline" onclick="openAttachmentMenu(event,\'cards\',\'' + card.dbId + '\')">+ Attachment</div>'
+            ) +
           '</div>') +
     '</div>' +
-    '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:2rem">' +
-      '<div class="bb-heading" style="margin:0;border:none;padding:0">Resolution Actions</div>' +
-      '<div id="addStepOpenBtn" onclick="openAddStepForm()" style="font-size:0.9rem;font-weight:700;color:#fff;cursor:pointer;padding:8px 18px;background:#3d6640;border:none;border-radius:6px;box-shadow:0 2px 4px rgba(0,0,0,0.15)">+ Add action</div>' +
+    '<div class="bb-section-panel" style="margin-bottom:0.75rem">' +
+      '<div class="bb-heading" style="font-size:1.35rem;font-weight:700;color:#1f2937;border:none;padding:0 0 0.75rem;margin:0 0 0.75rem;letter-spacing:0.04em">Resolution Actions</div>' +
+      timelineHTML +
+      completeBtn +
     '</div>' +
-    '<div id="addStepForm" style="display:none;margin:0.5rem 0 0.75rem;padding:0.75rem;background:#f0fdf4;border:1px solid #86efac;border-radius:6px">' +
-      '<div class="bb-edit-row" style="margin-bottom:0">' +
-        '<div class="bb-edit-field" style="flex:2"><input class="bb-edit-input" id="newStageName" placeholder="Action name" style="font-size:1.1rem;font-weight:700;font-family:inherit;background:#fff;border:1px solid #d1d5db;border-radius:4px;padding:8px"></div>' +
-        '<div class="bb-edit-field"><select class="bb-edit-select" id="newStagePerson" onchange="handleNewPerson(this);toggleNewSecondary()">' + buildPersonSelect(null, true) + '</select></div>' +
-        '<div class="bb-edit-field" style="flex:0"><select class="bb-edit-select" id="newStageStatus"><option value="upcoming">Upcoming</option><option value="now">Now</option><option value="done">Done</option></select></div>' +
+    '<div class="bb-section-panel" style="margin-bottom:0.75rem">' +
+    (function() {
+      var hasAnyWhy = !!(card.why1 || card.why2 || card.why3 || card.why4 || card.why5);
+      var whyDisplay = hasAnyWhy ? 'block' : 'none';
+      var arrow = hasAnyWhy ? '\u25BE' : '\u25B8';
+      return '<div class="bb-heading" style="font-size:1.35rem;font-weight:700;color:#1f2937;border:none;padding:0;margin:0 0 0.75rem;letter-spacing:0.04em;cursor:pointer;display:flex;align-items:center;gap:10px" onclick="toggleWhys(this)">' +
+        '<span class="bb-whys-arrow" style="font-size:0.95rem">' + arrow + '</span>5 Whys' +
+        (hasAnyWhy ? '' : ' <span style="font-size:0.75rem;font-weight:400;color:#9ca3af;text-transform:none;letter-spacing:0;margin-left:0.5rem">(optional — click to expand)</span>') +
       '</div>' +
-      '<div id="newStageSecondaryWrap" style="display:none;margin-top:0.5rem">' +
-        '<div class="bb-edit-label" style="margin-bottom:4px">Also relevant to <span style="font-weight:400;color:#9ca3af">(appears in their Us column)</span></div>' +
-        '<div id="newStageExtraPeople" style="display:flex;flex-wrap:wrap;gap:0.5rem 1rem;padding:0.35rem 0">' +
-          usContacts.map(function(c) {
-            return '<label data-person-id="' + c.id + '" style="display:inline-flex;align-items:center;gap:4px;font-size:0.85rem;cursor:pointer"><input type="checkbox" value="' + c.id + '" style="margin:0"> ' + c.name + '</label>';
-          }).join('') +
-        '</div>' +
-      '</div>' +
-      '<textarea class="bb-edit-textarea" id="newStageNotes" placeholder="Notes (optional)" style="min-height:2rem;font-size:0.8rem;margin-top:0.5rem;background:#fff;border:1px solid #d1d5db;border-radius:4px;padding:6px"></textarea>' +
-      '<div style="display:flex;justify-content:flex-end;gap:0.5rem;margin-top:0.5rem">' +
-        '<div onclick="closeAddStepForm()" style="font-size:0.9rem;font-weight:600;color:#6b7280;cursor:pointer;padding:8px 14px;background:#fff;border:1px solid #d1d5db;border-radius:6px">Cancel</div>' +
-        '<div onclick="addStage()" style="font-size:0.9rem;font-weight:700;color:#fff;cursor:pointer;padding:8px 18px;background:#3d6640;border:none;border-radius:6px;box-shadow:0 2px 4px rgba(0,0,0,0.15)">Save action</div>' +
-      '</div>' +
+      '<div id="whysSection" style="display:' + whyDisplay + '">' +
+        '<div style="font-size:0.75rem;color:#9ca3af;margin-bottom:0.75rem">Keep asking "why?" to find the root cause</div>' +
+        '<div class="bb-edit-label">1. Why is this happening?</div>' +
+        '<textarea class="bb-edit-textarea" id="editWhy1" style="min-height:2.5rem;margin-bottom:0.5rem">' + (card.why1 || '').replace(/</g, '&lt;') + '</textarea>' +
+        '<div class="bb-edit-label">2. Why is that?</div>' +
+        '<textarea class="bb-edit-textarea" id="editWhy2" style="min-height:2.5rem;margin-bottom:0.5rem">' + (card.why2 || '').replace(/</g, '&lt;') + '</textarea>' +
+        '<div class="bb-edit-label">3. Why?</div>' +
+        '<textarea class="bb-edit-textarea" id="editWhy3" style="min-height:2.5rem;margin-bottom:0.5rem">' + (card.why3 || '').replace(/</g, '&lt;') + '</textarea>' +
+        '<div class="bb-edit-label">4. Why?</div>' +
+        '<textarea class="bb-edit-textarea" id="editWhy4" style="min-height:2.5rem;margin-bottom:0.5rem">' + (card.why4 || '').replace(/</g, '&lt;') + '</textarea>' +
+        '<div class="bb-edit-label">5. Root cause</div>' +
+        '<textarea class="bb-edit-textarea" id="editWhy5" style="min-height:2.5rem;margin-bottom:0.5rem">' + (card.why5 || '').replace(/</g, '&lt;') + '</textarea>' +
+      '</div>';
+    })() +
     '</div>' +
-    timelineHTML +
-    completeBtn +
-    '<div class="bb-heading" style="margin-top:2rem">5 Whys</div>' +
-    '<div style="font-size:0.75rem;color:#9ca3af;margin-bottom:0.75rem">Keep asking "why?" to find the root cause</div>' +
-    '<div class="bb-edit-label">1. Why is this happening?</div>' +
-    '<textarea class="bb-edit-textarea" id="editWhy1" style="min-height:2.5rem;margin-bottom:0.5rem">' + (card.why1 || '').replace(/</g, '&lt;') + '</textarea>' +
-    '<div class="bb-edit-label">2. Why is that?</div>' +
-    '<textarea class="bb-edit-textarea" id="editWhy2" style="min-height:2.5rem;margin-bottom:0.5rem">' + (card.why2 || '').replace(/</g, '&lt;') + '</textarea>' +
-    '<div class="bb-edit-label">3. Why?</div>' +
-    '<textarea class="bb-edit-textarea" id="editWhy3" style="min-height:2.5rem;margin-bottom:0.5rem">' + (card.why3 || '').replace(/</g, '&lt;') + '</textarea>' +
-    '<div class="bb-edit-label">4. Why?</div>' +
-    '<textarea class="bb-edit-textarea" id="editWhy4" style="min-height:2.5rem;margin-bottom:0.5rem">' + (card.why4 || '').replace(/</g, '&lt;') + '</textarea>' +
-    '<div class="bb-edit-label">5. Root cause</div>' +
-    '<textarea class="bb-edit-textarea" id="editWhy5" style="min-height:2.5rem;margin-bottom:0.5rem">' + (card.why5 || '').replace(/</g, '&lt;') + '</textarea>' +
     '<div class="bb-autosave-status" id="autosaveStatus" style="font-size:0.75rem;color:#9ca3af;text-align:center;margin-top:1.5rem"></div>' +
     '<div class="bb-btn bb-btn--delete" onclick="deleteCard()" style="margin-top:0.5rem"><div class="bb-btn-indicator bb-btn-indicator--red"></div>Delete Buster Card</div>';
 
@@ -1536,9 +1643,33 @@
         '</div>' +
         '<div class="bb-edit-label" style="margin-bottom:4px">Notes</div>' +
         '<textarea id="stepEditNotes" placeholder="Notes..." style="min-height:4rem;font-size:0.9rem;background:#fff;border:1px solid #d1d5db;border-radius:4px;padding:8px;margin-bottom:10px;width:100%;box-sizing:border-box;font-family:inherit;line-height:1.4">' + (step.notes || '').replace(/</g, '&lt;') + '</textarea>' +
+        '<div class="bb-edit-label" style="margin-bottom:4px">Attachment</div>' +
+        '<div style="margin-bottom:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
+          (step.attachment_url
+            ? buildAttachDisplay(step.attachment_url, step.attachment_name, step.attachment_type, "removeAttachment('stages','" + stepId + "')")
+            : '<div class="bb-attach-btn bb-attach-btn--inline" onclick="openAttachmentMenu(event,\'stages\',\'' + stepId + '\')">+ Attachment</div>'
+          ) +
+        '</div>' +
+        '<div style="display:flex;gap:10px;margin-bottom:10px">' +
+          '<div style="flex:1">' +
+            '<div class="bb-edit-label" style="margin-bottom:4px">Duration</div>' +
+            '<div style="display:flex;gap:6px">' +
+              '<input id="stepEditDurationValue" type="number" min="0" placeholder="—" value="' + (step.duration_value != null ? step.duration_value : '') + '" oninput="if(this.value)document.getElementById(\'stepEditTargetDate\').value=\'\'" style="flex:1;font-size:0.95rem;padding:8px 10px;border:1px solid #d1d5db;border-radius:4px;width:100%;box-sizing:border-box;min-width:0">' +
+              '<select id="stepEditDurationUnit" style="font-size:0.95rem;padding:8px 10px;border:1px solid #d1d5db;border-radius:4px;background:#fff">' +
+                '<option value="hours"' + (step.duration_unit === 'hours' ? ' selected' : '') + '>hours</option>' +
+                '<option value="days"' + ((step.duration_unit === 'days' || !step.duration_unit) ? ' selected' : '') + '>days</option>' +
+                '<option value="weeks"' + (step.duration_unit === 'weeks' ? ' selected' : '') + '>weeks</option>' +
+              '</select>' +
+            '</div>' +
+          '</div>' +
+          '<div style="flex:1">' +
+            '<div class="bb-edit-label" style="margin-bottom:4px">Or target date</div>' +
+            '<input id="stepEditTargetDate" type="date" value="' + (step.target_date || '') + '" oninput="if(this.value)document.getElementById(\'stepEditDurationValue\').value=\'\'" style="font-size:0.95rem;padding:8px 10px;border:1px solid #d1d5db;border-radius:4px;width:100%;box-sizing:border-box">' +
+          '</div>' +
+        '</div>' +
         '<div style="display:flex;gap:0.5rem">' +
           '<div class="bb-btn bb-btn--save" onclick="event.stopPropagation();saveStep(\'' + stepId + '\')" style="flex:1;margin:0;padding:10px"><div class="bb-btn-indicator bb-btn-indicator--green"></div>Save</div>' +
-          '<div class="bb-btn" onclick="event.stopPropagation();renderDetail(currentCardId)" style="flex:1;margin:0;padding:10px">Cancel</div>' +
+          '<div class="bb-btn" onclick="event.stopPropagation();closeStepEdit()" style="flex:1;margin:0;padding:10px">Cancel</div>' +
           '<div class="bb-btn bb-btn--delete" onclick="deleteStep(\'' + stepId + '\')" style="flex:0;margin:0;padding:10px"><div class="bb-btn-indicator bb-btn-indicator--red"></div>Delete</div>' +
         '</div>' +
       '</div>';
@@ -1581,12 +1712,23 @@
         });
       }
     }
+    var durRaw = document.getElementById('stepEditDurationValue').value.trim();
+    var durValue = durRaw === '' ? null : parseInt(durRaw, 10);
+    if (durValue != null && (isNaN(durValue) || durValue <= 0)) durValue = null;
+    var durUnit = durValue != null ? document.getElementById('stepEditDurationUnit').value : null;
+    var targetDate = document.getElementById('stepEditTargetDate').value || null;
+    // Mutual exclusion: if target date set, clear duration
+    if (targetDate) { durValue = null; durUnit = null; }
+
     var updates = {
       name: document.getElementById('stepEditName').value.trim(),
       person_id: primaryId,
       additional_people: additionalPeople,
       status: document.getElementById('stepEditStatus').value,
-      notes: document.getElementById('stepEditNotes').value
+      notes: document.getElementById('stepEditNotes').value,
+      duration_value: durValue,
+      duration_unit: durUnit,
+      target_date: targetDate
     };
     if (!updates.name) { showToast('Action name required'); return; }
     await sb.from('stages').update(updates).eq('id', stepId);
@@ -2476,6 +2618,19 @@
     await loadData();
   };
 
+  window.toggleWhys = function(headerEl) {
+    var section = document.getElementById('whysSection');
+    if (!section) return;
+    var open = section.style.display !== 'none';
+    section.style.display = open ? 'none' : 'block';
+    var arrow = headerEl.querySelector('.bb-whys-arrow');
+    if (arrow) arrow.textContent = open ? '\u25B8' : '\u25BE';
+  };
+
+  window.closeStepEdit = function() {
+    if (currentCardId) renderDetail(currentCardId);
+  };
+
   window.toggleEditImportance = function() {
     var el = document.getElementById('editImportance');
     if (!el) return;
@@ -2488,6 +2643,119 @@
     if (status) status.textContent = 'Unsaved changes...';
     clearTimeout(autoSaveTimer);
     autoSaveTimer = setTimeout(function() { updateCard(true); }, 600);
+  };
+
+  // ── ATTACHMENT UPLOAD / MENU ──
+  function buildAttachDisplay(url, name, type, onRemoveCall) {
+    if (!url) return '';
+    var icon;
+    if (type === 'image') icon = '<img src="' + url + '" alt="">';
+    else if (type === 'url') icon = '<span style="font-size:1.1rem">\uD83D\uDD17</span>';
+    else icon = '<span style="font-size:1.1rem">\uD83D\uDCC4</span>';
+    var label = (name || 'attachment').replace(/</g, '&lt;');
+    var x = onRemoveCall
+      ? '<span class="bb-attach-x" onclick="event.stopPropagation();' + onRemoveCall + '" title="Remove">&times;</span>'
+      : '';
+    return '<a class="bb-attach-display" href="' + url + '" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="' + label + '">' + icon + '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px">' + label + '</span>' + x + '</a>';
+  }
+
+  // Hidden file input for uploads (re-used)
+  var bbAttachContext = null; // { table: 'cards'|'stages', id: dbId }
+  window.openAttachmentMenu = function(e, table, dbId) {
+    e.stopPropagation();
+    var existing = document.getElementById('bbAttachMenu');
+    if (existing) existing.remove();
+    bbAttachContext = { table: table, id: dbId };
+    var menu = document.createElement('div');
+    menu.id = 'bbAttachMenu';
+    menu.className = 'bb-attach-menu';
+    var rect = e.currentTarget.getBoundingClientRect();
+    var top = rect.bottom + 6;
+    var left = Math.max(10, Math.min(rect.left, window.innerWidth - 160));
+    menu.style.top = top + 'px';
+    menu.style.left = left + 'px';
+    menu.innerHTML =
+      '<div class="bb-attach-menu-item" onclick="triggerAttachUpload(\'camera\')">\uD83D\uDCF7 Take photo</div>' +
+      '<div class="bb-attach-menu-item" onclick="triggerAttachUpload(\'image\')">\uD83D\uDDBC From library</div>' +
+      '<div class="bb-attach-menu-item" onclick="triggerAttachUpload(\'file\')">\uD83D\uDCCE File</div>' +
+      '<div class="bb-attach-menu-item" onclick="addAttachmentLink()">\uD83D\uDD17 Link</div>';
+    document.body.appendChild(menu);
+    setTimeout(function() {
+      document.addEventListener('click', function close(ev) {
+        if (!menu.contains(ev.target)) { menu.remove(); document.removeEventListener('click', close); }
+      });
+    }, 50);
+  };
+
+  window.triggerAttachUpload = function(kind) {
+    var menu = document.getElementById('bbAttachMenu');
+    if (menu) menu.remove();
+    var input = document.createElement('input');
+    input.type = 'file';
+    if (kind === 'camera') {
+      input.accept = 'image/*';
+      input.setAttribute('capture', 'environment');
+    } else if (kind === 'image') {
+      input.accept = 'image/*';
+    } else {
+      input.accept = '*/*';
+    }
+    input.style.display = 'none';
+    input.onchange = async function() {
+      var file = input.files && input.files[0];
+      if (!file || !bbAttachContext) return;
+      showToast('Uploading…');
+      var safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      var path = bbAttachContext.table + '/' + bbAttachContext.id + '/' + Date.now() + '-' + safeName;
+      var { error: upErr } = await sb.storage.from('attachments').upload(path, file, { upsert: true });
+      if (upErr) { showToast('Upload failed: ' + upErr.message); return; }
+      var { data: pub } = sb.storage.from('attachments').getPublicUrl(path);
+      var url = pub && pub.publicUrl ? pub.publicUrl : '';
+      var attachType = (kind === 'image' || kind === 'camera') ? 'image' : 'file';
+      var { error: dbErr } = await sb.from(bbAttachContext.table).update({
+        attachment_url: url, attachment_name: file.name, attachment_type: attachType
+      }).eq('id', bbAttachContext.id);
+      if (dbErr) { showToast('Save failed: ' + dbErr.message); return; }
+      showToast('Attached');
+      await loadData();
+      if (currentCardId) await renderDetail(currentCardId);
+    };
+    document.body.appendChild(input);
+    input.click();
+    setTimeout(function(){ input.remove(); }, 60000);
+  };
+
+  window.addAttachmentLink = async function() {
+    var menu = document.getElementById('bbAttachMenu');
+    if (menu) menu.remove();
+    if (!bbAttachContext) return;
+    var url = prompt('Paste a URL:');
+    if (!url) return;
+    url = url.trim();
+    if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+    var label;
+    try { label = new URL(url).hostname.replace(/^www\./, ''); }
+    catch (_) { label = url; }
+    var custom = prompt('Label for this link:', label);
+    if (custom !== null && custom.trim()) label = custom.trim();
+    var { error } = await sb.from(bbAttachContext.table).update({
+      attachment_url: url, attachment_name: label, attachment_type: 'url'
+    }).eq('id', bbAttachContext.id);
+    if (error) { showToast('Error: ' + error.message); return; }
+    showToast('Link added');
+    await loadData();
+    if (currentCardId) await renderDetail(currentCardId);
+  };
+
+  window.removeAttachment = async function(table, dbId) {
+    if (!confirm('Remove this attachment?')) return;
+    var { error } = await sb.from(table).update({
+      attachment_url: null, attachment_name: null, attachment_type: null
+    }).eq('id', dbId);
+    if (error) { showToast('Error: ' + error.message); return; }
+    showToast('Attachment removed');
+    await loadData();
+    if (currentCardId) await renderDetail(currentCardId);
   };
 
   window.showImportanceInfo = function(e) {
