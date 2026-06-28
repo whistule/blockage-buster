@@ -732,8 +732,11 @@
       else noteAgeByCard[cardId] = { label: Math.floor(diffDays / 7) + 'w ago', fresh: false };
     });
 
-    // Last activity per card — drives the Us-view staleness overlay.
-    // Prefer cards.updated_at (kept current by DB triggers — see migrations/001_cards_updated_at.sql).
+    // Last PROGRESS per card — drives the Us-view staleness overlay.
+    // Prefer cards.last_progress_at, which advances on any genuine input by the person
+    // (completing/creating a step, adding/editing a note, editing the description, etc.)
+    // but NOT on passive routing — being assigned, moved between board stages, or reordered.
+    // See migrations/002_cards_last_progress_at.sql.
     // Fall back to the most recent step created/completed time when that column isn't present yet.
     var { data: allStageTimes } = await sb.from('stages').select('card_id, created_at, completed_at');
     var lastActivityByCard = {};
@@ -800,7 +803,7 @@
           sortPos: c.sort_pos || 0,
           postit: c.postit || '',
           important: !!c.important,
-          lastActivity: (c.updated_at ? new Date(c.updated_at).getTime() : null) || lastActivityByCard[c.id] || null
+          lastActivity: (c.last_progress_at ? new Date(c.last_progress_at).getTime() : null) || lastActivityByCard[c.id] || null
         };
       });
     }
