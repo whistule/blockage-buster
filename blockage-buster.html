@@ -593,7 +593,7 @@
     </a>
     <div class="bb-topbar-brand">
       <div class="bb-topbar-title"><span class="bb-topbar-mk">MK</span><span class="bb-topbar-app">BLOCKAGE BUSTER</span></div>
-      <div class="bb-topbar-sub">build __BUILD_VERSION__</div>
+      <div class="bb-topbar-sub" id="bbBuild">build __BUILD_VERSION__<span id="bbStealthMark" style="display:none"> 🔑</span></div>
     </div>
     <div id="bbGeneralAdd" onclick="openNewCard('flagged')" title="New buster" style="cursor:pointer;flex-shrink:0;user-select:none;width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:#fff;border:2px solid #ea580c;transition:background 0.15s,transform 0.1s" onmouseover="this.style.background='#fff7ed'" onmouseout="this.style.background='#fff'" onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform=''">
       <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#ea580c" stroke-width="2.5" stroke-linecap="round">
@@ -1101,6 +1101,26 @@
     return 'rgba(' + mix(0xf5, 0xdc) + ',' + mix(0xa6, 0x26) + ',' + mix(0x23, 0x26) + ',' + a + ')';
   }
 
+  // ── STEALTH EDIT (overseer) ──
+  // When ON, edits the overseer makes to a card don't reset the assignee's
+  // staleness counter — for tidying / refining someone else's task. Toggled
+  // covertly by double-clicking the overseer's own name (column header or tab).
+  var BB_OVERSEER = 'Misha';
+  var bbStealthEdit = (function() { try { return localStorage.getItem('bbStealthEdit') === '1'; } catch (e) { return false; } })();
+  var bbFrozenProgress = null; // { dbId, ms } captured when a card detail opens
+  function updateStealthIndicator() {
+    var mark = document.getElementById('bbStealthMark');
+    if (mark) mark.style.display = bbStealthEdit ? '' : 'none';
+    var build = document.getElementById('bbBuild');
+    if (build) build.style.color = bbStealthEdit ? '#ea580c' : '';
+  }
+  window.toggleStealthEdit = function() {
+    bbStealthEdit = !bbStealthEdit;
+    try { localStorage.setItem('bbStealthEdit', bbStealthEdit ? '1' : '0'); } catch (e) {}
+    updateStealthIndicator();
+    if (typeof showToast === 'function') showToast(bbStealthEdit ? 'Stealth edit ON — edits won’t reset counters' : 'Stealth edit OFF');
+  };
+
   // ── RENDER BOARD ──
   function render() {
     var data = getGroups();
@@ -1133,7 +1153,8 @@
         if (tabStale.needs) tabAttn = ' ❗';
       }
       var tabStyleAttr = tabStyle ? ' style="' + tabStyle + '"' : '';
-      tabsHTML += '<div class="bb-tab' + active + '" data-key="' + key + '"' + tabStyleAttr + '>' + label + tabAttn + ' <span class="bb-tab-count">' + groups[key].length + '</span></div>';
+      var tabDbl = (viewMode === 'person' && key === BB_OVERSEER) ? ' ondblclick="toggleStealthEdit()"' : '';
+      tabsHTML += '<div class="bb-tab' + active + '" data-key="' + key + '"' + tabStyleAttr + tabDbl + '>' + label + tabAttn + ' <span class="bb-tab-count">' + groups[key].length + '</span></div>';
     });
     if (viewMode === 'stage') tabsHTML += '<div class="bb-tab bb-tab--add">+ Column</div>';
     // Add card button for mobile — always visible
@@ -1181,7 +1202,8 @@
         stripeStyle = 'background:' + (personColors[key] || defaultPersonColor);
       }
       var addBtn = (viewMode === 'stage' && key !== 'busted') ? '<div class="bb-col-add" onclick="openNewCard(\'' + key + '\')">+</div>' : '';
-      colsHTML += '<div class="bb-column"><div class="bb-col-header"><div class="bb-col-stripe" style="' + stripeStyle + ';"></div><span class="bb-col-title">' + label + '</span><span class="bb-col-count">' + groups[key].length + '</span>' + addBtn + '</div><div class="bb-col-cards">';
+      var colDbl = (viewMode === 'person' && key === BB_OVERSEER) ? ' ondblclick="toggleStealthEdit()"' : '';
+      colsHTML += '<div class="bb-column"><div class="bb-col-header"><div class="bb-col-stripe" style="' + stripeStyle + ';"></div><span class="bb-col-title"' + colDbl + '>' + label + '</span><span class="bb-col-count">' + groups[key].length + '</span>' + addBtn + '</div><div class="bb-col-cards">';
       groups[key].forEach(function(c) { colsHTML += cardHTML(c, showStage); });
       colsHTML += '</div>';
       // Staleness overlay — Us view only, never on the Completed column
@@ -1198,6 +1220,7 @@
     if (typeof twemoji !== 'undefined') {
       twemoji.parse(document.getElementById('bbBoard'), { folder: 'svg', ext: '.svg' });
     }
+    updateStealthIndicator();
   }
 
   // ── VIEW MODE TOGGLE ──
@@ -1910,6 +1933,9 @@
 
   window.showDetail = async function(cardId) {
     currentCardId = cardId || null;
+    // Remember the card's progress time as opened, so stealth edits can restore it.
+    var c0 = cards.find(function(c) { return c.id === cardId; });
+    bbFrozenProgress = (c0 && c0.dbId) ? { dbId: c0.dbId, ms: c0.lastActivity } : null;
     document.getElementById('bbBoard').classList.remove('bb-view--active');
     document.getElementById('bbDetail').classList.add('bb-view--active');
     document.getElementById('bbDetailContent').innerHTML = '<div style="padding:2rem;color:#9ca3af;text-align:center">Loading...</div>';
@@ -1919,6 +1945,16 @@
   window.showBoard = function() {
     document.getElementById('bbDetail').classList.remove('bb-view--active');
     document.getElementById('bbBoard').classList.add('bb-view--active');
+    // Stealth edit: restore the card's pre-edit progress time so the overseer's
+    // tidying doesn't reset the assignee's staleness counter.
+    if (bbStealthEdit && bbFrozenProgress && bbFrozenProgress.ms) {
+      var frozen = bbFrozenProgress; bbFrozenProgress = null;
+      sb.from('cards').update({ last_progress_at: new Date(frozen.ms).toISOString() }).eq('id', frozen.dbId)
+        .then(function() { return loadData(); })
+        .catch(function(e) { console.error('Stealth restore failed:', e); });
+    } else {
+      bbFrozenProgress = null;
+    }
   };
 
   // ── COMPLETE STAGE ── (disabled until detail view wired to stages)
