@@ -162,6 +162,17 @@
     border: 1.5px solid #1f2937;
     box-shadow: 0 8px 18px rgba(31,41,55,0.4), 0 2px 5px rgba(0,0,0,0.12), inset 1px 1px 2px rgba(0,0,0,0.06);
   }
+  /* Stuck: no progress in over a week — fat red border + alert badge */
+  .bb-card--stuck {
+    border: 3px solid #dc2626;
+    box-shadow: 0 0 0 2px rgba(220,38,38,0.22), 0 6px 16px rgba(220,38,38,0.32);
+  }
+  .bb-card-stuck-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; background: #dc2626; color: #fff;
+    font-weight: 900; font-size: 1rem; line-height: 1; border-radius: 50%;
+    box-shadow: 0 1px 4px rgba(220,38,38,0.5);
+  }
   .bb-importance-tag {
     display: inline-block; flex-shrink: 0;
     font-size: 0.55rem; font-weight: 700;
@@ -909,8 +920,12 @@
       ? ''
       : '<span onclick="event.stopPropagation();openCardPostit(\'' + c.id + '\')" style="font-size:1.1rem;cursor:pointer;opacity:0.6;line-height:1" title="Add a post-it">\uD83D\uDCCC</span>';
 
+    // Stuck: not progressed in over a week (excludes completed/busted cards)
+    var isStuck = !isBusted && c.lastActivity && (Date.now() - c.lastActivity) >= BB_WEEK_MS;
+    var stuckBadge = isStuck ? '<span class="bb-card-stuck-badge" title="No progress in over a week">!</span>' : '';
+
     var topRight = '<div style="position:absolute;top:8px;right:10px;display:flex;align-items:center;gap:10px;z-index:5">' +
-      postitPin +
+      stuckBadge + postitPin +
     '</div>';
 
     var bottomBar = '<div class="bb-card-bar">' +
@@ -924,7 +939,7 @@
     var imgHTML = c.img ? '<img class="bb-card-img" src="' + c.img + '" alt="">' : '';
     var cardOpacity = hasRemindAt ? ' style="opacity:0.35"' : '';
 
-    var cardCls = 'bb-card' + (c.important ? ' bb-card--important' : '');
+    var cardCls = 'bb-card' + (c.important ? ' bb-card--important' : '') + (isStuck ? ' bb-card--stuck' : '');
     return '<div class="' + cardCls + '" data-card-id="' + c.id + '"' + cardOpacity + ' onclick="showDetail(\'' + c.id + '\')" draggable="true" ondragstart="cardDragStart(event,\'' + c.id + '\')" ondragover="cardDragOver(event)" ondrop="cardDrop(event,\'' + c.id + '\')">' +
       '<div class="bb-card-stripe" style="background:' + borderColor + ';">' +
         bustCircle +
