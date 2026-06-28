@@ -6,11 +6,18 @@
 -- most recent activity across a column's cards, that made a column look freshly
 -- worked the moment a card was dropped into it — masking genuinely stale cards.
 --
--- last_progress_at only advances when a task is actually worked:
---   * a step is completed (completed_at set), OR
---   * a note is added / edited on a step.
--- It does NOT advance on: placing/assigning a card, moving it between board
--- stages, creating an empty next step, or editing card meta.
+-- Principle: last_progress_at advances on any genuine INPUT BY THE PERSON on the
+-- card or its steps — completing a step, creating a step, adding/editing a note,
+-- editing the description or the 5-whys, changing urgency/mood/etc.
+-- It does NOT advance on passive ROUTING/PLACEMENT:
+--   * assigning / changing who a card or step belongs to
+--   * moving a card between board stages
+--   * reordering (sort position) / a step merely becoming the current one
+--
+-- Implementation note: rather than list every "progress" field (brittle as the
+-- schema grows), we bump UNLESS the only things that changed are the routing
+-- columns. Comparing the row as jsonb with those keys removed does this in one
+-- shot and stays correct if new content fields are added later.
 --
 -- updated_at is left in place as the general "any change" audit field.
 --
@@ -21,12 +28,10 @@ alter table public.cards
   add column if not exists last_progress_at timestamptz not null default now();
 
 -- 2) Backfill ----------------------------------------------------------------
--- Start everyone from their last recorded activity (updated_at)...
+-- Seed from last recorded activity, then prefer the latest real step completion.
 update public.cards
 set last_progress_at = coalesce(updated_at, now());
 
--- ...then, for cards that have a completed step, use the latest completion
--- (that is real progress).
 update public.cards c
 set last_progress_at = sub.ts
 from (
@@ -38,33 +43,56 @@ from (
 where sub.card_id = c.id
   and sub.ts is not null;
 
--- 3) Trigger function --------------------------------------------------------
--- Bump the parent card's last_progress_at only on genuine progress.
+-- 3) Card edits ---------------------------------------------------------------
+-- Replaces the updated_at touch function from migration 001: still maintains
+-- updated_at on every change, and ALSO bumps last_progress_at when something
+-- other than the routing columns (stage / person_id / sort_pos) changed.
+create or replace function public.bb_touch_cards_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  if (to_jsonb(new) - 'stage' - 'person_id' - 'sort_pos' - 'updated_at' - 'last_progress_at')
+     is distinct from
+     (to_jsonb(old) - 'stage' - 'person_id' - 'sort_pos' - 'updated_at' - 'last_progress_at')
+  then
+    new.last_progress_at = now();
+  end if;
+  return new;
+end;
+$$;
+-- (Trigger bb_cards_set_updated_at from migration 001 already calls this.)
+
+-- 4) Step edits ---------------------------------------------------------------
+-- Creating a step is progress. On update, bump unless only the routing columns
+-- (person assignment / status handoff / sort order) changed — so completing a
+-- step, editing a note, or renaming a step counts, but a pure reassignment or
+-- "becomes the current step" handoff does not.
 create or replace function public.bb_touch_card_progress()
 returns trigger
 language plpgsql
 as $$
 declare
+  cid uuid;
   is_progress boolean := false;
 begin
   if TG_OP = 'INSERT' then
-    -- A step logged as already done, or created with a note, is recorded progress.
-    is_progress := (new.completed_at is not null)
-                or (new.notes is not null and btrim(new.notes) <> '');
+    is_progress := true;
   elsif TG_OP = 'UPDATE' then
-    -- Completing a step, or adding/editing its note, is progress.
-    is_progress := (new.completed_at is distinct from old.completed_at)
-                or (new.notes is distinct from old.notes);
+    is_progress := (to_jsonb(new) - 'person_id' - 'additional_people' - 'secondary_person_id' - 'status' - 'sort_order')
+                   is distinct from
+                   (to_jsonb(old) - 'person_id' - 'additional_people' - 'secondary_person_id' - 'status' - 'sort_order');
   end if;
 
-  if is_progress and new.card_id is not null then
-    update public.cards set last_progress_at = now() where id = new.card_id;
+  cid := coalesce(new.card_id, old.card_id);
+  if is_progress and cid is not null then
+    update public.cards set last_progress_at = now() where id = cid;
   end if;
-  return new;
+  return coalesce(new, old);
 end;
 $$;
 
--- 4) Trigger -----------------------------------------------------------------
 drop trigger if exists bb_stages_progress on public.stages;
 create trigger bb_stages_progress
   after insert or update on public.stages

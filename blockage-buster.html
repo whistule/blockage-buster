@@ -733,9 +733,10 @@
     });
 
     // Last PROGRESS per card — drives the Us-view staleness overlay.
-    // Prefer cards.last_progress_at, which only advances when a task is actually worked
-    // (a step completed or a note added) — NOT when a card is merely placed/assigned into
-    // a column. See migrations/002_cards_last_progress_at.sql.
+    // Prefer cards.last_progress_at, which advances on any genuine input by the person
+    // (completing/creating a step, adding/editing a note, editing the description, etc.)
+    // but NOT on passive routing — being assigned, moved between board stages, or reordered.
+    // See migrations/002_cards_last_progress_at.sql.
     // Fall back to the most recent step created/completed time when that column isn't present yet.
     var { data: allStageTimes } = await sb.from('stages').select('card_id, created_at, completed_at');
     var lastActivityByCard = {};
