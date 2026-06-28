@@ -1,0 +1,59 @@
+name: Blockage Buster Reminder
+
+# Sends a Pushover push notification reminding staff to check the
+# Blockage Buster board.
+#
+# ── Setup (one time) ────────────────────────────────────────────────
+# Add these in the repo:  Settings → Secrets and variables → Actions
+#
+#   Secrets (required):
+#     PUSHOVER_TOKEN  – your Pushover application/API token
+#     PUSHOVER_USER   – a Pushover user key  OR  a delivery group key.
+#                       Use a GROUP key to reach multiple staff members
+#                       (https://pushover.net/groups) — no code change
+#                       needed when you add or remove people.
+#
+#   Variables (optional):
+#     BLOCKAGE_BUSTER_URL – link the notification opens (the live board).
+#                           Falls back to the repo URL if unset.
+#
+# ── Changing the schedule ───────────────────────────────────────────
+# Edit the cron line below. GitHub cron is ALWAYS in UTC and does not
+# adjust for British Summer Time. '7 8 * * *' fires at 08:07 UTC, which
+# is ~09:07 in London during BST (summer) and 08:07 during GMT (winter).
+# To run only on weekdays use: '7 8 * * 1-5'.
+#
+# You can also trigger a one-off test from the Actions tab via "Run workflow".
+
+on:
+  schedule:
+    - cron: '7 8 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Pushover reminder
+        env:
+          PUSHOVER_TOKEN: ${{ secrets.PUSHOVER_TOKEN }}
+          PUSHOVER_USER: ${{ secrets.PUSHOVER_USER }}
+          BOARD_URL: ${{ vars.BLOCKAGE_BUSTER_URL }}
+        run: |
+          if [ -z "$PUSHOVER_TOKEN" ] || [ -z "$PUSHOVER_USER" ]; then
+            echo "::error::PUSHOVER_TOKEN and/or PUSHOVER_USER secrets are not set. See the comments at the top of this workflow file for setup instructions."
+            exit 1
+          fi
+
+          board_url="${BOARD_URL:-https://github.com/${GITHUB_REPOSITORY}}"
+
+          curl --fail --silent --show-error \
+            --form-string "token=${PUSHOVER_TOKEN}" \
+            --form-string "user=${PUSHOVER_USER}" \
+            --form-string "title=Blockage Buster 🚧" \
+            --form-string "message=Time to check the Blockage Buster — anything stuck, waiting on us, or waiting on them?" \
+            --form-string "url=${board_url}" \
+            --form-string "url_title=Open the board" \
+            https://api.pushover.net/1/messages.json
+
+          echo "Reminder sent."
