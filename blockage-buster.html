@@ -260,7 +260,7 @@
 
   /* ── DESKTOP COLUMNS ── */
   .bb-columns { display: none; }
-  .bb-column { background: #f3f4f6; min-height: 300px; border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; }
+  .bb-column { background: #f3f4f6; min-height: 300px; border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; position: relative; }
   .bb-column:last-child { border-right: none; }
   .bb-col-header { padding: 0.75rem 1rem; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center; gap: 0.5rem; position: sticky; top: 52px; z-index: 8; background: #f3f4f6; }
   .bb-col-title { font-size: 1.4rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #4b5563; }
@@ -272,6 +272,14 @@
   .bb-col-stripe--resolved { background: #0098a0; }
   .bb-col-stripe--person { background: #4b5563; }
   .bb-col-cards { padding: 0.5rem; flex: 1; overflow-y: auto; }
+
+  /* ── STALENESS OVERLAY (Us view: fades in when a person's column goes untouched) ── */
+  .bb-col-overlay { position: absolute; inset: 0; z-index: 5; pointer-events: none; transition: opacity 0.6s ease, background-color 0.6s ease; }
+  .bb-col-overlay-banner { position: absolute; top: 60px; left: 50%; transform: translateX(-50%); z-index: 9; pointer-events: none; background: #dc2626; color: #fff; font-size: 0.78rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; padding: 5px 12px; border-radius: 999px; box-shadow: 0 2px 8px rgba(0,0,0,0.28); white-space: nowrap; animation: bbAttnPulse 1.8s ease-in-out infinite; }
+  .bb-mobile-attn { margin: 0 0 0.5rem; background: #dc2626; color: #fff; border-radius: 8px; padding: 8px 12px; text-align: center; font-size: 0.8rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; box-shadow: 0 2px 6px rgba(0,0,0,0.2); animation: bbAttnPulse 1.8s ease-in-out infinite; }
+  @keyframes bbAttnPulse { 0%, 100% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.05); } }
+  .bb-mobile-attn { animation-name: bbAttnPulseFlat; }
+  @keyframes bbAttnPulseFlat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
 
   @media (min-width: 768px) {
     body { max-width: 100%; }
@@ -724,6 +732,19 @@
       else noteAgeByCard[cardId] = { label: Math.floor(diffDays / 7) + 'w ago', fresh: false };
     });
 
+    // Last activity per card = most recent step created/completed time (drives the Us-view staleness overlay)
+    var { data: allStageTimes } = await sb.from('stages').select('card_id, created_at, completed_at');
+    var lastActivityByCard = {};
+    if (allStageTimes) {
+      allStageTimes.forEach(function(s) {
+        [s.created_at, s.completed_at].forEach(function(ts) {
+          if (!ts) return;
+          var t = new Date(ts).getTime();
+          if (!lastActivityByCard[s.card_id] || t > lastActivityByCard[s.card_id]) lastActivityByCard[s.card_id] = t;
+        });
+      });
+    }
+
     // Load reminders (pending)
     var { data: reminders } = await sb.from('reminders').select('*').eq('sent', false);
     var reminderByCard = {};
@@ -776,7 +797,8 @@
           attachmentType: c.attachment_type || '',
           sortPos: c.sort_pos || 0,
           postit: c.postit || '',
-          important: !!c.important
+          important: !!c.important,
+          lastActivity: lastActivityByCard[c.id] || null
         };
       });
     }
@@ -1042,6 +1064,38 @@
     return { groups: groups, order: order };
   }
 
+  // ── STALENESS (Us view) ──
+  // A person's column starts tinting light orange once nothing in it has been
+  // touched for half a week, deepening to red by one week, then flags for attention.
+  var BB_HALF_WEEK_MS = 3.5 * 24 * 60 * 60 * 1000;
+  var BB_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+  // Returns null (fresh), or { t: 0..1, needs: bool } where t drives the colour/opacity.
+  function columnStaleness(list) {
+    if (!list || !list.length) return null;
+    var freshest = 0;
+    list.forEach(function(c) {
+      if (c.stage === 'busted' || c.stage === 'resolved') return; // completed work doesn't go stale
+      if (c.lastActivity && c.lastActivity > freshest) freshest = c.lastActivity;
+    });
+    if (!freshest) return null; // no activity timestamps — don't raise a false alarm
+    var age = Date.now() - freshest;
+    if (age < BB_HALF_WEEK_MS) return null;
+    var t = Math.min(1, (age - BB_HALF_WEEK_MS) / (BB_WEEK_MS - BB_HALF_WEEK_MS));
+    return { t: t, needs: age >= BB_WEEK_MS };
+  }
+
+  // Light orange (#f5a623) → red (#dc2626) interpolated by t (0..1).
+  function staleColor(t) {
+    function mix(a, b) { return Math.round(a + (b - a) * t); }
+    return 'rgb(' + mix(0xf5, 0xdc) + ',' + mix(0xa6, 0x26) + ',' + mix(0x23, 0x26) + ')';
+  }
+  function staleAlpha(t) { return 0.14 + 0.34 * t; }
+  function staleRGBA(t, a) {
+    function mix(x, y) { return Math.round(x + (y - x) * t); }
+    return 'rgba(' + mix(0xf5, 0xdc) + ',' + mix(0xa6, 0x26) + ',' + mix(0x23, 0x26) + ',' + a + ')';
+  }
+
   // ── RENDER BOARD ──
   function render() {
     var data = getGroups();
@@ -1066,8 +1120,15 @@
       if (viewMode === 'stage') label = stageLabels[key] || key;
       else if (viewMode === 'urgency') label = urgencyLabels[key] || key;
       else label = key;
-      var tabColor = (viewMode === 'person' && personColors[key]) ? ' style="color:' + personColors[key] + '"' : '';
-      tabsHTML += '<div class="bb-tab' + active + '" data-key="' + key + '"' + tabColor + '>' + label + ' <span class="bb-tab-count">' + groups[key].length + '</span></div>';
+      var tabStyle = (viewMode === 'person' && personColors[key]) ? 'color:' + personColors[key] + ';' : '';
+      var tabStale = (viewMode === 'person' && key !== 'Completed') ? columnStaleness(groups[key]) : null;
+      var tabAttn = '';
+      if (tabStale) {
+        tabStyle += 'background:' + staleRGBA(tabStale.t, 0.18 + 0.3 * tabStale.t) + ';border-bottom:3px solid ' + staleColor(tabStale.t) + ';';
+        if (tabStale.needs) tabAttn = ' ❗';
+      }
+      var tabStyleAttr = tabStyle ? ' style="' + tabStyle + '"' : '';
+      tabsHTML += '<div class="bb-tab' + active + '" data-key="' + key + '"' + tabStyleAttr + '>' + label + tabAttn + ' <span class="bb-tab-count">' + groups[key].length + '</span></div>';
     });
     if (viewMode === 'stage') tabsHTML += '<div class="bb-tab bb-tab--add">+ Column</div>';
     // Add card button for mobile — always visible
@@ -1085,10 +1146,13 @@
     // ── Mobile cards ──
     var mobileEl = document.getElementById('bbMobileCards');
     var showStage = false;
-    if (groups[activeTab]) {
-      mobileEl.innerHTML = groups[activeTab].map(function(c) { return cardHTML(c, showStage); }).join('');
+    var mobileStale = (viewMode === 'person' && activeTab && activeTab !== 'Completed' && groups[activeTab]) ? columnStaleness(groups[activeTab]) : null;
+    mobileEl.style.background = mobileStale ? staleRGBA(mobileStale.t, staleAlpha(mobileStale.t)) : '';
+    var mobileBanner = (mobileStale && mobileStale.needs) ? '<div class="bb-mobile-attn">❗ Needs attention</div>' : '';
+    if (groups[activeTab] && groups[activeTab].length) {
+      mobileEl.innerHTML = mobileBanner + groups[activeTab].map(function(c) { return cardHTML(c, showStage); }).join('');
     } else {
-      mobileEl.innerHTML = '<div class="bb-empty">No blockages here</div>';
+      mobileEl.innerHTML = mobileBanner + '<div class="bb-empty">No blockages here</div>';
     }
 
     // ── Desktop columns ──
@@ -1114,7 +1178,14 @@
       var addBtn = (viewMode === 'stage' && key !== 'busted') ? '<div class="bb-col-add" onclick="openNewCard(\'' + key + '\')">+</div>' : '';
       colsHTML += '<div class="bb-column"><div class="bb-col-header"><div class="bb-col-stripe" style="' + stripeStyle + ';"></div><span class="bb-col-title">' + label + '</span><span class="bb-col-count">' + groups[key].length + '</span>' + addBtn + '</div><div class="bb-col-cards">';
       groups[key].forEach(function(c) { colsHTML += cardHTML(c, showStage); });
-      colsHTML += '</div></div>';
+      colsHTML += '</div>';
+      // Staleness overlay — Us view only, never on the Completed column
+      var stale = (viewMode === 'person' && key !== 'Completed') ? columnStaleness(groups[key]) : null;
+      if (stale) {
+        colsHTML += '<div class="bb-col-overlay" style="background:' + staleColor(stale.t) + ';opacity:' + staleAlpha(stale.t).toFixed(3) + '"></div>';
+        if (stale.needs) colsHTML += '<div class="bb-col-overlay-banner">❗ Needs attention</div>';
+      }
+      colsHTML += '</div>';
     });
     colsEl.innerHTML = colsHTML;
 
