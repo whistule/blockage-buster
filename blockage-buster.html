@@ -153,6 +153,7 @@
     margin-bottom: 10px;
     cursor: pointer; transition: background 0.15s;
     display: flex; overflow: hidden; height: fit-content;
+    position: relative;
     -webkit-user-select: none; user-select: none;
     -webkit-touch-callout: none;
     touch-action: pan-y;
@@ -218,7 +219,21 @@
   .bb-card-stripe-num { writing-mode: horizontal-tb; transform: none; font-size: 0.7rem; letter-spacing: 0.04em; }
   .bb-card-stripe-who { transform: rotate(180deg); text-align: left; line-height: 1.3; margin-top: auto; }
 
-  .bb-card-body { padding: 12px 14px 0; min-width: 0; position: relative; display: flex; flex-direction: column; flex: 1; }
+  /* Left colour: thin edge line + vertical name tab (number/tick move onto the white) */
+  .bb-card-edge { position: absolute; left: 0; top: 0; bottom: 0; width: 6px; z-index: 1; }
+  .bb-card-nametab {
+    position: absolute; left: 0; top: 0; width: 22px; z-index: 2;
+    writing-mode: vertical-rl; text-orientation: mixed; text-align: center;
+    color: #fff; font-weight: 800; font-size: 0.7rem; letter-spacing: 0.05em;
+    text-transform: uppercase; white-space: nowrap;
+    padding: 9px 0; border-radius: 0 0 9px 0;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.18);
+  }
+  .bb-card-head { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
+  .bb-card-num { font-weight: 800; font-size: 0.95rem; letter-spacing: 0.02em; }
+  .bb-card-bust { width: 18px; height: 18px; border-radius: 50%; cursor: pointer; flex-shrink: 0; box-sizing: border-box; }
+
+  .bb-card-body { padding: 12px 14px 0 30px; min-width: 0; position: relative; display: flex; flex-direction: column; flex: 1; }
   .bb-card-bottom { margin-top: auto; }
   .bb-card-bar {
     display: flex; align-items: center; flex-wrap: nowrap;
@@ -291,6 +306,9 @@
   @keyframes bbAttnPulse { 0%, 100% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.05); } }
   .bb-mobile-attn { animation-name: bbAttnPulseFlat; }
   @keyframes bbAttnPulseFlat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+  /* Giant exclamation under the "Needs attention" banner */
+  .bb-col-overlay-excl { position: absolute; top: 104px; left: 50%; transform: translateX(-50%); z-index: 9; pointer-events: none; color: #dc2626; font-weight: 900; font-size: 6rem; line-height: 1; text-shadow: 0 3px 8px rgba(0,0,0,0.18); animation: bbAttnPulse 1.8s ease-in-out infinite; }
+  .bb-mobile-excl { text-align: center; color: #dc2626; font-weight: 900; font-size: 5rem; line-height: 1; margin: 2px 0 14px; animation: bbAttnPulseFlat 1.8s ease-in-out infinite; }
 
   @media (min-width: 768px) {
     body { max-width: 100%; }
@@ -330,7 +348,7 @@
     .bb-card-stripe { width: 28px !important; min-width: 28px !important; }
     .bb-card-stripe-text { font-size: 0.45rem !important; }
     .bb-card-stripe-num { font-size: 0.8rem !important; }
-    .bb-card-body { padding: 8px 10px 0 !important; }
+    .bb-card-body { padding: 8px 10px 0 28px !important; }
     .bb-card-title { font-size: 0.88rem !important; }
     .bb-card-desc { font-size: 0.75rem !important; -webkit-line-clamp: 1 !important; }
     .bb-card-meta { font-size: 0.7rem !important; }
@@ -822,19 +840,6 @@
     render();
   }
 
-  // Soften the card bars by lowering opacity only — keeps each person's
-  // ORIGINAL, vibrant hue (no desaturation), just lets the white card show
-  // through so the board reads calmer. Tweak BB_BAR_ALPHA to taste (1 = full).
-  var BB_BAR_ALPHA = 0.78;
-  function softColor(hex) {
-    if (!hex || hex.charAt(0) !== '#') return hex || defaultPersonColor;
-    var h = hex.slice(1);
-    if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
-    if (h.length !== 6) return hex;
-    var r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
-    return 'rgba(' + r + ',' + g + ',' + b + ',' + BB_BAR_ALPHA + ')';
-  }
-
   // ── RENDER CARD HTML ──
   function cardHTML(c, showStage) {
     var pillCls = c.urgency ? 'bb-pill--' + c.urgency : 'bb-pill--low';
@@ -848,12 +853,13 @@
     }
     var bell = c.hasReminder ? '<span class="bb-card-bell">🔔</span>' : '';
 
-    // Stripe always shows person colour — softened to a pastel
-    var borderColor = softColor(personColors[c.person] || defaultPersonColor);
-    if (isBusted) borderColor = softColor('#0098a0');
+    // Stripe always shows person colour
+    var borderColor = personColors[c.person] || defaultPersonColor;
+    if (isBusted) borderColor = '#0098a0';
 
     // Stripe text: person name at bottom (or 'Complete' if busted), card number at top
     var stripeName = isBusted ? 'Complete' : c.person;
+    var personJs = (c.person || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
     var meta = '<div class="bb-card-meta">';
     if (isBusted) {
@@ -952,15 +958,23 @@
     var imgHTML = c.img ? '<img class="bb-card-img" src="' + c.img + '" alt="">' : '';
     var cardOpacity = hasRemindAt ? ' style="opacity:0.35"' : '';
 
+    // Left colour: thin edge + vertical name tab; number & bust tick move onto the white
+    var cardEdge = '<div class="bb-card-edge" style="background:' + borderColor + '"></div>';
+    var nameTab = isBusted
+      ? '<div class="bb-card-nametab" style="background:' + borderColor + '">COMPLETE</div>'
+      : '<div class="bb-card-nametab" style="background:' + borderColor + ';cursor:pointer" onclick="event.stopPropagation()" ondblclick="event.stopPropagation();jumpToPerson(\'' + personJs + '\')" title="Double-tap to view their column">' + stripeName + '</div>';
+    var bustHead = isBusted
+      ? '<span class="bb-card-bust" onclick="event.stopPropagation();unbustCard(\'' + c.id + '\')" style="background:' + borderColor + ';display:inline-flex;align-items:center;justify-content:center" title="Reopen"><span style="color:#fff;font-size:11px;font-weight:800;line-height:1">&#10003;</span></span>'
+      : '<span class="bb-card-bust" onclick="event.stopPropagation();bustCard(\'' + c.id + '\')" style="border:2px solid ' + borderColor + '" title="Mark as busted"></span>';
+    var cardHead = '<div class="bb-card-head"><span class="bb-card-num" style="color:' + borderColor + '">#' + c.id + '</span>' + bustHead + '</div>';
+
     var cardCls = 'bb-card' + (c.important ? ' bb-card--important' : '') + (isStuck ? ' bb-card--stuck' : '');
     return '<div class="' + cardCls + '" data-card-id="' + c.id + '"' + cardOpacity + ' onclick="showDetail(\'' + c.id + '\')" draggable="true" ondragstart="cardDragStart(event,\'' + c.id + '\')" ondragover="cardDragOver(event)" ondrop="cardDrop(event,\'' + c.id + '\')">' +
-      '<div class="bb-card-stripe" style="background:' + borderColor + ';">' +
-        bustCircle +
-        '<span class="bb-card-stripe-text bb-card-stripe-num">' + c.id + '</span>' +
-        '<span class="bb-card-stripe-text bb-card-stripe-who">' + (isBusted ? '<span style="font-size:0.5rem;opacity:0.8">COMPLETE</span>' : '<span style="font-size:0.4rem;opacity:0.7;letter-spacing:0.1em;display:block">WITH</span><span style="font-size:0.8rem;display:block">' + stripeName + '</span>') + '</span>' +
-      '</div>' +
+      cardEdge +
+      nameTab +
       '<div class="bb-card-body">' +
         topRight +
+        cardHead +
         '<div class="bb-card-title" style="padding-right:64px">' + (isBusted ? '<span style="color:#0098a0;margin-right:4px">&#10003;</span>' : '') + c.title + '</div>' +
         (c.img ? '<div style="display:flex;gap:10px"><div style="flex:1;min-width:0">' : '') +
         (c.postit
@@ -1150,6 +1164,15 @@
     if (typeof showToast === 'function') showToast(bbStealthEdit ? 'Stealth edit ON — edits won’t reset counters' : 'Stealth edit OFF');
   };
 
+  // Double-tap a person's name (e.g. on a card stripe) to jump to their Us column.
+  window.jumpToPerson = function(name) {
+    if (!name) return;
+    viewMode = 'person';
+    activeTab = name;
+    render();
+    window.scrollTo(0, 0);
+  };
+
   // ── RENDER BOARD ──
   function render() {
     var data = getGroups();
@@ -1203,7 +1226,7 @@
     var showStage = false;
     var mobileStale = (viewMode === 'person' && activeTab && activeTab !== 'Completed' && groups[activeTab]) ? columnStaleness(groups[activeTab]) : null;
     mobileEl.style.background = mobileStale ? staleRGBA(mobileStale.t, staleAlpha(mobileStale.t)) : '';
-    var mobileBanner = (mobileStale && mobileStale.needs) ? '<div class="bb-mobile-attn">❗ Needs attention</div>' : '';
+    var mobileBanner = (mobileStale && mobileStale.needs) ? '<div class="bb-mobile-attn">❗ Needs attention</div><div class="bb-mobile-excl">!</div>' : '';
     if (groups[activeTab] && groups[activeTab].length) {
       mobileEl.innerHTML = mobileBanner + groups[activeTab].map(function(c) { return cardHTML(c, showStage); }).join('');
     } else {
@@ -1239,7 +1262,7 @@
       var stale = (viewMode === 'person' && key !== 'Completed') ? columnStaleness(groups[key]) : null;
       if (stale) {
         colsHTML += '<div class="bb-col-overlay" style="background:' + staleColor(stale.t) + ';opacity:' + staleAlpha(stale.t).toFixed(3) + '"></div>';
-        if (stale.needs) colsHTML += '<div class="bb-col-overlay-banner">❗ Needs attention</div>';
+        if (stale.needs) colsHTML += '<div class="bb-col-overlay-banner">❗ Needs attention</div><div class="bb-col-overlay-excl">!</div>';
       }
       colsHTML += '</div>';
     });
