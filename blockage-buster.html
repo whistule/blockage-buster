@@ -206,7 +206,7 @@
     width: 38px; min-width: 38px; flex-shrink: 0;
     display: flex; flex-direction: column;
     align-items: center; justify-content: space-between;
-    padding: 8px 0 0;
+    padding: 0 0 8px;
     gap: 6px;
     position: relative;
   }
@@ -217,7 +217,9 @@
     color: white; white-space: nowrap;
   }
   .bb-card-stripe-num { writing-mode: horizontal-tb; transform: none; font-size: 0.7rem; letter-spacing: 0.04em; }
-  .bb-card-stripe-who { transform: rotate(180deg); text-align: center; line-height: 1.3; margin-top: auto; align-self: flex-end; padding: 7px 4px; border-radius: 0 7px 7px 0; }
+  .bb-card-stripe-who { transform: rotate(180deg); text-align: center; line-height: 1.3; margin-top: auto; }
+  /* coloured tab at the TOP end of the bar — full width, diagonal bottom edge */
+  .bb-card-toptab { align-self: stretch; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 4px 16px; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 84%); }
 
   /* Left colour: thin edge line + vertical name tab (number/tick move onto the white) */
   .bb-card-edge { position: absolute; left: 0; top: 0; bottom: 0; width: 6px; z-index: 1; }
@@ -962,18 +964,20 @@
     // and the name as a coloured tab widening left from the line. Layout/positions
     // of the bust button (top), number (beneath) and WITH-name (bottom) unchanged.
     var bustStripe = isBusted
-      ? '<div onclick="event.stopPropagation();unbustCard(\'' + c.id + '\')" style="width:20px;height:20px;background:' + borderColor + ';border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0" title="Reopen"><span style="color:#fff;font-size:12px;font-weight:700">&#10003;</span></div>'
-      : '<div onclick="event.stopPropagation();bustCard(\'' + c.id + '\')" style="width:20px;height:20px;background:#fff;border:2px solid ' + borderColor + ';border-radius:50%;cursor:pointer;flex-shrink:0" title="Mark as busted"></div>';
-    var whoTab = isBusted
-      ? '<span class="bb-card-stripe-text bb-card-stripe-who" style="background:' + borderColor + '"><span style="font-size:0.5rem;opacity:0.85">COMPLETE</span></span>'
-      : '<span class="bb-card-stripe-text bb-card-stripe-who" style="background:' + borderColor + ';cursor:pointer" onclick="event.stopPropagation()" ondblclick="event.stopPropagation();jumpToPerson(\'' + personJs + '\')" title="Double-tap to view their column"><span style="font-size:0.4rem;opacity:0.8;letter-spacing:0.1em;display:block">WITH</span><span style="font-size:0.8rem;display:block">' + stripeName + '</span></span>';
+      ? '<div onclick="event.stopPropagation();unbustCard(\'' + c.id + '\')" style="width:20px;height:20px;background:rgba(255,255,255,0.95);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0" title="Reopen"><span style="color:' + borderColor + ';font-size:12px;font-weight:700">&#10003;</span></div>'
+      : '<div onclick="event.stopPropagation();bustCard(\'' + c.id + '\')" style="width:20px;height:20px;background:#fff;border:2px solid rgba(255,255,255,0.9);border-radius:50%;cursor:pointer;flex-shrink:0" title="Mark as busted"></div>';
+    var whoText = isBusted
+      ? '<span class="bb-card-stripe-text bb-card-stripe-who" style="color:' + borderColor + '"><span style="font-size:0.5rem;opacity:0.85">COMPLETE</span></span>'
+      : '<span class="bb-card-stripe-text bb-card-stripe-who" style="color:' + borderColor + ';cursor:pointer" onclick="event.stopPropagation()" ondblclick="event.stopPropagation();jumpToPerson(\'' + personJs + '\')" title="Double-tap to view their column"><span style="font-size:0.4rem;opacity:0.75;letter-spacing:0.1em;display:block">WITH</span><span style="font-size:0.8rem;display:block">' + stripeName + '</span></span>';
 
     var cardCls = 'bb-card' + (c.important ? ' bb-card--important' : '') + (isStuck ? ' bb-card--stuck' : '');
     return '<div class="' + cardCls + '" data-card-id="' + c.id + '"' + cardOpacity + ' onclick="showDetail(\'' + c.id + '\')" draggable="true" ondragstart="cardDragStart(event,\'' + c.id + '\')" ondragover="cardDragOver(event)" ondrop="cardDrop(event,\'' + c.id + '\')">' +
       '<div class="bb-card-stripe" style="background:#fff;border-right:4px solid ' + borderColor + '">' +
-        bustStripe +
-        '<span class="bb-card-stripe-text bb-card-stripe-num" style="color:' + borderColor + '">' + c.id + '</span>' +
-        whoTab +
+        '<div class="bb-card-toptab" style="background:' + borderColor + '">' +
+          bustStripe +
+          '<span class="bb-card-stripe-text bb-card-stripe-num">' + c.id + '</span>' +
+        '</div>' +
+        whoText +
       '</div>' +
       '<div class="bb-card-body">' +
         topRight +
