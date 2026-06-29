@@ -1138,16 +1138,15 @@
     return { t: t, needs: age >= BB_WEEK_MS };
   }
 
-  // Light grey (#d1d5db) → slate grey (#4b5563) interpolated by t (0..1).
-  // Greyed-out rather than coloured: a stale column visibly dims/fades.
+  // Light orange (#f5a623) → red (#dc2626) interpolated by t (0..1).
   function staleColor(t) {
     function mix(a, b) { return Math.round(a + (b - a) * t); }
-    return 'rgb(' + mix(0xd1, 0x4b) + ',' + mix(0xd5, 0x55) + ',' + mix(0xdb, 0x63) + ')';
+    return 'rgb(' + mix(0xf5, 0xdc) + ',' + mix(0xa6, 0x26) + ',' + mix(0x23, 0x26) + ')';
   }
   function staleAlpha(t) { return 0.14 + 0.34 * t; }
   function staleRGBA(t, a) {
     function mix(x, y) { return Math.round(x + (y - x) * t); }
-    return 'rgba(' + mix(0xd1, 0x4b) + ',' + mix(0xd5, 0x55) + ',' + mix(0xdb, 0x63) + ',' + a + ')';
+    return 'rgba(' + mix(0xf5, 0xdc) + ',' + mix(0xa6, 0x26) + ',' + mix(0x23, 0x26) + ',' + a + ')';
   }
 
   // ── STEALTH EDIT (overseer) ──
