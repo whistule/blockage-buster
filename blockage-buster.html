@@ -822,19 +822,6 @@
     render();
   }
 
-  // Soften the card bars by lowering opacity only — keeps each person's
-  // ORIGINAL, vibrant hue (no desaturation), just lets the white card show
-  // through so the board reads calmer. Tweak BB_BAR_ALPHA to taste (1 = full).
-  var BB_BAR_ALPHA = 0.78;
-  function softColor(hex) {
-    if (!hex || hex.charAt(0) !== '#') return hex || defaultPersonColor;
-    var h = hex.slice(1);
-    if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
-    if (h.length !== 6) return hex;
-    var r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
-    return 'rgba(' + r + ',' + g + ',' + b + ',' + BB_BAR_ALPHA + ')';
-  }
-
   // ── RENDER CARD HTML ──
   function cardHTML(c, showStage) {
     var pillCls = c.urgency ? 'bb-pill--' + c.urgency : 'bb-pill--low';
@@ -848,9 +835,9 @@
     }
     var bell = c.hasReminder ? '<span class="bb-card-bell">🔔</span>' : '';
 
-    // Stripe always shows person colour — softened to a pastel
-    var borderColor = softColor(personColors[c.person] || defaultPersonColor);
-    if (isBusted) borderColor = softColor('#0098a0');
+    // Stripe always shows person colour
+    var borderColor = personColors[c.person] || defaultPersonColor;
+    if (isBusted) borderColor = '#0098a0';
 
     // Stripe text: person name at bottom (or 'Complete' if busted), card number at top
     var stripeName = isBusted ? 'Complete' : c.person;
