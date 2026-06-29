@@ -6,13 +6,13 @@
 <title>Blockage Buster</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Jost:wght@400;500;600;700&family=Baloo+2:wght@700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/twemoji@14.0.2/dist/twemoji.min.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html { height: 100%; background: #e5e7eb; }
-  body { font-family: 'Plus Jakarta Sans', sans-serif; color: #4b5563; }
+  body { font-family: 'Jost', sans-serif; color: #4b5563; }
   .bb-section-panel { background: #fff; padding: 1rem 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid #e5e7eb; }
   .bb-attach-btn {
     display: inline-flex; align-items: center; justify-content: center;
@@ -88,7 +88,7 @@
   .bb-topbar-mk { color: #1f2937; }
   .bb-topbar-app { color: #e20e0c; }
   .bb-topbar-sub {
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: 'Jost', sans-serif;
     font-size: 0.7rem; color: #9ca3af;
     text-transform: lowercase; letter-spacing: 0.15em;
     margin-top: 0.1rem;
@@ -307,8 +307,8 @@
   .bb-mobile-attn { animation-name: bbAttnPulseFlat; }
   @keyframes bbAttnPulseFlat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
   /* Giant exclamation under the "Needs attention" banner */
-  .bb-col-overlay-excl { position: absolute; top: 104px; left: 50%; transform: translateX(-50%); z-index: 9; pointer-events: none; color: #dc2626; font-weight: 900; font-size: 6rem; line-height: 1; text-shadow: 0 3px 8px rgba(0,0,0,0.18); animation: bbAttnPulse 1.8s ease-in-out infinite; }
-  .bb-mobile-excl { text-align: center; color: #dc2626; font-weight: 900; font-size: 5rem; line-height: 1; margin: 2px 0 14px; animation: bbAttnPulseFlat 1.8s ease-in-out infinite; }
+  .bb-col-overlay-excl { position: absolute; top: 100px; left: 50%; transform: translateX(-50%); z-index: 9; pointer-events: none; font-family: 'Baloo 2', sans-serif; color: #dc2626; font-weight: 800; font-size: 6.5rem; line-height: 1; -webkit-text-stroke: 2.5px #fff; text-shadow: 0 0 16px rgba(220,38,38,0.85), 0 0 30px rgba(220,38,38,0.5); animation: bbAttnPulse 1.8s ease-in-out infinite; }
+  .bb-mobile-excl { text-align: center; font-family: 'Baloo 2', sans-serif; color: #dc2626; font-weight: 800; font-size: 5.5rem; line-height: 1; margin: 2px 0 14px; -webkit-text-stroke: 2.5px #fff; text-shadow: 0 0 16px rgba(220,38,38,0.85), 0 0 30px rgba(220,38,38,0.5); animation: bbAttnPulseFlat 1.8s ease-in-out infinite; }
 
   @media (min-width: 768px) {
     body { max-width: 100%; }
@@ -414,19 +414,19 @@
 
   /* Editable fields */
   .bb-edit-input {
-    width: 100%; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.25rem; font-weight: 700;
+    width: 100%; font-family: 'Jost', sans-serif; font-size: 1.25rem; font-weight: 700;
     color: #1f2937; background: transparent; border: none; border-bottom: 2px solid #e5e7eb;
     padding: 0.4rem 0; outline: none; letter-spacing: 0.02em;
   }
   .bb-edit-input:focus { border-bottom-color: #e20e0c; }
   .bb-edit-textarea {
-    width: 100%; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.95rem;
+    width: 100%; font-family: 'Jost', sans-serif; font-size: 0.95rem;
     color: #4b5563; background: transparent; border: none; border-bottom: 2px solid #e5e7eb;
     padding: 0.4rem 0; outline: none; resize: vertical; min-height: 4rem; line-height: 1.5;
   }
   .bb-edit-textarea:focus { border-bottom-color: #e20e0c; }
   .bb-edit-select {
-    font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.85rem; font-weight: 600;
+    font-family: 'Jost', sans-serif; font-size: 0.85rem; font-weight: 600;
     color: #1f2937; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 4px;
     padding: 0.4rem 0.6rem; outline: none; cursor: pointer;
   }
@@ -473,7 +473,7 @@
   .bb-stage-action { font-size: 0.8rem; color: #9ca3af; cursor: pointer; }
 
   /* Buttons */
-  .bb-btn { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 1rem; background: white; border: 1px solid #9ca3af; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.95rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; box-shadow: 1px 1px 2px rgba(0,0,0,0.1); transition: background 0.15s; margin-top: 0.75rem; }
+  .bb-btn { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 1rem; background: white; border: 1px solid #9ca3af; cursor: pointer; font-family: 'Jost', sans-serif; font-size: 0.95rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; box-shadow: 1px 1px 2px rgba(0,0,0,0.1); transition: background 0.15s; margin-top: 0.75rem; }
   .bb-btn:active { background: #e5e7eb; }
   .bb-btn-indicator { width: 1rem; height: 2rem; flex-shrink: 0; border: 1px solid #6b7280; box-shadow: inset 1px 1px 2px rgba(0,0,0,0.2); }
   .bb-btn-indicator--green { background: #84cc16; }
@@ -535,7 +535,7 @@
   .bb-form-input, .bb-form-select, .bb-form-textarea {
     width: 100%; padding: 0.6rem 0.75rem;
     border: 1px solid #d1d5db; background: white;
-    font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.9rem;
+    font-family: 'Jost', sans-serif; font-size: 0.9rem;
     color: #4b5563;
   }
   .bb-form-input:focus, .bb-form-select:focus, .bb-form-textarea:focus {
