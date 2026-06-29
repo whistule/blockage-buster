@@ -1154,20 +1154,38 @@
   // staleness counter — for tidying / refining someone else's task. Toggled
   // covertly by double-clicking the overseer's own name (column header or tab).
   var BB_OVERSEER = 'Misha';
+  var BB_STEALTH_MS = 60 * 1000; // auto-switch stealth edit off after 1 minute
   var bbStealthEdit = (function() { try { return localStorage.getItem('bbStealthEdit') === '1'; } catch (e) { return false; } })();
   var bbFrozenProgress = null; // { dbId, ms } captured when a card detail opens
+  var bbStealthTimer = null;
   function updateStealthIndicator() {
     var mark = document.getElementById('bbStealthMark');
     if (mark) mark.style.display = bbStealthEdit ? '' : 'none';
     var build = document.getElementById('bbBuild');
     if (build) build.style.color = bbStealthEdit ? '#ea580c' : '';
   }
+  // Auto-off safety: stealth edit switches itself off 1 min after being turned
+  // on (timer reset each time a card is finished while it's on), so it can't be
+  // left on by accident.
+  function armStealthTimer() {
+    if (bbStealthTimer) { clearTimeout(bbStealthTimer); bbStealthTimer = null; }
+    if (!bbStealthEdit) return;
+    bbStealthTimer = setTimeout(function() {
+      if (!bbStealthEdit) return;
+      bbStealthEdit = false;
+      try { localStorage.setItem('bbStealthEdit', '0'); } catch (e) {}
+      updateStealthIndicator();
+      if (typeof showToast === 'function') showToast('Stealth edit auto-switched off');
+    }, BB_STEALTH_MS);
+  }
   window.toggleStealthEdit = function() {
     bbStealthEdit = !bbStealthEdit;
     try { localStorage.setItem('bbStealthEdit', bbStealthEdit ? '1' : '0'); } catch (e) {}
     updateStealthIndicator();
-    if (typeof showToast === 'function') showToast(bbStealthEdit ? 'Stealth edit ON — edits won’t reset counters' : 'Stealth edit OFF');
+    armStealthTimer();
+    if (typeof showToast === 'function') showToast(bbStealthEdit ? 'Stealth edit ON (auto-off in 1 min)' : 'Stealth edit OFF');
   };
+  armStealthTimer(); // if it was left on from a previous session, start the auto-off countdown
 
   // Double-tap a person's name (e.g. on a card stripe) to jump to their Us column.
   window.jumpToPerson = function(name) {
@@ -2006,6 +2024,7 @@
     // tidying doesn't reset the assignee's staleness counter.
     if (bbStealthEdit && bbFrozenProgress && bbFrozenProgress.ms) {
       var frozen = bbFrozenProgress; bbFrozenProgress = null;
+      armStealthTimer(); // active stealth use — reset the 1-min auto-off countdown
       sb.from('cards').update({ last_progress_at: new Date(frozen.ms).toISOString() }).eq('id', frozen.dbId)
         .then(function() { return loadData(); })
         .catch(function(e) { console.error('Stealth restore failed:', e); });
