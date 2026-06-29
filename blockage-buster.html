@@ -286,8 +286,8 @@
 
   /* ── STALENESS OVERLAY (Us view: fades in when a person's column goes untouched) ── */
   .bb-col-overlay { position: absolute; inset: 0; z-index: 5; pointer-events: none; transition: opacity 0.6s ease, background-color 0.6s ease; }
-  .bb-col-overlay-banner { position: absolute; top: 60px; left: 50%; transform: translateX(-50%); z-index: 9; pointer-events: none; background: #dc2626; color: #fff; font-size: 0.78rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; padding: 5px 12px; border-radius: 999px; box-shadow: 0 2px 8px rgba(0,0,0,0.28); white-space: nowrap; animation: bbAttnPulse 1.8s ease-in-out infinite; }
-  .bb-mobile-attn { margin: 0 0 0.5rem; background: #dc2626; color: #fff; border-radius: 8px; padding: 8px 12px; text-align: center; font-size: 0.8rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; box-shadow: 0 2px 6px rgba(0,0,0,0.2); animation: bbAttnPulse 1.8s ease-in-out infinite; }
+  .bb-col-overlay-banner { position: absolute; top: 60px; left: 50%; transform: translateX(-50%); z-index: 9; pointer-events: none; background: #dc2626; color: #fff; font-size: 0.95rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; padding: 6px 14px; border-radius: 999px; box-shadow: 0 2px 8px rgba(0,0,0,0.28); white-space: nowrap; animation: bbAttnPulse 1.8s ease-in-out infinite; }
+  .bb-mobile-attn { margin: 0 0 0.5rem; background: #dc2626; color: #fff; border-radius: 8px; padding: 9px 12px; text-align: center; font-size: 0.95rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; box-shadow: 0 2px 6px rgba(0,0,0,0.2); animation: bbAttnPulse 1.8s ease-in-out infinite; }
   @keyframes bbAttnPulse { 0%, 100% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.05); } }
   .bb-mobile-attn { animation-name: bbAttnPulseFlat; }
   @keyframes bbAttnPulseFlat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
@@ -822,6 +822,21 @@
     render();
   }
 
+  // Soften a person's colour into a pastel for the card bars — keeps each
+  // person's hue (so the colour code still reads) but desaturates and lightens
+  // it a touch so the board is calmer. White stripe text stays legible.
+  function softColor(hex) {
+    if (!hex || hex.charAt(0) !== '#') return hex || defaultPersonColor;
+    var h = hex.slice(1);
+    if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+    if (h.length !== 6) return hex;
+    var r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
+    var lum = 0.299 * r + 0.587 * g + 0.114 * b;
+    var ds = 0.35, lt = 0.12; // desaturate then lighten slightly
+    function soft(c) { var v = c + (lum - c) * ds; return Math.round(v + (255 - v) * lt); }
+    return 'rgb(' + soft(r) + ',' + soft(g) + ',' + soft(b) + ')';
+  }
+
   // ── RENDER CARD HTML ──
   function cardHTML(c, showStage) {
     var pillCls = c.urgency ? 'bb-pill--' + c.urgency : 'bb-pill--low';
@@ -835,9 +850,9 @@
     }
     var bell = c.hasReminder ? '<span class="bb-card-bell">🔔</span>' : '';
 
-    // Stripe always shows person colour
-    var borderColor = personColors[c.person] || defaultPersonColor;
-    if (isBusted) borderColor = '#0098a0';
+    // Stripe always shows person colour — softened to a pastel
+    var borderColor = softColor(personColors[c.person] || defaultPersonColor);
+    if (isBusted) borderColor = softColor('#0098a0');
 
     // Stripe text: person name at bottom (or 'Complete' if busted), card number at top
     var stripeName = isBusted ? 'Complete' : c.person;
@@ -1105,15 +1120,16 @@
     return { t: t, needs: age >= BB_WEEK_MS };
   }
 
-  // Light orange (#f5a623) → red (#dc2626) interpolated by t (0..1).
+  // Light grey (#d1d5db) → slate grey (#4b5563) interpolated by t (0..1).
+  // Greyed-out rather than coloured: a stale column visibly dims/fades.
   function staleColor(t) {
     function mix(a, b) { return Math.round(a + (b - a) * t); }
-    return 'rgb(' + mix(0xf5, 0xdc) + ',' + mix(0xa6, 0x26) + ',' + mix(0x23, 0x26) + ')';
+    return 'rgb(' + mix(0xd1, 0x4b) + ',' + mix(0xd5, 0x55) + ',' + mix(0xdb, 0x63) + ')';
   }
   function staleAlpha(t) { return 0.14 + 0.34 * t; }
   function staleRGBA(t, a) {
     function mix(x, y) { return Math.round(x + (y - x) * t); }
-    return 'rgba(' + mix(0xf5, 0xdc) + ',' + mix(0xa6, 0x26) + ',' + mix(0x23, 0x26) + ',' + a + ')';
+    return 'rgba(' + mix(0xd1, 0x4b) + ',' + mix(0xd5, 0x55) + ',' + mix(0xdb, 0x63) + ',' + a + ')';
   }
 
   // ── STEALTH EDIT (overseer) ──
