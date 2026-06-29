@@ -222,14 +222,14 @@
   /* Left colour: thin edge line + vertical name tab (number/tick move onto the white) */
   .bb-card-edge { position: absolute; left: 0; top: 0; bottom: 0; width: 6px; z-index: 1; }
   .bb-card-nametab {
-    position: absolute; left: 0; top: 0; width: 22px; z-index: 2;
+    position: absolute; left: 0; bottom: 0; width: 22px; z-index: 2;
     writing-mode: vertical-rl; text-orientation: mixed; text-align: center;
     color: #fff; font-weight: 800; font-size: 0.7rem; letter-spacing: 0.05em;
     text-transform: uppercase; white-space: nowrap;
-    padding: 9px 0; border-radius: 0 0 9px 0;
-    box-shadow: 2px 2px 5px rgba(0,0,0,0.18);
+    padding: 9px 0; border-radius: 0 9px 0 0;
+    box-shadow: 2px -2px 5px rgba(0,0,0,0.18);
   }
-  .bb-card-head { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
+  .bb-card-head { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; margin-bottom: 4px; }
   .bb-card-num { font-weight: 800; font-size: 0.95rem; letter-spacing: 0.02em; }
   .bb-card-bust { width: 18px; height: 18px; border-radius: 50%; cursor: pointer; flex-shrink: 0; box-sizing: border-box; }
 
@@ -239,7 +239,7 @@
     display: flex; align-items: center; flex-wrap: nowrap;
     gap: 8px; padding: 0 14px;
     height: 36px; min-height: 36px; max-height: 36px;
-    margin: 0.3rem -14px 0 -10px;
+    margin: 0.3rem -14px 0 0;
     border-top: 1px solid #e5e7eb;
     background: #fafafa;
     overflow: hidden;
@@ -966,7 +966,7 @@
     var bustHead = isBusted
       ? '<span class="bb-card-bust" onclick="event.stopPropagation();unbustCard(\'' + c.id + '\')" style="background:' + borderColor + ';display:inline-flex;align-items:center;justify-content:center" title="Reopen"><span style="color:#fff;font-size:11px;font-weight:800;line-height:1">&#10003;</span></span>'
       : '<span class="bb-card-bust" onclick="event.stopPropagation();bustCard(\'' + c.id + '\')" style="border:2px solid ' + borderColor + '" title="Mark as busted"></span>';
-    var cardHead = '<div class="bb-card-head"><span class="bb-card-num" style="color:' + borderColor + '">#' + c.id + '</span>' + bustHead + '</div>';
+    var cardHead = '<div class="bb-card-head">' + bustHead + '<span class="bb-card-num" style="color:' + borderColor + '">#' + c.id + '</span></div>';
 
     var cardCls = 'bb-card' + (c.important ? ' bb-card--important' : '') + (isStuck ? ' bb-card--stuck' : '');
     return '<div class="' + cardCls + '" data-card-id="' + c.id + '"' + cardOpacity + ' onclick="showDetail(\'' + c.id + '\')" draggable="true" ondragstart="cardDragStart(event,\'' + c.id + '\')" ondragover="cardDragOver(event)" ondrop="cardDrop(event,\'' + c.id + '\')">' +
