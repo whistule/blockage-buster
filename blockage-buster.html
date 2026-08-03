@@ -290,7 +290,7 @@
   .bb-columns { display: none; }
   .bb-column { background: #f3f4f6; min-height: 300px; border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; position: relative; }
   .bb-column:last-child { border-right: none; }
-  .bb-col-header { padding: 0.75rem 1rem; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center; gap: 0.5rem; position: sticky; top: 52px; z-index: 8; background: #f3f4f6; }
+  .bb-col-header { padding: 0.75rem 1rem; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center; gap: 0.5rem; position: sticky; top: 0; z-index: 8; background: #f3f4f6; }
   .bb-col-title { font-size: 1.4rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #4b5563; }
   .bb-col-count { background: #4b5563; color: white; font-size: 0.65rem; font-weight: 700; padding: 1px 6px; border-radius: 8px; }
   .bb-col-stripe { width: 4px; height: 16px; border-radius: 2px; }
@@ -303,6 +303,8 @@
   /* "Watching" separator — cards where the current action isn't with this person */
   .bb-watch-sep { display: flex; align-items: center; justify-content: center; gap: 7px; margin: 14px 4px 9px; color: #9ca3af; font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; }
   .bb-watch-sep::before, .bb-watch-sep::after { content: ''; flex: 1; height: 1px; background: #d1d5db; }
+  /* Workstation "in control" colour bar at the top of a workcentre column */
+  .bb-ws-bar { display: flex; height: 10px; width: 100%; flex-shrink: 0; }
 
   /* ── STALENESS OVERLAY (Us view: fades in when a person's column goes untouched) ── */
   .bb-col-overlay { position: absolute; inset: 0; z-index: 5; pointer-events: none; transition: opacity 0.6s ease, background-color 0.6s ease; }
@@ -319,7 +321,10 @@
     body { max-width: 100%; }
     .bb-tabs { display: none !important; }
     .bb-cardlist { display: none !important; }
-    .bb-columns { display: grid !important; flex: 1; min-height: calc(100vh - 52px); }
+    /* Lock the topbar and let only the columns frame scroll (both axes). */
+    #bbBoard.bb-view--active { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+    #bbBoard .bb-topbar--main { flex-shrink: 0; }
+    .bb-columns { display: grid !important; flex: 1 1 auto; min-height: 0; overflow: auto; }
     .bb-detail { max-width: 680px; margin: 0 auto; }
   }
   @media (max-width: 767px) {
@@ -637,7 +642,8 @@
     </div>
     <div id="bbWorkstationsBtn" onclick="openWorkstations()" title="Workstations" style="cursor:pointer;flex-shrink:0;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:#fff;border:1px solid #d1d5db;transition:background 0.15s,border-color 0.15s" onmouseover="this.style.background='#f9fafb';this.style.borderColor='#9ca3af'" onmouseout="this.style.background='#fff';this.style.borderColor='#d1d5db'">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+        <path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>
+        <path d="M7 18h.01M12 18h.01M17 18h.01"/>
       </svg>
     </div>
     <div id="bbWorkdaysBtn" onclick="openWorkdaysModal()" title="Working Days" style="cursor:pointer;flex-shrink:0;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:#fff;border:1px solid #d1d5db;transition:background 0.15s,border-color 0.15s" onmouseover="this.style.background='#f9fafb';this.style.borderColor='#9ca3af'" onmouseout="this.style.background='#fff';this.style.borderColor='#d1d5db'">
@@ -1074,22 +1080,20 @@
       // Remove empty groups
       order = order.filter(function(k) { return groups[k].length > 0; });
     } else if (viewMode === 'workstation') {
-      // One column per workcentre, in configured order; then Unassigned; then Completed.
-      workstations.forEach(function(w) { groups[w.name] = []; order.push(w.name); });
+      // Unassigned first (page left), then one column per workcentre in configured
+      // order. Completed/busted cards are not shown in this view at all.
       groups['Unassigned'] = []; order.push('Unassigned');
+      workstations.forEach(function(w) { groups[w.name] = []; order.push(w.name); });
       filtered.forEach(function(c) {
         var isBusted = c.stage === 'busted' || c.stage === 'resolved';
-        var key = isBusted ? 'Completed' : (c.workstationName || 'Unassigned');
+        if (isBusted) return;
+        var key = c.workstationName || 'Unassigned';
         if (!groups[key]) { groups[key] = []; order.push(key); }
         groups[key].push(c);
       });
-      // Drop the Unassigned column if empty; move Completed to the end.
+      // Drop the Unassigned column if empty.
       if (groups['Unassigned'] && groups['Unassigned'].length === 0) {
         order = order.filter(function(k) { return k !== 'Unassigned'; });
-      }
-      if (groups['Completed'] && order.indexOf('Completed') !== -1) {
-        order = order.filter(function(k) { return k !== 'Completed'; });
-        order.push('Completed');
       }
     } else if (viewMode === 'stage') {
       // Always show all stage columns in fixed order
@@ -1220,6 +1224,21 @@
     return html;
   }
 
+  // A coloured bar (one segment per assigned person) for a workcentre column.
+  function workstationBarHTML(key) {
+    if (viewMode !== 'workstation') return '';
+    var ws = null;
+    for (var i = 0; i < workstations.length; i++) { if (workstations[i].name === key) { ws = workstations[i]; break; } }
+    if (!ws || !Array.isArray(ws.people) || !ws.people.length) return '';
+    var names = [];
+    var segs = ws.people.map(function(pid) {
+      var ct = contactsMap[pid];
+      if (ct) names.push(ct.name);
+      return '<div style="flex:1;background:' + ((ct && ct.color) || '#9ca3af') + '"></div>';
+    }).join('');
+    return '<div class="bb-ws-bar" title="In control: ' + names.join(', ') + '">' + segs + '</div>';
+  }
+
   // ── STEALTH EDIT (overseer) ──
   // When ON, edits the overseer makes to a card don't reset the assignee's
   // staleness counter — for tidying / refining someone else's task. Toggled
@@ -1322,14 +1341,14 @@
     mobileEl.style.background = mobileStale ? staleRGBA(mobileStale.t, staleAlpha(mobileStale.t)) : '';
     var mobileBanner = (mobileStale && mobileStale.needs) ? '<div class="bb-mobile-attn">❗ Needs attention</div><div class="bb-mobile-excl">!</div>' : '';
     if (groups[activeTab] && groups[activeTab].length) {
-      mobileEl.innerHTML = mobileBanner + renderColumnCards(groups[activeTab], activeTab, showStage);
+      mobileEl.innerHTML = mobileBanner + workstationBarHTML(activeTab) + renderColumnCards(groups[activeTab], activeTab, showStage);
     } else {
-      mobileEl.innerHTML = mobileBanner + '<div class="bb-empty">No blockages here</div>';
+      mobileEl.innerHTML = mobileBanner + workstationBarHTML(activeTab) + '<div class="bb-empty">No blockages here</div>';
     }
 
     // ── Desktop columns ──
     var colsEl = document.getElementById('bbDesktopCols');
-    var colWidths = order.map(function(k) { return (k === 'onhold' || k === 'busted') ? '0.5fr' : '1fr'; }).join(' ');
+    var colWidths = order.map(function(k) { return (k === 'onhold' || k === 'busted') ? 'minmax(130px, 0.5fr)' : 'minmax(240px, 1fr)'; }).join(' ');
     colsEl.style.gridTemplateColumns = colWidths;
     var colsHTML = '';
     order.forEach(function(key) {
@@ -1352,7 +1371,7 @@
       }
       var addBtn = (viewMode === 'stage' && key !== 'busted') ? '<div class="bb-col-add" onclick="openNewCard(\'' + key + '\')">+</div>' : '';
       var colDbl = (viewMode === 'person' && key === BB_OVERSEER) ? ' ondblclick="toggleStealthEdit()"' : '';
-      colsHTML += '<div class="bb-column"><div class="bb-col-header"><div class="bb-col-stripe" style="' + stripeStyle + ';"></div><span class="bb-col-title"' + colDbl + '>' + label + '</span><span class="bb-col-count">' + groups[key].length + '</span>' + addBtn + '</div><div class="bb-col-cards">';
+      colsHTML += '<div class="bb-column">' + workstationBarHTML(key) + '<div class="bb-col-header"><div class="bb-col-stripe" style="' + stripeStyle + ';"></div><span class="bb-col-title"' + colDbl + '>' + label + '</span><span class="bb-col-count">' + groups[key].length + '</span>' + addBtn + '</div><div class="bb-col-cards">';
       colsHTML += renderColumnCards(groups[key], key, showStage);
       colsHTML += '</div>';
       // Staleness overlay — Us view only, never on the Completed column
@@ -2238,14 +2257,36 @@
       list.innerHTML = '<div style="font-size:0.85rem;color:#9ca3af;padding:8px 0">No workcentres yet — add one below.</div>';
       return;
     }
+    var internal = Object.keys(contactsMap).map(function(id) { return contactsMap[id]; })
+      .filter(function(c) { return c && c.type !== 'external' && c.name; })
+      .sort(function(a, b) { return a.name.localeCompare(b.name); });
     list.innerHTML = workstations.map(function(w) {
-      return '<div class="bb-ws-row" draggable="true" data-ws-id="' + w.id + '" ondragstart="wsDragStart(event,\'' + w.id + '\')" ondragover="event.preventDefault()" ondrop="wsDrop(event,\'' + w.id + '\')" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid #e5e7eb;border-radius:6px;margin-bottom:6px;background:#fff">' +
-        '<span style="cursor:grab;color:#9ca3af;font-size:1rem;line-height:1;letter-spacing:-2px">⋮⋮</span>' +
-        '<input value="' + (w.name || '').replace(/"/g, '&quot;') + '" onblur="renameWorkstation(\'' + w.id + '\',this.value)" onkeydown="if(event.key===\'Enter\'){this.blur();}" style="flex:1;border:none;outline:none;font-size:0.95rem;font-weight:600;color:#1f2937;background:transparent">' +
-        '<span onclick="deleteWorkstation(\'' + w.id + '\')" title="Delete" style="cursor:pointer;color:#ef4444;font-size:0.9rem;padding:2px 6px">✕</span>' +
+      var people = Array.isArray(w.people) ? w.people : [];
+      var checks = internal.map(function(p) {
+        var on = people.indexOf(p.id) !== -1;
+        return '<label style="display:inline-flex;align-items:center;gap:5px;font-size:0.82rem;cursor:pointer">' +
+          '<input type="checkbox"' + (on ? ' checked' : '') + ' onchange="toggleWorkstationPerson(\'' + w.id + '\',\'' + p.id + '\')" style="margin:0">' +
+          '<span style="width:11px;height:11px;border-radius:50%;background:' + (p.color || '#9ca3af') + ';display:inline-block;flex-shrink:0"></span>' + p.name +
+        '</label>';
+      }).join('');
+      return '<div class="bb-ws-row" draggable="true" data-ws-id="' + w.id + '" ondragstart="wsDragStart(event,\'' + w.id + '\')" ondragover="event.preventDefault()" ondrop="wsDrop(event,\'' + w.id + '\')" style="padding:8px 10px;border:1px solid #e5e7eb;border-radius:6px;margin-bottom:6px;background:#fff">' +
+        '<div style="display:flex;align-items:center;gap:8px">' +
+          '<span style="cursor:grab;color:#9ca3af;font-size:1rem;line-height:1;letter-spacing:-2px">⋮⋮</span>' +
+          '<input value="' + (w.name || '').replace(/"/g, '&quot;') + '" onblur="renameWorkstation(\'' + w.id + '\',this.value)" onkeydown="if(event.key===\'Enter\'){this.blur();}" style="flex:1;border:none;outline:none;font-size:0.95rem;font-weight:600;color:#1f2937;background:transparent">' +
+          '<span onclick="deleteWorkstation(\'' + w.id + '\')" title="Delete" style="cursor:pointer;color:#ef4444;font-size:0.9rem;padding:2px 6px">✕</span>' +
+        '</div>' +
+        (internal.length ? '<div style="display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:9px;padding-left:26px">' + checks + '</div>' : '') +
       '</div>';
     }).join('');
   }
+  window.toggleWorkstationPerson = async function(wsId, personId) {
+    var ws = workstationsMap[wsId]; if (!ws) return;
+    var people = Array.isArray(ws.people) ? ws.people.slice() : [];
+    var idx = people.indexOf(personId);
+    if (idx === -1) people.push(personId); else people.splice(idx, 1);
+    await sb.from('workstations').update({ people: people }).eq('id', wsId);
+    await loadData(); renderWorkstationsList(); render();
+  };
   window.addWorkstation = async function() {
     var input = document.getElementById('bbWsNew'); if (!input) return;
     var name = input.value.trim(); if (!name) { input.focus(); return; }
