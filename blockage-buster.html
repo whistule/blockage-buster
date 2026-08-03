@@ -78,7 +78,7 @@
   .bb-logo {
     width: 48px; height: 52px; flex-shrink: 0;
   }
-  .bb-topbar-brand { flex: 1; }
+  .bb-topbar-brand { flex: 0 0 auto; }
   .bb-topbar-title {
     font-family: 'Oswald', 'Arial Narrow', sans-serif;
     font-size: 2rem; font-weight: 700;
@@ -102,7 +102,7 @@
 
   /* View toggle — tab style */
   .bb-view-toggle {
-    display: flex; gap: 0; align-items: flex-end;
+    display: flex; gap: 0; align-items: flex-end; margin-left: auto;
   }
   .bb-view-toggle-btn {
     padding: 0.6rem 1.2rem 0.55rem; font-size: 1rem; font-weight: 700;
@@ -112,7 +112,13 @@
     transition: color 0.15s, border-color 0.15s;
   }
   .bb-view-toggle-btn:hover { color: #4b5563; }
-  .bb-view-toggle-btn--active { color: #1f2937; border-bottom-color: #1f2937; }
+  /* Active tab lifts off the page as a raised, shadowed chip (no underline). */
+  .bb-view-toggle-btn--active {
+    color: #1f2937; background: #ffffff; border-radius: 9px;
+    border-bottom-color: transparent;
+    box-shadow: 0 4px 10px rgba(31,41,55,0.16), 0 1px 2px rgba(31,41,55,0.10);
+    transform: translateY(-1px);
+  }
   @media (min-width: 900px) {
     .bb-view-toggle-btn {
       padding: 0.7rem 1.75rem 0.6rem; font-size: 1.15rem; letter-spacing: 0.08em;
@@ -161,12 +167,12 @@
   }
   /* Stuck: no progress in over a week — fat red border + alert badge */
   .bb-card--stuck {
-    border: 3px solid #dc2626;
+    border: 3px solid #e11d48;
     box-shadow: 0 0 0 2px rgba(220,38,38,0.22), 0 6px 16px rgba(220,38,38,0.32);
   }
   .bb-card-stuck-badge {
     display: inline-flex; align-items: center; justify-content: center;
-    width: 22px; height: 22px; background: #dc2626; color: #fff;
+    width: 22px; height: 22px; background: #e11d48; color: #fff;
     font-weight: 900; font-size: 1rem; line-height: 1; border-radius: 50%;
     box-shadow: 0 1px 4px rgba(220,38,38,0.5);
   }
@@ -268,7 +274,7 @@
   .bb-mood:hover .bb-mood-ghost { opacity: 1; stroke: #94a3b8; }
 
   .bb-pill { display: inline-block; font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 3px 8px; border-radius: 4px; color: white; white-space: nowrap; }
-  .bb-pill--urgent { background: #ef4444; }
+  .bb-pill--urgent { background: #e11d48; }
   .bb-pill--high { background: #f97316; }
   .bb-pill--medium { background: #22c55e; }
   .bb-pill--low { background: #9ca3af; }
@@ -1033,7 +1039,7 @@
   }
 
   var urgencyLabels = { urgent: 'Urgent', high: 'Soon', medium: 'Medium', low: 'Low', '': 'None' };
-  var urgencyColors = { urgent: '#ef4444', high: '#f97316', medium: '#22c55e', low: '#9ca3af', '': '#d1d5db' };
+  var urgencyColors = { urgent: '#e11d48', high: '#f97316', medium: '#22c55e', low: '#9ca3af', '': '#d1d5db' };
   var urgencyGroupOrder = ['urgent', 'high', 'medium', 'low', ''];
 
   // ── SEARCH ──
