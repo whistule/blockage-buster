@@ -102,9 +102,13 @@
 
   /* View toggle — tab style */
   .bb-view-toggle {
-    display: flex; gap: 0; align-items: flex-end;
-    flex-basis: 100%; margin-top: 0.4rem;   /* own full-width row, directly above the board */
+    display: flex; gap: 0; align-items: flex-end; margin-left: 1rem;
+    /* Inline on row 1 when it fits. */
   }
+  /* When the row can't fit, the tabs (not the search) drop to their own row,
+     so the tab-to-line distance stays constant. Toggled by JS (updateTopbarWrap). */
+  .bb-topbar--main.bb-wrapmode .bb-view-toggle { order: 2; flex-basis: 100%; margin-left: 0; margin-top: 0.4rem; }
+  .bb-topbar--main.bb-wrapmode #bbSearchWrap { order: 1; }
   .bb-view-toggle-btn {
     padding: 0.6rem 1.2rem 0.55rem; font-size: 1rem; font-weight: 700;
     text-transform: uppercase; letter-spacing: 0.06em;
@@ -675,18 +679,18 @@
         <line x1="16" y1="3" x2="16" y2="7"/>
       </svg>
     </div>
-    <div id="bbSearchWrap" onclick="openSearch()" style="margin-left:1.25rem;position:relative;flex-shrink:0">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none">
-        <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-      </svg>
-      <input id="bbSearch" type="search" placeholder="Search busters..." oninput="handleSearch(this.value)" onkeydown="if(event.key==='Escape'){this.value='';handleSearch('');this.blur();}" onblur="if(!this.value){document.getElementById('bbSearchWrap').classList.remove('bb-search--open');}this.style.borderColor='#d1d5db';this.style.boxShadow='none';" style="padding:0.5rem 0.75rem 0.5rem 2.1rem;font-size:0.9rem;border:1px solid #d1d5db;border-radius:8px;background:#fff;font-family:inherit;width:220px;outline:none;transition:border-color 0.15s,box-shadow 0.15s;box-sizing:border-box" onfocus="this.style.borderColor='#0098a0';this.style.boxShadow='0 0 0 3px rgba(0,152,160,0.1)'">
-    </div>
     <div class="bb-view-toggle">
       <div class="bb-view-toggle-btn bb-view-toggle-btn--active" onclick="setViewMode('person')">Us</div>
       <div class="bb-view-toggle-btn" onclick="setViewMode('workstation')">Workstation</div>
       <div class="bb-view-toggle-btn" onclick="setViewMode('stage')">Stage</div>
       <div class="bb-view-toggle-btn" onclick="setViewMode('supplier')">Them</div>
       <div class="bb-view-toggle-btn" onclick="setViewMode('urgency')">Urgency</div>
+    </div>
+    <div id="bbSearchWrap" onclick="openSearch()" style="margin-left:1.25rem;position:relative;flex-shrink:0">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none">
+        <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input id="bbSearch" type="search" placeholder="Search busters..." oninput="handleSearch(this.value)" onkeydown="if(event.key==='Escape'){this.value='';handleSearch('');this.blur();}" onblur="if(!this.value){document.getElementById('bbSearchWrap').classList.remove('bb-search--open');}this.style.borderColor='#d1d5db';this.style.boxShadow='none';" style="padding:0.5rem 0.75rem 0.5rem 2.1rem;font-size:0.9rem;border:1px solid #d1d5db;border-radius:8px;background:#fff;font-family:inherit;width:220px;outline:none;transition:border-color 0.15s,box-shadow 0.15s;box-sizing:border-box" onfocus="this.style.borderColor='#0098a0';this.style.boxShadow='0 0 0 3px rgba(0,152,160,0.1)'">
     </div>
   </div>
 
@@ -1433,7 +1437,24 @@
       twemoji.parse(document.getElementById('bbBoard'), { folder: 'svg', ext: '.svg' });
     }
     updateStealthIndicator();
+    updateTopbarWrap();
     updateTabDrop();
+  }
+
+  // Only drop the tab bar to its own row when it genuinely doesn't fit inline.
+  // (Detected by whether the search box wraps below the tabs in the plain layout.)
+  function updateTopbarWrap() {
+    var bar = document.querySelector('.bb-topbar--main');
+    var toggle = document.querySelector('.bb-view-toggle');
+    var search = document.getElementById('bbSearchWrap');
+    if (!bar || !toggle || !search) return;
+    bar.classList.remove('bb-wrapmode');
+    // Measure the plain inline layout: if the tabs and search no longer share a
+    // row (no vertical overlap), the row overflowed — drop the tabs to their own
+    // row instead of the search. (Overlap check ignores the centred-height jitter.)
+    var tr = toggle.getBoundingClientRect(), sr = search.getBoundingClientRect();
+    var overlap = Math.min(tr.bottom, sr.bottom) - Math.max(tr.top, sr.top);
+    if (overlap <= 2) bar.classList.add('bb-wrapmode');
   }
 
   // Drop the active tab's two side lines down to the top of the board (the
@@ -1449,7 +1470,7 @@
       root.style.setProperty('--bb-tab-drop', (gap >= 2 && gap <= 44) ? gap + 'px' : '0px');
     } catch (e) {}
   }
-  window.addEventListener('resize', updateTabDrop);
+  window.addEventListener('resize', function() { updateTopbarWrap(); updateTabDrop(); });
 
   // ── VIEW MODE TOGGLE ──
   window.setViewMode = function(mode) {
