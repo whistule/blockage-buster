@@ -1071,9 +1071,10 @@
     }
 
     if (viewMode === 'urgency') {
-      // Use fixed order for urgency groups
+      // Use fixed order for urgency groups. Completed/busted cards are not shown.
       urgencyGroupOrder.forEach(function(u) { groups[u] = []; order.push(u); });
       filtered.forEach(function(c) {
+        if (c.stage === 'busted' || c.stage === 'resolved') return;
         var key = c.urgency || '';
         groups[key].push(c);
       });
