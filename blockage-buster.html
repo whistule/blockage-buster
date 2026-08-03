@@ -1471,7 +1471,7 @@
               personBadge + nowPill + editBtn +
             '</div>' +
             '<div style="margin-top:0.15rem;display:flex;gap:6px;align-items:flex-start">' +
-              '<textarea id="step-notes-input-' + s.id + '" class="bb-edit-textarea" style="flex:1;min-height:1.5rem;font-size:0.75rem;font-style:italic;color:#6b7280;padding:2px 4px" placeholder="Add notes..." onblur="saveStepNotes(\'' + s.id + '\')">' + (s.notes || '').replace(/</g, '&lt;') + '</textarea>' +
+              '<textarea id="step-notes-input-' + s.id + '" class="bb-edit-textarea" style="flex:1;min-height:3rem;font-size:0.9rem;line-height:1.4;font-style:italic;color:#6b7280;padding:6px 8px" placeholder="Add notes..." onblur="saveStepNotes(\'' + s.id + '\')">' + (s.notes || '').replace(/</g, '&lt;') + '</textarea>' +
               (s.attachment_url
                 ? buildAttachDisplay(s.attachment_url, s.attachment_name, s.attachment_type, "removeAttachment('stages','" + s.id + "')")
                 : '<span class="bb-attach-btn--icon" onclick="event.stopPropagation();openAttachmentMenu(event,\'stages\',\'' + s.id + '\')" style="cursor:pointer" title="Add attachment">+</span>'
@@ -1503,7 +1503,7 @@
             }).join('') +
           '</div>' +
         '</div>' +
-        '<textarea class="bb-edit-textarea" id="newStageNotes" placeholder="Notes (optional)" style="min-height:1.5rem;font-size:0.8rem;margin-top:0.5rem;background:#fff;border:1px solid #e5e7eb;border-radius:4px;padding:6px"></textarea>' +
+        '<textarea class="bb-edit-textarea" id="newStageNotes" placeholder="Notes (optional)" style="min-height:4.5rem;font-size:0.9rem;line-height:1.45;margin-top:0.5rem;background:#fff;border:1px solid #e5e7eb;border-radius:4px;padding:8px"></textarea>' +
         '<div class="bb-btn bb-btn--save" onclick="addStage()" style="margin-top:0.5rem;padding:8px 14px;font-size:0.85rem"><div class="bb-btn-indicator bb-btn-indicator--green" style="width:0.85rem;height:1.6rem"></div>Add Action</div>' +
       '</div>' +
     '</div>';
@@ -1546,7 +1546,7 @@
           '</div>') +
     '</div>' +
     '<div class="bb-section-panel" style="margin-bottom:0.75rem">' +
-      '<div class="bb-edit-label" style="margin-bottom:6px">Watched by <span style="font-weight:400;color:#9ca3af">(card shows in their Us column, whatever the current action)</span></div>' +
+      '<div class="bb-edit-label" style="margin-bottom:8px;font-size:1rem;color:#374151">Watched by <span style="font-weight:400;font-size:0.8rem;color:#9ca3af">(card shows in their Us column, whatever the current action)</span></div>' +
       '<div id="editWatchers" style="display:flex;flex-wrap:wrap;gap:8px 16px">' +
         usContacts.map(function(pc) { var checked = (card.watchers || []).indexOf(pc.name) !== -1 ? ' checked' : ''; return '<label style="display:inline-flex;align-items:center;gap:5px;font-size:0.9rem;cursor:pointer"><input type="checkbox" class="bb-watcher" data-watcher-id="' + pc.id + '"' + checked + ' style="margin:0"> ' + pc.name + '</label>'; }).join('') +
       '</div>' +
