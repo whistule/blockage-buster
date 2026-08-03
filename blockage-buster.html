@@ -2018,6 +2018,22 @@
     await renderDetail(cardId);
   };
   window.showBoard = function() {
+    // If a just-created card was left blank (no title, description or steps), discard it.
+    if (bbNewCardDbId) {
+      var toCheck = bbNewCardDbId; bbNewCardDbId = null;
+      var tEl = document.getElementById('editTitle');
+      var dEl = document.getElementById('editDesc');
+      var blank = (!tEl || !tEl.value.trim()) && (!dEl || !dEl.value.trim());
+      if (blank) {
+        sb.from('stages').select('id').eq('card_id', toCheck).limit(1)
+          .then(function(res) {
+            if (!(res && res.data && res.data.length)) {
+              return sb.from('cards').delete().eq('id', toCheck).then(function() { return loadData(); });
+            }
+          })
+          .catch(function(e) { console.error('Discard blank card failed:', e); });
+      }
+    }
     document.getElementById('bbDetail').classList.remove('bb-view--active');
     document.getElementById('bbBoard').classList.add('bb-view--active');
     // Stealth edit: restore the card's pre-edit progress time so the overseer's
@@ -2072,18 +2088,22 @@
   // ── NEW CARD ──
 
   var newCardStage = 'flagged';
+  var bbNewCardDbId = null; // a freshly-created card, discarded on exit if left blank
 
-  window.openNewCard = function(stage) {
-    newCardStage = stage || 'flagged';
-    // Set stage dropdown
-    document.getElementById('ncStage').value = newCardStage;
-    // Populate person dropdown from contacts
-    // Clear form
-    document.getElementById('ncTitle').value = '';
-    document.getElementById('ncDesc').value = '';
-    document.getElementById('ncUrgency').value = 'medium';
-    // Show modal
-    document.getElementById('bbNewCardModal').classList.add('bb-modal-overlay--open');
+  // Create a card immediately and open its edit screen (no popup). The board
+  // stage is set by who its actions are with, so no Stage field is needed here.
+  window.openNewCard = async function(stage) {
+    var initStage = (stageOrder.indexOf(stage) !== -1) ? stage : 'flagged';
+    var { data, error } = await sb.from('cards').insert({
+      title: '', description: '', stage: initStage, urgency: 'medium'
+    }).select();
+    if (error) { showToast('Error: ' + error.message); return; }
+    bbNewCardDbId = data[0].id;
+    var newId = String(data[0].buster_num).padStart(3, '0');
+    await loadData();
+    showDetail(newId);
+    var t = document.getElementById('editTitle');
+    if (t) { t.focus(); }
   };
 
   window.closeNewCard = function() {
