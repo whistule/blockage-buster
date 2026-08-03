@@ -93,11 +93,7 @@
     text-transform: lowercase; letter-spacing: 0.15em;
     margin-top: 0.1rem;
   }
-  .bb-topbar-rule {
-    height: 3px; background: #e20e0c; width: 100%;
-    position: absolute; bottom: 0; left: 0;
-  }
-  .bb-topbar--main { position: relative; padding-bottom: 1.25rem; }
+  .bb-topbar--main { position: relative; padding-bottom: 0.75rem; }
   .bb-topbar-title--sub {
     font-family: 'Oswald', 'Arial Narrow', sans-serif;
     color: #4b5563; font-size: 1.2rem; font-weight: 600;
@@ -324,7 +320,7 @@
     /* Lock the topbar and let only the columns frame scroll (both axes). */
     #bbBoard.bb-view--active { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
     #bbBoard .bb-topbar--main { flex-shrink: 0; }
-    .bb-columns { display: grid !important; flex: 1 1 auto; min-height: 0; overflow: auto; margin-top: 9px; }
+    .bb-columns { display: grid !important; flex: 1 1 auto; min-height: 0; overflow: auto; border-top: 1px solid #e5e7eb; }
     .bb-detail { max-width: 680px; margin: 0 auto; }
   }
   @media (max-width: 767px) {
@@ -678,7 +674,6 @@
       </svg>
       <input id="bbSearch" type="search" placeholder="Search busters..." oninput="handleSearch(this.value)" onkeydown="if(event.key==='Escape'){this.value='';handleSearch('');this.blur();}" onblur="if(!this.value){document.getElementById('bbSearchWrap').classList.remove('bb-search--open');}this.style.borderColor='#d1d5db';this.style.boxShadow='none';" style="padding:0.5rem 0.75rem 0.5rem 2.1rem;font-size:0.9rem;border:1px solid #d1d5db;border-radius:8px;background:#fff;font-family:inherit;width:220px;outline:none;transition:border-color 0.15s,box-shadow 0.15s;box-sizing:border-box" onfocus="this.style.borderColor='#0098a0';this.style.boxShadow='0 0 0 3px rgba(0,152,160,0.1)'">
     </div>
-    <div class="bb-topbar-rule"></div>
   </div>
 
   <!-- Working Days modal -->
