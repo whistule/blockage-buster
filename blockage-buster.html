@@ -290,8 +290,8 @@
   .bb-columns { display: none; }
   .bb-column { background: #f3f4f6; min-height: 300px; border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; position: relative; }
   .bb-column:last-child { border-right: none; }
-  .bb-col-header { padding: 0.75rem 1rem; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center; gap: 0.5rem; position: sticky; top: 0; z-index: 8; background: #f3f4f6; }
-  .bb-col-title { font-size: 1.4rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #4b5563; }
+  .bb-col-header { padding: 0.4rem 0.85rem; height: 54px; box-sizing: border-box; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center; gap: 0.5rem; position: sticky; top: 0; z-index: 8; background: #f3f4f6; }
+  .bb-col-title { font-size: 1.02rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: #4b5563; line-height: 1.1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .bb-col-count { background: #4b5563; color: white; font-size: 0.65rem; font-weight: 700; padding: 1px 6px; border-radius: 8px; }
   .bb-col-stripe { width: 4px; height: 16px; border-radius: 2px; }
   .bb-col-stripe--flagged { background: #7a8a78; }
@@ -303,8 +303,8 @@
   /* "Watching" separator — cards where the current action isn't with this person */
   .bb-watch-sep { display: flex; align-items: center; justify-content: center; gap: 7px; margin: 14px 4px 9px; color: #9ca3af; font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; }
   .bb-watch-sep::before, .bb-watch-sep::after { content: ''; flex: 1; height: 1px; background: #d1d5db; }
-  /* Workstation "in control" colour bar at the top of a workcentre column */
-  .bb-ws-bar { display: flex; height: 10px; width: 100%; flex-shrink: 0; }
+  /* Thin colour-coded ownership line at the top of a column (Us + Workstation) */
+  .bb-ws-bar { display: flex; height: 6px; width: 100%; flex-shrink: 0; }
 
   /* ── STALENESS OVERLAY (Us view: fades in when a person's column goes untouched) ── */
   .bb-col-overlay { position: absolute; inset: 0; z-index: 5; pointer-events: none; transition: opacity 0.6s ease, background-color 0.6s ease; }
@@ -324,7 +324,7 @@
     /* Lock the topbar and let only the columns frame scroll (both axes). */
     #bbBoard.bb-view--active { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
     #bbBoard .bb-topbar--main { flex-shrink: 0; }
-    .bb-columns { display: grid !important; flex: 1 1 auto; min-height: 0; overflow: auto; }
+    .bb-columns { display: grid !important; flex: 1 1 auto; min-height: 0; overflow: auto; margin-top: 9px; }
     .bb-detail { max-width: 680px; margin: 0 auto; }
   }
   @media (max-width: 767px) {
@@ -1239,19 +1239,35 @@
     return html;
   }
 
-  // A coloured bar (one segment per assigned person) for a workcentre column.
-  function workstationBarHTML(key) {
-    if (viewMode !== 'workstation') return '';
-    var ws = null;
-    for (var i = 0; i < workstations.length; i++) { if (workstations[i].name === key) { ws = workstations[i]; break; } }
-    if (!ws || !Array.isArray(ws.people) || !ws.people.length) return '';
-    var names = [];
-    var segs = ws.people.map(function(pid) {
-      var ct = contactsMap[pid];
-      if (ct) names.push(ct.name);
-      return '<div style="flex:1;background:' + ((ct && ct.color) || '#9ca3af') + '"></div>';
-    }).join('');
-    return '<div class="bb-ws-bar" title="In control: ' + names.join(', ') + '">' + segs + '</div>';
+  // A thin colour bar at the top of a column showing who it belongs to.
+  // Person view: the person's colour. Workstation view: the in-control people
+  // (one segment each), grey if nobody's assigned. Across the board this forms
+  // one continuous colour-coded line that changes colour per column.
+  function columnOwnerBarHTML(key) {
+    var segs = '', title = '';
+    if (viewMode === 'workstation') {
+      var ws = null;
+      for (var i = 0; i < workstations.length; i++) { if (workstations[i].name === key) { ws = workstations[i]; break; } }
+      var people = (ws && Array.isArray(ws.people)) ? ws.people : [];
+      if (people.length) {
+        var names = [];
+        segs = people.map(function(pid) {
+          var ct = contactsMap[pid];
+          if (ct) names.push(ct.name);
+          return '<div style="flex:1;background:' + ((ct && ct.color) || '#9ca3af') + '"></div>';
+        }).join('');
+        title = 'In control: ' + names.join(', ');
+      } else {
+        segs = '<div style="flex:1;background:#d1d5db"></div>';
+      }
+    } else if (viewMode === 'person') {
+      var col = (key === 'Completed') ? '#0098a0' : (personColors[key] || defaultPersonColor);
+      segs = '<div style="flex:1;background:' + col + '"></div>';
+      title = key;
+    } else {
+      return '';
+    }
+    return '<div class="bb-ws-bar" title="' + title.replace(/"/g, '&quot;') + '">' + segs + '</div>';
   }
 
   // ── STEALTH EDIT (overseer) ──
@@ -1356,9 +1372,9 @@
     mobileEl.style.background = mobileStale ? staleRGBA(mobileStale.t, staleAlpha(mobileStale.t)) : '';
     var mobileBanner = (mobileStale && mobileStale.needs) ? '<div class="bb-mobile-attn">❗ Needs attention</div><div class="bb-mobile-excl">!</div>' : '';
     if (groups[activeTab] && groups[activeTab].length) {
-      mobileEl.innerHTML = mobileBanner + workstationBarHTML(activeTab) + renderColumnCards(groups[activeTab], activeTab, showStage);
+      mobileEl.innerHTML = mobileBanner + columnOwnerBarHTML(activeTab) + renderColumnCards(groups[activeTab], activeTab, showStage);
     } else {
-      mobileEl.innerHTML = mobileBanner + workstationBarHTML(activeTab) + '<div class="bb-empty">No blockages here</div>';
+      mobileEl.innerHTML = mobileBanner + columnOwnerBarHTML(activeTab) + '<div class="bb-empty">No blockages here</div>';
     }
 
     // ── Desktop columns ──
@@ -1390,7 +1406,7 @@
       }
       var addBtn = (viewMode === 'stage' && key !== 'busted') ? '<div class="bb-col-add" onclick="openNewCard(\'' + key + '\')">+</div>' : '';
       var colDbl = (viewMode === 'person' && key === BB_OVERSEER) ? ' ondblclick="toggleStealthEdit()"' : '';
-      colsHTML += '<div class="bb-column">' + workstationBarHTML(key) + '<div class="bb-col-header"><div class="bb-col-stripe" style="' + stripeStyle + ';"></div><span class="bb-col-title"' + colDbl + '>' + label + '</span><span class="bb-col-count">' + groups[key].length + '</span>' + addBtn + '</div><div class="bb-col-cards">';
+      colsHTML += '<div class="bb-column">' + columnOwnerBarHTML(key) + '<div class="bb-col-header"><div class="bb-col-stripe" style="' + stripeStyle + ';"></div><span class="bb-col-title"' + colDbl + '>' + label + '</span><span class="bb-col-count">' + groups[key].length + '</span>' + addBtn + '</div><div class="bb-col-cards">';
       colsHTML += renderColumnCards(groups[key], key, showStage);
       colsHTML += '</div>';
       // Staleness overlay — Us view only, never on the Completed column
