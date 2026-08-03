@@ -641,9 +641,8 @@
       </svg>
     </div>
     <div id="bbWorkstationsBtn" onclick="openWorkstations()" title="Workstations" style="cursor:pointer;flex-shrink:0;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:#fff;border:1px solid #d1d5db;transition:background 0.15s,border-color 0.15s" onmouseover="this.style.background='#f9fafb';this.style.borderColor='#9ca3af'" onmouseout="this.style.background='#fff';this.style.borderColor='#d1d5db'">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>
-        <path d="M7 18h.01M12 18h.01M17 18h.01"/>
+      <svg width="22" height="22" viewBox="0 0 16 16" fill="#6b7280">
+        <path d="M1 0 0 1l2.2 3.081a1 1 0 0 0 .815.419h.07a1 1 0 0 1 .708.293l2.675 2.675-2.617 2.654A3.003 3.003 0 0 0 0 13a3 3 0 1 0 5.878-.851l2.654-2.617.968.968-.305.914a1 1 0 0 0 .242 1.023l3.356 3.356a1 1 0 0 0 1.414 0l1.586-1.586a1 1 0 0 0 0-1.414l-3.356-3.356a1 1 0 0 0-1.023-.242L11.5 9.5l-.96-.96 2.68-2.643A3.005 3.005 0 0 0 16 3c0-.269-.035-.53-.102-.777l-2.14 2.141L12 4l-.364-1.757L13.777.102a3 3 0 0 0-3.675 3.68L7.462 6.46 4.793 3.793a1 1 0 0 1-.293-.707v-.071a1 1 0 0 0-.419-.814L1 0Z"/>
       </svg>
     </div>
     <div id="bbWorkdaysBtn" onclick="openWorkdaysModal()" title="Working Days" style="cursor:pointer;flex-shrink:0;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:#fff;border:1px solid #d1d5db;transition:background 0.15s,border-color 0.15s" onmouseover="this.style.background='#f9fafb';this.style.borderColor='#9ca3af'" onmouseout="this.style.background='#fff';this.style.borderColor='#d1d5db'">
@@ -652,6 +651,18 @@
         <line x1="3" y1="10" x2="21" y2="10"/>
         <line x1="8" y1="3" x2="8" y2="7"/>
         <line x1="16" y1="3" x2="16" y2="7"/>
+      </svg>
+    </div>
+    <div id="bbUndoBtn" onclick="bbUndo()" title="Nothing to undo" style="cursor:pointer;flex-shrink:0;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:#fff;border:1px solid #d1d5db;opacity:0.3;pointer-events:none;transition:background 0.15s,border-color 0.15s,opacity 0.15s" onmouseover="this.style.background='#f9fafb';this.style.borderColor='#9ca3af'" onmouseout="this.style.background='#fff';this.style.borderColor='#d1d5db'">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 14 4 9l5-5"/>
+        <path d="M4 9h11a5 5 0 0 1 0 10h-4"/>
+      </svg>
+    </div>
+    <div id="bbRedoBtn" onclick="bbRedo()" title="Nothing to redo" style="cursor:pointer;flex-shrink:0;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:#fff;border:1px solid #d1d5db;opacity:0.3;pointer-events:none;transition:background 0.15s,border-color 0.15s,opacity 0.15s" onmouseover="this.style.background='#f9fafb';this.style.borderColor='#9ca3af'" onmouseout="this.style.background='#fff';this.style.borderColor='#d1d5db'">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m15 14 5-5-5-5"/>
+        <path d="M20 9H9a5 5 0 0 0 0 10h4"/>
       </svg>
     </div>
     <div class="bb-view-toggle">
@@ -1103,6 +1114,9 @@
         var key = c.stage;
         // Map old 'resolved' to 'busted'
         if (key === 'resolved') key = 'busted';
+        // Auto-fill Sticky: any card lingering with no progress for over a week
+        // lands in the Sticky column, whatever stage it was in (completed excluded).
+        if (key !== 'busted' && c.lastActivity && (Date.now() - c.lastActivity) >= BB_WEEK_MS) { key = 'sticky'; }
         if (!groups[key]) { groups[key] = []; order.push(key); }
         groups[key].push(c);
       });
@@ -1349,7 +1363,11 @@
 
     // ── Desktop columns ──
     var colsEl = document.getElementById('bbDesktopCols');
-    var colWidths = order.map(function(k) { return (k === 'onhold' || k === 'busted') ? 'minmax(130px, 0.5fr)' : 'minmax(240px, 1fr)'; }).join(' ');
+    var colWidths = order.map(function(k) {
+      // Workstation view: shrink empty workcentres, give ones with cards ~2.5x the width.
+      if (viewMode === 'workstation') { return groups[k].length ? 'minmax(240px, 2.5fr)' : 'minmax(96px, 1fr)'; }
+      return (k === 'onhold' || k === 'busted') ? 'minmax(130px, 0.5fr)' : 'minmax(240px, 1fr)';
+    }).join(' ');
     colsEl.style.gridTemplateColumns = colWidths;
     var colsHTML = '';
     order.forEach(function(key) {
@@ -2237,11 +2255,11 @@
     ov.id = 'bbWorkstationsModal';
     ov.className = 'bb-modal-overlay bb-modal-overlay--open';
     ov.innerHTML =
-      '<div class="bb-modal" style="max-width:440px">' +
+      '<div class="bb-modal" style="max-width:460px">' +
         '<div class="bb-modal-close" onclick="closeWorkstations()">✕</div>' +
         '<div class="bb-modal-title">Workstations</div>' +
-        '<div style="font-size:0.8rem;color:#9ca3af;margin-bottom:12px">Drag to set the process order — this is the order the columns appear in the Workstation view.</div>' +
-        '<div id="bbWsList"></div>' +
+        '<div style="font-size:0.8rem;color:#9ca3af;margin-bottom:12px">Drag to set the process order — this is the order the columns appear in the Workstation view. Tick a box to put someone in control of a workcentre.</div>' +
+        '<div id="bbWsList" style="overflow-x:auto"></div>' +
         '<div style="display:flex;gap:8px;margin-top:14px">' +
           '<input id="bbWsNew" class="bb-form-input" type="text" placeholder="New workcentre name" style="flex:1" onkeydown="if(event.key===\'Enter\'){addWorkstation();}">' +
           '<div class="bb-btn bb-btn--save" style="padding:8px 14px;white-space:nowrap" onclick="addWorkstation()"><div class="bb-btn-indicator bb-btn-indicator--green"></div>Add</div>' +
@@ -2261,24 +2279,41 @@
     var internal = Object.keys(contactsMap).map(function(id) { return contactsMap[id]; })
       .filter(function(c) { return c && c.type !== 'external' && c.name; })
       .sort(function(a, b) { return a.name.localeCompare(b.name); });
-    list.innerHTML = workstations.map(function(w) {
+    // Matrix layout: workcentres down the left, people's names across the top once,
+    // a checkbox at each intersection. Column 1 = workcentre (drag/name/delete).
+    var cols = 'grid-template-columns:minmax(150px,1fr) repeat(' + internal.length + ',34px);gap:4px;';
+    var box = 'box-sizing:border-box;min-width:' + (172 + internal.length * 38) + 'px;';
+    var header = '';
+    if (internal.length) {
+      header = '<div style="display:grid;' + cols + box + 'align-items:end;padding:0 11px 7px">' +
+        '<div></div>' +
+        internal.map(function(p) {
+          var fn = (p.name || '').split(' ')[0];
+          return '<div title="' + (p.name || '').replace(/"/g, '&quot;') + '" style="display:flex;flex-direction:column;align-items:center;gap:3px;font-size:0.66rem;font-weight:600;color:#4b5563;line-height:1.05;overflow:hidden">' +
+            '<span style="width:13px;height:13px;border-radius:50%;background:' + (p.color || '#9ca3af') + '"></span>' +
+            '<span style="max-width:34px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + fn + '</span>' +
+          '</div>';
+        }).join('') +
+      '</div>';
+    }
+    var rows = workstations.map(function(w) {
       var people = Array.isArray(w.people) ? w.people : [];
       var checks = internal.map(function(p) {
         var on = people.indexOf(p.id) !== -1;
-        return '<label style="display:inline-flex;align-items:center;gap:5px;font-size:0.82rem;cursor:pointer">' +
-          '<input type="checkbox"' + (on ? ' checked' : '') + ' onchange="toggleWorkstationPerson(\'' + w.id + '\',\'' + p.id + '\')" style="margin:0">' +
-          '<span style="width:11px;height:11px;border-radius:50%;background:' + (p.color || '#9ca3af') + ';display:inline-block;flex-shrink:0"></span>' + p.name +
-        '</label>';
+        return '<div style="display:flex;justify-content:center;align-items:center">' +
+          '<input type="checkbox"' + (on ? ' checked' : '') + ' onchange="toggleWorkstationPerson(\'' + w.id + '\',\'' + p.id + '\')" title="' + (p.name || '').replace(/"/g, '&quot;') + '" style="margin:0;cursor:pointer;width:16px;height:16px">' +
+        '</div>';
       }).join('');
-      return '<div class="bb-ws-row" draggable="true" data-ws-id="' + w.id + '" ondragstart="wsDragStart(event,\'' + w.id + '\')" ondragover="event.preventDefault()" ondrop="wsDrop(event,\'' + w.id + '\')" style="padding:8px 10px;border:1px solid #e5e7eb;border-radius:6px;margin-bottom:6px;background:#fff">' +
-        '<div style="display:flex;align-items:center;gap:8px">' +
+      return '<div class="bb-ws-row" draggable="true" data-ws-id="' + w.id + '" ondragstart="wsDragStart(event,\'' + w.id + '\')" ondragover="event.preventDefault()" ondrop="wsDrop(event,\'' + w.id + '\')" style="display:grid;' + cols + box + 'align-items:center;padding:8px 10px;border:1px solid #e5e7eb;border-radius:6px;margin-bottom:6px;background:#fff">' +
+        '<div style="display:flex;align-items:center;gap:6px;min-width:0">' +
           '<span style="cursor:grab;color:#9ca3af;font-size:1rem;line-height:1;letter-spacing:-2px">⋮⋮</span>' +
-          '<input value="' + (w.name || '').replace(/"/g, '&quot;') + '" onblur="renameWorkstation(\'' + w.id + '\',this.value)" onkeydown="if(event.key===\'Enter\'){this.blur();}" style="flex:1;border:none;outline:none;font-size:0.95rem;font-weight:600;color:#1f2937;background:transparent">' +
-          '<span onclick="deleteWorkstation(\'' + w.id + '\')" title="Delete" style="cursor:pointer;color:#ef4444;font-size:0.9rem;padding:2px 6px">✕</span>' +
+          '<input value="' + (w.name || '').replace(/"/g, '&quot;') + '" onblur="renameWorkstation(\'' + w.id + '\',this.value)" onkeydown="if(event.key===\'Enter\'){this.blur();}" style="flex:1;min-width:0;border:none;outline:none;font-size:0.95rem;font-weight:600;color:#1f2937;background:transparent">' +
+          '<span onclick="deleteWorkstation(\'' + w.id + '\')" title="Delete" style="cursor:pointer;color:#ef4444;font-size:0.9rem;padding:2px 4px;flex-shrink:0">✕</span>' +
         '</div>' +
-        (internal.length ? '<div style="display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:9px;padding-left:26px">' + checks + '</div>' : '') +
+        checks +
       '</div>';
     }).join('');
+    list.innerHTML = header + rows;
   }
   window.toggleWorkstationPerson = async function(wsId, personId) {
     var ws = workstationsMap[wsId]; if (!ws) return;
@@ -3019,8 +3054,10 @@
   window.setMood = async function(cardId, emoji) {
     var card = cards.find(function(c) { return c.id === cardId; });
     if (!card || !card.dbId) return;
+    var prevMood = card.mood || '';
     var { error } = await sb.from('cards').update({ mood: emoji }).eq('id', card.dbId);
     if (error) { showToast('Error: ' + error.message); return; }
+    pushCardHistory(card.dbId, { mood: emoji }, { mood: prevMood }, 'Mood #' + cardId);
     await loadData();
   };
 
@@ -3028,7 +3065,9 @@
   window.holdCard = async function(cardId, fromEvent) {
     var card = cards.find(function(c) { return c.id === cardId; });
     if (!card || !card.dbId) return;
+    var prevStage = card.stage;
     await sb.from('cards').update({ stage: 'onhold' }).eq('id', card.dbId);
+    pushCardHistory(card.dbId, { stage: 'onhold' }, { stage: prevStage }, 'Hold #' + cardId);
     showToast('Card #' + cardId + ' on hold — set a reminder');
     await loadData();
     // Force the reminder picker to open
@@ -3049,6 +3088,71 @@
     showToast('Card #' + cardId + ' off hold');
     await loadData();
   };
+
+  // ── UNDO / REDO ──
+  // A lightweight history of reversible board actions (bust, reopen, hold,
+  // importance, mood, reorder). Each entry knows how to undo and redo itself.
+  var bbUndoStack = [];
+  var bbRedoStack = [];
+  var BB_HISTORY_MAX = 40;
+
+  function pushHistory(entry) {
+    bbUndoStack.push(entry);
+    if (bbUndoStack.length > BB_HISTORY_MAX) bbUndoStack.shift();
+    bbRedoStack = [];
+    updateUndoButtons();
+  }
+  // Convenience for a single-card field change: patch = new values, prev = old.
+  function pushCardHistory(dbId, patch, prev, label) {
+    pushHistory({
+      label: label,
+      undo: function() { return sb.from('cards').update(prev).eq('id', dbId); },
+      redo: function() { return sb.from('cards').update(patch).eq('id', dbId); }
+    });
+  }
+  window.bbUndo = async function() {
+    var e = bbUndoStack.pop();
+    if (!e) return;
+    try { await e.undo(); } catch (err) { showToast('Undo failed'); updateUndoButtons(); return; }
+    bbRedoStack.push(e);
+    updateUndoButtons();
+    await loadData();
+    showToast('Undone: ' + e.label);
+  };
+  window.bbRedo = async function() {
+    var e = bbRedoStack.pop();
+    if (!e) return;
+    try { await e.redo(); } catch (err) { showToast('Redo failed'); updateUndoButtons(); return; }
+    bbUndoStack.push(e);
+    updateUndoButtons();
+    await loadData();
+    showToast('Redone: ' + e.label);
+  };
+  function updateUndoButtons() {
+    var u = document.getElementById('bbUndoBtn');
+    var r = document.getElementById('bbRedoBtn');
+    if (u) {
+      var canU = bbUndoStack.length > 0;
+      u.style.opacity = canU ? '1' : '0.3';
+      u.style.pointerEvents = canU ? 'auto' : 'none';
+      u.title = canU ? ('Undo: ' + bbUndoStack[bbUndoStack.length - 1].label) : 'Nothing to undo';
+    }
+    if (r) {
+      var canR = bbRedoStack.length > 0;
+      r.style.opacity = canR ? '1' : '0.3';
+      r.style.pointerEvents = canR ? 'auto' : 'none';
+      r.title = canR ? ('Redo: ' + bbRedoStack[bbRedoStack.length - 1].label) : 'Nothing to redo';
+    }
+  }
+  // Keyboard: Ctrl/Cmd+Z = undo, Ctrl+Shift+Z / Ctrl+Y = redo (ignored while typing).
+  document.addEventListener('keydown', function(e) {
+    if (!(e.ctrlKey || e.metaKey)) return;
+    var t = e.target;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+    var k = (e.key || '').toLowerCase();
+    if (k === 'z' && !e.shiftKey) { e.preventDefault(); window.bbUndo(); }
+    else if ((k === 'z' && e.shiftKey) || k === 'y') { e.preventDefault(); window.bbRedo(); }
+  });
 
   // ── DRAG REORDER CARDS ON BOARD ──
   var dragCardId = null;
@@ -3085,12 +3189,26 @@
     // Swap sort positions
     var dragPos = dragCard.sortPos || 0;
     var targetPos = targetCard.sortPos || 0;
+    var origDrag = dragPos, origTarget = targetPos;
     // If same position, assign new ones
     if (dragPos === targetPos) {
       targetPos = dragPos + 1;
     }
-    await sb.from('cards').update({ sort_pos: targetPos }).eq('id', dragCard.dbId);
-    await sb.from('cards').update({ sort_pos: dragPos }).eq('id', targetCard.dbId);
+    var dId = dragCard.dbId, tId = targetCard.dbId;
+    var newDrag = targetPos, newTarget = dragPos;
+    await sb.from('cards').update({ sort_pos: newDrag }).eq('id', dId);
+    await sb.from('cards').update({ sort_pos: newTarget }).eq('id', tId);
+    pushHistory({
+      label: 'Reorder',
+      undo: function() {
+        return sb.from('cards').update({ sort_pos: origDrag }).eq('id', dId)
+          .then(function() { return sb.from('cards').update({ sort_pos: origTarget }).eq('id', tId); });
+      },
+      redo: function() {
+        return sb.from('cards').update({ sort_pos: newDrag }).eq('id', dId)
+          .then(function() { return sb.from('cards').update({ sort_pos: newTarget }).eq('id', tId); });
+      }
+    });
 
     dragCardId = null;
     await loadData();
@@ -3117,7 +3235,9 @@
   window.bustCard = async function(cardId) {
     var card = cards.find(function(c) { return c.id === cardId; });
     if (!card || !card.dbId) return;
+    var prevStage = card.stage;
     await sb.from('cards').update({ stage: 'busted' }).eq('id', card.dbId);
+    pushCardHistory(card.dbId, { stage: 'busted' }, { stage: prevStage }, 'Bust #' + cardId);
     showToast('Card #' + cardId + ' — Busted!');
     await loadData();
   };
@@ -3125,7 +3245,9 @@
   window.unbustCard = async function(cardId) {
     var card = cards.find(function(c) { return c.id === cardId; });
     if (!card || !card.dbId) return;
+    var prevStage = card.stage;
     await sb.from('cards').update({ stage: 'flagged' }).eq('id', card.dbId);
+    pushCardHistory(card.dbId, { stage: 'flagged' }, { stage: prevStage }, 'Reopen #' + cardId);
     showToast('Card #' + cardId + ' reopened');
     await loadData();
   };
@@ -3296,6 +3418,7 @@
     var newVal = !card.important;
     var { error } = await sb.from('cards').update({ important: newVal }).eq('id', card.dbId);
     if (error) { showToast('Error: ' + error.message); return; }
+    pushCardHistory(card.dbId, { important: newVal }, { important: !newVal }, (newVal ? 'Star' : 'Unstar') + ' #' + cardId);
     card.important = newVal;
     render();
   };
