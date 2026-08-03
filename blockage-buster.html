@@ -802,6 +802,14 @@
             if (ct && ct.type !== 'external' && extraPeopleNames.indexOf(ct.name) === -1) extraPeopleNames.push(ct.name);
           });
         }
+        // Resolve card-level watcher UUIDs → internal contact names (Us only, dedup)
+        var watcherNames = [];
+        if (Array.isArray(c.watchers)) {
+          c.watchers.forEach(function(pid) {
+            var ct = contactsMap[pid];
+            if (ct && ct.type !== 'external' && watcherNames.indexOf(ct.name) === -1) watcherNames.push(ct.name);
+          });
+        }
         return {
           id: String(c.buster_num).padStart(3, '0'),
           dbId: c.id,
@@ -815,6 +823,7 @@
           secondaryPerson: nowSecondary ? nowSecondary.name : '',
           secondaryType: nowSecondary ? (nowSecondary.type || 'internal') : '',
           extraPeople: extraPeopleNames,
+          watchers: watcherNames,
           urgency: c.urgency || '',
           currentStep: nowStage ? nowStage.name : '—',
           hasReminder: !!reminderByCard[c.id],
@@ -1013,7 +1022,7 @@
     var hay = [
       c.title, c.desc, c.postit, c.latestNote, c.currentStep,
       c.person, c.loggedBy, c.id, String(c.dbId || ''),
-      (c.extraPeople || []).join(' ')
+      (c.extraPeople || []).join(' '), (c.watchers || []).join(' ')
     ].join(' ').toLowerCase();
     return hay.indexOf(searchTerm) !== -1;
   }
@@ -1082,6 +1091,14 @@
         // In "Us" view, also place in columns for each additional relevant internal person
         if (viewMode === 'person' && Array.isArray(c.extraPeople)) {
           c.extraPeople.forEach(function(name) {
+            if (!name || name === c.person) return;
+            if (!groups[name]) { groups[name] = []; order.push(name); }
+            if (groups[name].indexOf(c) === -1) groups[name].push(c);
+          });
+        }
+        // Card-level watchers — show the card in each watcher's Us column too
+        if (viewMode === 'person' && Array.isArray(c.watchers)) {
+          c.watchers.forEach(function(name) {
             if (!name || name === c.person) return;
             if (!groups[name]) { groups[name] = []; order.push(name); }
             if (groups[name].indexOf(c) === -1) groups[name].push(c);
@@ -1509,6 +1526,12 @@
           '</div>') +
     '</div>' +
     '<div class="bb-section-panel" style="margin-bottom:0.75rem">' +
+      '<div class="bb-edit-label" style="margin-bottom:6px">Watched by <span style="font-weight:400;color:#9ca3af">(card shows in their Us column, whatever the current action)</span></div>' +
+      '<div id="editWatchers" style="display:flex;flex-wrap:wrap;gap:8px 16px">' +
+        usContacts.map(function(pc) { var checked = (card.watchers || []).indexOf(pc.name) !== -1 ? ' checked' : ''; return '<label style="display:inline-flex;align-items:center;gap:5px;font-size:0.9rem;cursor:pointer"><input type="checkbox" class="bb-watcher" data-watcher-id="' + pc.id + '"' + checked + ' style="margin:0"> ' + pc.name + '</label>'; }).join('') +
+      '</div>' +
+    '</div>' +
+    '<div class="bb-section-panel" style="margin-bottom:0.75rem">' +
       '<div class="bb-heading" style="font-size:1.35rem;font-weight:700;color:#1f2937;border:none;padding:0 0 0.75rem;margin:0 0 0.75rem;letter-spacing:0.04em">Resolution Actions</div>' +
       timelineHTML +
       completeBtn +
@@ -1555,6 +1578,15 @@
         var status = document.getElementById('autosaveStatus');
         if (status) status.textContent = 'Unsaved changes...';
         autoSaveTimer = setTimeout(function() { updateCard(true); }, 1200);
+      });
+    });
+    // Watcher checkboxes also autosave
+    Array.prototype.forEach.call(document.querySelectorAll('#editWatchers input.bb-watcher'), function(cb) {
+      cb.addEventListener('change', function() {
+        clearTimeout(autoSaveTimer);
+        var status = document.getElementById('autosaveStatus');
+        if (status) status.textContent = 'Unsaved changes...';
+        autoSaveTimer = setTimeout(function() { updateCard(true); }, 600);
       });
     });
   }
@@ -1990,6 +2022,14 @@
       if (el) whyUpdates[k.toLowerCase()] = el.value;
     });
     await sb.from('cards').update(whyUpdates).eq('id', card.dbId);
+    // Save card-level watchers separately (silently no-ops if the column isn't present yet)
+    if (document.getElementById('editWatchers')) {
+      var watcherIds = [];
+      Array.prototype.forEach.call(document.querySelectorAll('#editWatchers input.bb-watcher:checked'), function(cb) {
+        watcherIds.push(cb.getAttribute('data-watcher-id'));
+      });
+      await sb.from('cards').update({ watchers: watcherIds }).eq('id', card.dbId);
+    }
     var status = document.getElementById('autosaveStatus');
     if (error) {
       if (!silent) showToast('Error: ' + error.message);
@@ -2018,13 +2058,15 @@
     await renderDetail(cardId);
   };
   window.showBoard = function() {
-    // If a just-created card was left blank (no title, description or steps), discard it.
+    var tEl = document.getElementById('editTitle');
+    var dEl = document.getElementById('editDesc');
+
+    // Discard a just-created card if it was left blank (no title, description or steps).
+    var discardingBlank = false;
     if (bbNewCardDbId) {
       var toCheck = bbNewCardDbId; bbNewCardDbId = null;
-      var tEl = document.getElementById('editTitle');
-      var dEl = document.getElementById('editDesc');
-      var blank = (!tEl || !tEl.value.trim()) && (!dEl || !dEl.value.trim());
-      if (blank) {
+      if ((!tEl || !tEl.value.trim()) && (!dEl || !dEl.value.trim())) {
+        discardingBlank = true;
         sb.from('stages').select('id').eq('card_id', toCheck).limit(1)
           .then(function(res) {
             if (!(res && res.data && res.data.length)) {
@@ -2034,14 +2076,24 @@
           .catch(function(e) { console.error('Discard blank card failed:', e); });
       }
     }
+
+    // Save on back: flush any pending edits immediately (unless we're discarding a blank card).
+    var savePromise = Promise.resolve();
+    if (!discardingBlank && currentCardId && tEl) {
+      if (autoSaveTimer) { clearTimeout(autoSaveTimer); autoSaveTimer = null; }
+      savePromise = updateCard(true) || Promise.resolve();
+    }
+
     document.getElementById('bbDetail').classList.remove('bb-view--active');
     document.getElementById('bbBoard').classList.add('bb-view--active');
-    // Stealth edit: restore the card's pre-edit progress time so the overseer's
-    // tidying doesn't reset the assignee's staleness counter.
+
+    // Stealth edit: after the save flush, restore the card's pre-edit progress
+    // time so the overseer's tidying doesn't reset the assignee's counter.
     if (bbStealthEdit && bbFrozenProgress && bbFrozenProgress.ms) {
       var frozen = bbFrozenProgress; bbFrozenProgress = null;
       armStealthTimer(); // active stealth use — reset the 1-min auto-off countdown
-      sb.from('cards').update({ last_progress_at: new Date(frozen.ms).toISOString() }).eq('id', frozen.dbId)
+      savePromise
+        .then(function() { return sb.from('cards').update({ last_progress_at: new Date(frozen.ms).toISOString() }).eq('id', frozen.dbId); })
         .then(function() { return loadData(); })
         .catch(function(e) { console.error('Stealth restore failed:', e); });
     } else {
