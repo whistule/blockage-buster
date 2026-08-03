@@ -2122,9 +2122,36 @@
     ov.onclick = function(e) { if (e.target === ov) ov.remove(); };
   }
 
+  // Ask whether to assign a person to a typed-but-unassigned action on Back.
+  function showAssignPersonPopup() {
+    var old = document.getElementById('bbAssignModal'); if (old) old.remove();
+    var ov = document.createElement('div');
+    ov.id = 'bbAssignModal';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;padding:20px';
+    ov.innerHTML =
+      '<div style="background:#fff;border-radius:10px;max-width:360px;width:100%;padding:22px;box-shadow:0 10px 40px rgba(0,0,0,0.3)">' +
+        '<div style="font-size:1.1rem;font-weight:800;color:#1f2937;margin-bottom:8px">Assign this action to someone?</div>' +
+        '<div style="font-size:0.9rem;color:#6b7280;line-height:1.45;margin-bottom:18px">This action has no person assigned, so the card won\'t show in anyone\'s column yet. Assign someone, or save it as unassigned?</div>' +
+        '<div style="display:flex;flex-direction:column;gap:10px">' +
+          '<div id="bbAssignPick" style="text-align:center;font-weight:700;padding:11px;border-radius:8px;background:#ea580c;color:#fff;cursor:pointer">Assign someone</div>' +
+          '<div id="bbAssignUnassigned" style="text-align:center;font-weight:600;padding:11px;border-radius:8px;background:#f3f4f6;color:#374151;cursor:pointer">Save as unassigned</div>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(ov);
+    document.getElementById('bbAssignPick').onclick = function() { ov.remove(); var p = document.getElementById('newStagePerson'); if (p) { p.focus(); try { if (p.showPicker) p.showPicker(); } catch (e) {} } };
+    document.getElementById('bbAssignUnassigned').onclick = async function() { ov.remove(); try { await addStage(); } catch (e) { console.error('Save unassigned action failed:', e); } finishShowBoard(); };
+    ov.onclick = function(e) { if (e.target === ov) ov.remove(); };
+  }
+
   window.showBoard = async function() {
-    // Save a typed-but-not-yet-added action so nothing is lost on Back.
     var nameEl = document.getElementById('newStageName');
+    var personEl = document.getElementById('newStagePerson');
+    // A typed action with no person assigned → ask whether to assign someone.
+    if (currentCardId && nameEl && nameEl.value.trim() && personEl && !personEl.value) {
+      showAssignPersonPopup();
+      return;
+    }
+    // Otherwise, save a typed-but-not-yet-added action so nothing is lost on Back.
     if (currentCardId && nameEl && nameEl.value.trim()) {
       try { await addStage(); } catch (e) { console.error('Auto-add pending action failed:', e); }
     }
