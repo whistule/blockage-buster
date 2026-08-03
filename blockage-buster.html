@@ -102,7 +102,8 @@
 
   /* View toggle — tab style */
   .bb-view-toggle {
-    display: flex; gap: 0; align-items: flex-end; margin-left: 1.75rem;
+    display: flex; gap: 0; align-items: flex-end;
+    flex-basis: 100%; margin-top: 0.4rem;   /* own full-width row, directly above the board */
   }
   .bb-view-toggle-btn {
     padding: 0.6rem 1.2rem 0.55rem; font-size: 1rem; font-weight: 700;
@@ -112,11 +113,20 @@
     transition: color 0.15s, border-color 0.15s, background 0.15s;
   }
   .bb-view-toggle-btn:hover { color: #4b5563; }
-  /* Active tab = square-cornered box, top/left/right border, open at the bottom. */
+  /* Active tab = square-cornered white box, open at the bottom, with its two
+     side lines dropping down to the coloured ownership line on the board. */
   .bb-view-toggle-btn--active {
     color: #1f2937; background: #ffffff;
     border-color: #cbd1d9; border-radius: 0;
+    position: relative;
   }
+  .bb-view-toggle-btn--active::before,
+  .bb-view-toggle-btn--active::after {
+    content: ''; position: absolute; top: 100%;
+    width: 1px; height: var(--bb-tab-drop, 22px); background: #cbd1d9;
+  }
+  .bb-view-toggle-btn--active::before { left: -1px; }
+  .bb-view-toggle-btn--active::after { right: -1px; }
   @media (min-width: 900px) {
     .bb-view-toggle-btn {
       padding: 0.7rem 1.75rem 0.6rem; font-size: 1.15rem; letter-spacing: 0.08em;
@@ -665,18 +675,18 @@
         <line x1="16" y1="3" x2="16" y2="7"/>
       </svg>
     </div>
+    <div id="bbSearchWrap" onclick="openSearch()" style="margin-left:1.25rem;position:relative;flex-shrink:0">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none">
+        <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input id="bbSearch" type="search" placeholder="Search busters..." oninput="handleSearch(this.value)" onkeydown="if(event.key==='Escape'){this.value='';handleSearch('');this.blur();}" onblur="if(!this.value){document.getElementById('bbSearchWrap').classList.remove('bb-search--open');}this.style.borderColor='#d1d5db';this.style.boxShadow='none';" style="padding:0.5rem 0.75rem 0.5rem 2.1rem;font-size:0.9rem;border:1px solid #d1d5db;border-radius:8px;background:#fff;font-family:inherit;width:220px;outline:none;transition:border-color 0.15s,box-shadow 0.15s;box-sizing:border-box" onfocus="this.style.borderColor='#0098a0';this.style.boxShadow='0 0 0 3px rgba(0,152,160,0.1)'">
+    </div>
     <div class="bb-view-toggle">
       <div class="bb-view-toggle-btn bb-view-toggle-btn--active" onclick="setViewMode('person')">Us</div>
       <div class="bb-view-toggle-btn" onclick="setViewMode('workstation')">Workstation</div>
       <div class="bb-view-toggle-btn" onclick="setViewMode('stage')">Stage</div>
       <div class="bb-view-toggle-btn" onclick="setViewMode('supplier')">Them</div>
       <div class="bb-view-toggle-btn" onclick="setViewMode('urgency')">Urgency</div>
-    </div>
-    <div id="bbSearchWrap" onclick="openSearch()" style="margin-left:1.25rem;position:relative;flex-shrink:0">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none">
-        <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-      </svg>
-      <input id="bbSearch" type="search" placeholder="Search busters..." oninput="handleSearch(this.value)" onkeydown="if(event.key==='Escape'){this.value='';handleSearch('');this.blur();}" onblur="if(!this.value){document.getElementById('bbSearchWrap').classList.remove('bb-search--open');}this.style.borderColor='#d1d5db';this.style.boxShadow='none';" style="padding:0.5rem 0.75rem 0.5rem 2.1rem;font-size:0.9rem;border:1px solid #d1d5db;border-radius:8px;background:#fff;font-family:inherit;width:220px;outline:none;transition:border-color 0.15s,box-shadow 0.15s;box-sizing:border-box" onfocus="this.style.borderColor='#0098a0';this.style.boxShadow='0 0 0 3px rgba(0,152,160,0.1)'">
     </div>
   </div>
 
@@ -1423,7 +1433,23 @@
       twemoji.parse(document.getElementById('bbBoard'), { folder: 'svg', ext: '.svg' });
     }
     updateStealthIndicator();
+    updateTabDrop();
   }
+
+  // Drop the active tab's two side lines down to the top of the board (the
+  // coloured ownership line). Measured live so it adapts to the topbar height;
+  // hidden when the tabs aren't sitting directly above the board.
+  function updateTabDrop() {
+    try {
+      var root = document.documentElement;
+      var tab = document.querySelector('.bb-view-toggle-btn--active');
+      var cols = document.getElementById('bbDesktopCols');
+      if (!tab || !cols || cols.offsetParent === null) { root.style.setProperty('--bb-tab-drop', '0px'); return; }
+      var gap = Math.round(cols.getBoundingClientRect().top - tab.getBoundingClientRect().bottom);
+      root.style.setProperty('--bb-tab-drop', (gap >= 2 && gap <= 44) ? gap + 'px' : '0px');
+    } catch (e) {}
+  }
+  window.addEventListener('resize', updateTabDrop);
 
   // ── VIEW MODE TOGGLE ──
   window.setViewMode = function(mode) {
