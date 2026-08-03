@@ -300,6 +300,9 @@
   .bb-col-stripe--resolved { background: #0098a0; }
   .bb-col-stripe--person { background: #4b5563; }
   .bb-col-cards { padding: 0.5rem; flex: 1; overflow-y: auto; }
+  /* "Watching" separator — cards where the current action isn't with this person */
+  .bb-watch-sep { display: flex; align-items: center; justify-content: center; gap: 7px; margin: 14px 4px 9px; color: #9ca3af; font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; }
+  .bb-watch-sep::before, .bb-watch-sep::after { content: ''; flex: 1; height: 1px; background: #d1d5db; }
 
   /* ── STALENESS OVERLAY (Us view: fades in when a person's column goes untouched) ── */
   .bb-col-overlay { position: absolute; inset: 0; z-index: 5; pointer-events: none; transition: opacity 0.6s ease, background-color 0.6s ease; }
@@ -1166,6 +1169,23 @@
     return 'rgba(' + mix(0xf5, 0xdc) + ',' + mix(0xa6, 0x26) + ',' + mix(0x23, 0x26) + ',' + a + ')';
   }
 
+  // Render a person column: their own active cards, then a "Watching" section
+  // (eye separator) for cards where the current action isn't with them.
+  var BB_EYE_SVG = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+  function renderColumnCards(list, key, showStage) {
+    if (viewMode !== 'person' || key === 'Completed') {
+      return list.map(function(c) { return cardHTML(c, showStage); }).join('');
+    }
+    var active = [], watched = [];
+    list.forEach(function(c) { (c.person === key ? active : watched).push(c); });
+    var html = active.map(function(c) { return cardHTML(c, showStage); }).join('');
+    if (watched.length) {
+      html += '<div class="bb-watch-sep">' + BB_EYE_SVG + '<span>Watching</span></div>';
+      html += watched.map(function(c) { return cardHTML(c, showStage); }).join('');
+    }
+    return html;
+  }
+
   // ── STEALTH EDIT (overseer) ──
   // When ON, edits the overseer makes to a card don't reset the assignee's
   // staleness counter — for tidying / refining someone else's task. Toggled
@@ -1268,7 +1288,7 @@
     mobileEl.style.background = mobileStale ? staleRGBA(mobileStale.t, staleAlpha(mobileStale.t)) : '';
     var mobileBanner = (mobileStale && mobileStale.needs) ? '<div class="bb-mobile-attn">❗ Needs attention</div><div class="bb-mobile-excl">!</div>' : '';
     if (groups[activeTab] && groups[activeTab].length) {
-      mobileEl.innerHTML = mobileBanner + groups[activeTab].map(function(c) { return cardHTML(c, showStage); }).join('');
+      mobileEl.innerHTML = mobileBanner + renderColumnCards(groups[activeTab], activeTab, showStage);
     } else {
       mobileEl.innerHTML = mobileBanner + '<div class="bb-empty">No blockages here</div>';
     }
@@ -1296,7 +1316,7 @@
       var addBtn = (viewMode === 'stage' && key !== 'busted') ? '<div class="bb-col-add" onclick="openNewCard(\'' + key + '\')">+</div>' : '';
       var colDbl = (viewMode === 'person' && key === BB_OVERSEER) ? ' ondblclick="toggleStealthEdit()"' : '';
       colsHTML += '<div class="bb-column"><div class="bb-col-header"><div class="bb-col-stripe" style="' + stripeStyle + ';"></div><span class="bb-col-title"' + colDbl + '>' + label + '</span><span class="bb-col-count">' + groups[key].length + '</span>' + addBtn + '</div><div class="bb-col-cards">';
-      groups[key].forEach(function(c) { colsHTML += cardHTML(c, showStage); });
+      colsHTML += renderColumnCards(groups[key], key, showStage);
       colsHTML += '</div>';
       // Staleness overlay — Us view only, never on the Completed column
       var stale = (viewMode === 'person' && key !== 'Completed') ? columnStaleness(groups[key]) : null;
