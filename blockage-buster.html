@@ -2057,7 +2057,7 @@
     window.scrollTo(0, 0);
     await renderDetail(cardId);
   };
-  window.showBoard = function() {
+  function finishShowBoard() {
     var tEl = document.getElementById('editTitle');
     var dEl = document.getElementById('editDesc');
 
@@ -2099,6 +2099,47 @@
     } else {
       bbFrozenProgress = null;
     }
+  }
+
+  // "No action yet" nudge when leaving a titled card that has no resolution actions.
+  function showNoActionPopup() {
+    var old = document.getElementById('bbNoActionModal'); if (old) old.remove();
+    var ov = document.createElement('div');
+    ov.id = 'bbNoActionModal';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;padding:20px';
+    ov.innerHTML =
+      '<div style="background:#fff;border-radius:10px;max-width:360px;width:100%;padding:22px;box-shadow:0 10px 40px rgba(0,0,0,0.3)">' +
+        '<div style="font-size:1.1rem;font-weight:800;color:#1f2937;margin-bottom:8px">No action added yet</div>' +
+        '<div style="font-size:0.9rem;color:#6b7280;line-height:1.45;margin-bottom:18px">This blockage has no resolution action assigned to anyone yet. Add one so it lands in someone\'s column?</div>' +
+        '<div style="display:flex;flex-direction:column;gap:10px">' +
+          '<div id="bbNoActionBack" style="text-align:center;font-weight:700;padding:11px;border-radius:8px;background:#ea580c;color:#fff;cursor:pointer">Go back &amp; add an action</div>' +
+          '<div id="bbNoActionContinue" style="text-align:center;font-weight:600;padding:11px;border-radius:8px;background:#f3f4f6;color:#374151;cursor:pointer">Continue without assigning</div>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(ov);
+    document.getElementById('bbNoActionBack').onclick = function() { ov.remove(); var ni = document.getElementById('newStageName'); if (ni) ni.focus(); };
+    document.getElementById('bbNoActionContinue').onclick = function() { ov.remove(); finishShowBoard(); };
+    ov.onclick = function(e) { if (e.target === ov) ov.remove(); };
+  }
+
+  window.showBoard = async function() {
+    // Save a typed-but-not-yet-added action so nothing is lost on Back.
+    var nameEl = document.getElementById('newStageName');
+    if (currentCardId && nameEl && nameEl.value.trim()) {
+      try { await addStage(); } catch (e) { console.error('Auto-add pending action failed:', e); }
+    }
+    var tEl = document.getElementById('editTitle');
+    // If leaving a titled card that STILL has no actions at all, ask first.
+    if (currentCardId && tEl && tEl.value.trim()) {
+      var card = cards.find(function(c) { return c.id === currentCardId; });
+      if (card && card.dbId && card.currentStep === '—') {
+        try {
+          var res = await sb.from('stages').select('id').eq('card_id', card.dbId).limit(1);
+          if (!(res.data && res.data.length)) { showNoActionPopup(); return; }
+        } catch (e) { /* fall through and close normally */ }
+      }
+    }
+    finishShowBoard();
   };
 
   // ── COMPLETE STAGE ── (disabled until detail view wired to stages)
