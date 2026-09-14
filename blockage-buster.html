@@ -741,6 +741,11 @@
   var contactsMap = {}; // id → { name, type, color }
   var personColors = {};
   var defaultPersonColor = '#6b7280';
+  // Names hidden from Us view, working-days grid, workstations matrix, person dropdowns,
+  // extra-people checkboxes, and watcher lists. Contacts rows stay in place so historical
+  // (busted/completed) cards and steps still resolve their name.
+  var HIDDEN_INTERNAL_NAMES = ['Ben'];
+  function isHiddenInternal(name) { return HIDDEN_INTERNAL_NAMES.indexOf(name) !== -1; }
 
   var viewMode = 'person';
   var activeTab = null;
@@ -846,7 +851,7 @@
         if (nowStage && Array.isArray(nowStage.additional_people)) {
           nowStage.additional_people.forEach(function(pid) {
             var ct = contactsMap[pid];
-            if (ct && ct.type !== 'external' && extraPeopleNames.indexOf(ct.name) === -1) extraPeopleNames.push(ct.name);
+            if (ct && ct.type !== 'external' && !isHiddenInternal(ct.name) && extraPeopleNames.indexOf(ct.name) === -1) extraPeopleNames.push(ct.name);
           });
         }
         // Resolve card-level watcher UUIDs → internal contact names (Us only, dedup)
@@ -854,7 +859,7 @@
         if (Array.isArray(c.watchers)) {
           c.watchers.forEach(function(pid) {
             var ct = contactsMap[pid];
-            if (ct && ct.type !== 'external' && watcherNames.indexOf(ct.name) === -1) watcherNames.push(ct.name);
+            if (ct && ct.type !== 'external' && !isHiddenInternal(ct.name) && watcherNames.indexOf(ct.name) === -1) watcherNames.push(ct.name);
           });
         }
         return {
@@ -1138,7 +1143,7 @@
       if (viewMode === 'person') {
         Object.keys(contactsMap).forEach(function(id) {
           var ct = contactsMap[id];
-          if (ct && ct.type !== 'external' && ct.name && !groups[ct.name]) {
+          if (ct && ct.type !== 'external' && ct.name && !isHiddenInternal(ct.name) && !groups[ct.name]) {
             groups[ct.name] = [];
             order.push(ct.name);
           }
@@ -1517,7 +1522,7 @@
     Object.keys(contactsMap).forEach(function(id) {
       var c = contactsMap[id];
       if (c.type === 'external') themContacts.push({ id: id, name: c.name });
-      else usContacts.push({ id: id, name: c.name });
+      else if (!isHiddenInternal(c.name)) usContacts.push({ id: id, name: c.name });
     });
     usContacts.sort(function(a,b) { return a.name.localeCompare(b.name); });
     themContacts.sort(function(a,b) { return a.name.localeCompare(b.name); });
@@ -1967,7 +1972,9 @@
     Object.keys(contactsMap).forEach(function(id) {
       var c = contactsMap[id];
       if (c.type === 'external') themContacts.push({ id: id, name: c.name });
-      else usContacts.push({ id: id, name: c.name });
+      // Keep a hidden internal selectable only if it's already assigned to this step,
+      // so opening + saving a historical step doesn't blank the person.
+      else if (!isHiddenInternal(c.name) || id === step.person_id) usContacts.push({ id: id, name: c.name });
     });
     usContacts.sort(function(a,b) { return a.name.localeCompare(b.name); });
     themContacts.sort(function(a,b) { return a.name.localeCompare(b.name); });
@@ -2339,7 +2346,7 @@
       return;
     }
     var internal = Object.keys(contactsMap).map(function(id) { return contactsMap[id]; })
-      .filter(function(c) { return c && c.type !== 'external' && c.name; })
+      .filter(function(c) { return c && c.type !== 'external' && c.name && !isHiddenInternal(c.name); })
       .sort(function(a, b) { return a.name.localeCompare(b.name); });
     // Matrix layout: workcentres down the left, people's names across the top once,
     // a checkbox at each intersection. Column 1 = workcentre (drag/name/delete).
@@ -3540,7 +3547,6 @@
     { key: 'R', name: 'Ronnie', color: '#f5c518' },
     { key: 'E', name: 'Ewen',   color: '#2ecc71' },
     { key: 'H', name: 'Helena', color: '#3498db' },
-    { key: 'B', name: 'Ben',    color: '#e67e22' },
     { key: 'D', name: 'Dillon', color: '#e74c3c' },
     { key: 'M', name: 'Misha',  color: '#9b59b6' }
   ];
