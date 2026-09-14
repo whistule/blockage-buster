@@ -306,6 +306,14 @@
   .bb-column:last-child { border-right: none; }
   .bb-col-header { padding: 0.4rem 0.85rem; height: 54px; box-sizing: border-box; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center; gap: 0.5rem; position: sticky; top: 0; z-index: 8; background: #f3f4f6; }
   .bb-col-title { font-size: 1.02rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: #4b5563; line-height: 1.1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  /* Collapsible done-pile column (Us/Them "Completed", Stage "Busted"). Click strip to expand, ‹ to collapse. */
+  .bb-column--collapsed { cursor: pointer; background: #f0fdfa; transition: background 0.15s; overflow: hidden; }
+  .bb-column--collapsed:hover { background: #ccfbf1; }
+  .bb-collapsed-strip { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 10px; padding: 14px 0; height: 100%; }
+  .bb-collapsed-count { font-size: 0.8rem; font-weight: 700; color: #0098a0; padding: 2px 8px; border-radius: 10px; background: #fff; border: 1px solid #0098a0; }
+  .bb-collapsed-label { writing-mode: vertical-rl; transform: rotate(180deg); font-size: 0.75rem; font-weight: 700; color: #0098a0; letter-spacing: 0.15em; text-transform: uppercase; white-space: nowrap; }
+  .bb-col-collapse { cursor: pointer; padding: 3px 8px; color: #6b7280; font-weight: 700; font-size: 1.1rem; border-radius: 3px; line-height: 1; margin-left: auto; user-select: none; }
+  .bb-col-collapse:hover { background: #e5e7eb; color: #0098a0; }
   .bb-col-count { background: #4b5563; color: white; font-size: 0.65rem; font-weight: 700; padding: 1px 6px; border-radius: 8px; }
   .bb-col-stripe { width: 4px; height: 16px; border-radius: 2px; }
   .bb-col-stripe--flagged { background: #7a8a78; }
@@ -1295,6 +1303,16 @@
   var BB_OVERSEER = 'Misha';
   var BB_STEALTH_MS = 60 * 1000; // auto-switch stealth edit off after 1 minute
   var bbStealthEdit = (function() { try { return localStorage.getItem('bbStealthEdit') === '1'; } catch (e) { return false; } })();
+  // Collapsed by default; users open the done pile only when they want to look at it.
+  var bbDoneCollapsed = (function() { try { return localStorage.getItem('bbDoneCollapsed') !== '0'; } catch (e) { return true; } })();
+  window.toggleDonePile = function() {
+    bbDoneCollapsed = !bbDoneCollapsed;
+    try { localStorage.setItem('bbDoneCollapsed', bbDoneCollapsed ? '1' : '0'); } catch (e) {}
+    render();
+  };
+  function isDoneKey(key) {
+    return key === 'Completed' || (viewMode === 'stage' && key === 'busted');
+  }
   var bbFrozenProgress = null; // { dbId, ms } captured when a card detail opens
   var bbStealthTimer = null;
   function updateStealthIndicator() {
@@ -1400,11 +1418,24 @@
     var colWidths = order.map(function(k) {
       // Workstation view: shrink empty workcentres, give ones with cards ~2.5x the width.
       if (viewMode === 'workstation') { return groups[k].length ? 'minmax(240px, 2.5fr)' : 'minmax(96px, 1fr)'; }
-      return (k === 'onhold' || k === 'busted') ? 'minmax(130px, 0.5fr)' : 'minmax(240px, 1fr)';
+      if (isDoneKey(k) && bbDoneCollapsed) return '40px';
+      if (k === 'onhold') return 'minmax(130px, 0.5fr)';
+      return 'minmax(240px, 1fr)';
     }).join(' ');
     colsEl.style.gridTemplateColumns = colWidths;
     var colsHTML = '';
     order.forEach(function(key) {
+      // Done pile collapsed to a filing-tab strip — click anywhere to expand.
+      if (isDoneKey(key) && bbDoneCollapsed) {
+        var doneLabel = (viewMode === 'stage') ? 'Busted' : 'Completed';
+        colsHTML += '<div class="bb-column bb-column--collapsed" onclick="toggleDonePile()" title="Click to open ' + doneLabel + '">' +
+          '<div class="bb-collapsed-strip">' +
+            '<div class="bb-collapsed-count">' + groups[key].length + '</div>' +
+            '<div class="bb-collapsed-label">' + doneLabel + '</div>' +
+          '</div>' +
+        '</div>';
+        return;
+      }
       var label, stripeStyle;
       if (viewMode === 'stage') {
         label = stageLabels[key] || key;
@@ -1424,7 +1455,8 @@
       }
       var addBtn = (viewMode === 'stage' && key !== 'busted') ? '<div class="bb-col-add" onclick="openNewCard(\'' + key + '\')">+</div>' : '';
       var colDbl = (viewMode === 'person' && key === BB_OVERSEER) ? ' ondblclick="toggleStealthEdit()"' : '';
-      colsHTML += '<div class="bb-column">' + columnOwnerBarHTML(key) + '<div class="bb-col-header"><div class="bb-col-stripe" style="' + stripeStyle + ';"></div><span class="bb-col-title"' + colDbl + '>' + label + '</span><span class="bb-col-count">' + groups[key].length + '</span>' + addBtn + '</div><div class="bb-col-cards">';
+      var collapseBtn = isDoneKey(key) ? '<div class="bb-col-collapse" onclick="event.stopPropagation();toggleDonePile()" title="Close">‹</div>' : '';
+      colsHTML += '<div class="bb-column">' + columnOwnerBarHTML(key) + '<div class="bb-col-header"><div class="bb-col-stripe" style="' + stripeStyle + ';"></div><span class="bb-col-title"' + colDbl + '>' + label + '</span><span class="bb-col-count">' + groups[key].length + '</span>' + addBtn + collapseBtn + '</div><div class="bb-col-cards">';
       colsHTML += renderColumnCards(groups[key], key, showStage);
       colsHTML += '</div>';
       // Staleness overlay — Us view only, never on the Completed column
