@@ -36,13 +36,33 @@
     text-decoration: none; max-width: 100%;
   }
   .bb-attach-display img { max-width: 28px; max-height: 28px; border-radius: 2px; object-fit: cover; }
-  .bb-attach-vid { position: relative; display: inline-flex; flex-shrink: 0; }
-  .bb-attach-vid video { width: 28px; height: 28px; border-radius: 2px; object-fit: cover; background: #1f2937; pointer-events: none; }
-  .bb-attach-vid::after {
-    content: '\25B6'; position: absolute; inset: 0;
-    display: flex; align-items: center; justify-content: center;
-    color: #fff; font-size: 0.6rem; text-shadow: 0 0 3px rgba(0,0,0,0.9); pointer-events: none;
+  /* Photos + videos: large preview on a row of their own */
+  .bb-attach-media { flex: 1 0 100%; width: 100%; display: flex; flex-direction: column; gap: 4px; margin-top: 4px; }
+  .bb-attach-media-frame {
+    position: relative; display: block; width: 100%; max-width: 320px; height: 180px;
+    background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 4px; overflow: hidden;
   }
+  .bb-attach-media-frame img, .bb-attach-media-frame video {
+    width: 100%; height: 100%; object-fit: contain; display: block;
+  }
+  .bb-attach-media-frame--video { background: #111827; border-color: #111827; }
+  .bb-attach-media-frame--video video { pointer-events: none; }
+  .bb-attach-media-frame--video::after {
+    content: '\25B6'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 48px; height: 48px; border-radius: 50%; background: rgba(0,0,0,0.55);
+    display: flex; align-items: center; justify-content: center; padding-left: 4px; box-sizing: border-box;
+    color: #fff; font-size: 1.2rem; pointer-events: none;
+  }
+  .bb-attach-media-cap {
+    display: flex; align-items: center; gap: 6px; max-width: 320px;
+    font-size: 0.75rem; color: #6b7280;
+  }
+  .bb-attach-media-cap .bb-attach-media-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+  .bb-attach-media-cap .bb-attach-x {
+    cursor: pointer; color: #9ca3af; font-size: 0.8rem;
+    width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%;
+  }
+  .bb-attach-media-cap .bb-attach-x:hover { background: #ef4444; color: #fff; }
   .bb-attach-display .bb-attach-x {
     cursor: pointer; color: #9ca3af; font-size: 0.7rem; margin-left: 4px;
     width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center;
@@ -1655,7 +1675,7 @@
               '<span class="bb-stage-name" contenteditable="true" data-step-id="' + s.id + '" onclick="event.stopPropagation()" onblur="saveStepTitle(\'' + s.id + '\',this)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur();}" style="font-weight:700;font-size:1rem;cursor:text;outline:none;padding:1px 3px;border-radius:3px" onfocus="this.style.background=\'#fef3c7\'" onblur2="this.style.background=\'\'">' + (s.name || '').replace(/</g, '&lt;') + '</span>' +
               personBadge + nowPill + editBtn +
             '</div>' +
-            '<div style="margin-top:0.15rem;display:flex;gap:6px;align-items:flex-start">' +
+            '<div style="margin-top:0.15rem;display:flex;flex-wrap:wrap;gap:6px;align-items:flex-start">' +
               '<textarea id="step-notes-input-' + s.id + '" class="bb-edit-textarea" style="flex:1;min-height:3rem;font-size:0.9rem;line-height:1.4;font-style:italic;color:#6b7280;padding:6px 8px" placeholder="Add notes..." onblur="saveStepNotes(\'' + s.id + '\')">' + (s.notes || '').replace(/</g, '&lt;') + '</textarea>' +
               (s.attachment_url
                 ? buildAttachDisplay(s.attachment_url, s.attachment_name, s.attachment_type, "removeAttachment('stages','" + s.id + "')")
@@ -3390,15 +3410,24 @@
   // ── ATTACHMENT UPLOAD / MENU ──
   function buildAttachDisplay(url, name, type, onRemoveCall) {
     if (!url) return '';
-    var icon;
-    if (type === 'image') icon = '<img src="' + url + '" alt="">';
-    else if (type === 'video') icon = '<span class="bb-attach-vid"><video src="' + url + '#t=0.1" muted playsinline preload="metadata"></video></span>';
-    else if (type === 'url') icon = '<span style="font-size:1.1rem">\uD83D\uDD17</span>';
-    else icon = '<span style="font-size:1.1rem">\uD83D\uDCC4</span>';
     var label = (name || 'attachment').replace(/</g, '&lt;');
     var x = onRemoveCall
       ? '<span class="bb-attach-x" onclick="event.stopPropagation();' + onRemoveCall + '" title="Remove">&times;</span>'
       : '';
+    // Photos and videos get a large preview on their own row; files and links stay as a chip
+    if (type === 'image' || type === 'video') {
+      var isVideo = type === 'video';
+      var media = isVideo
+        ? '<video src="' + url + '#t=0.1" muted playsinline preload="metadata"></video>'
+        : '<img src="' + url + '" alt="">';
+      return '<div class="bb-attach-media">' +
+        '<a class="bb-attach-media-frame' + (isVideo ? ' bb-attach-media-frame--video' : '') + '" href="' + url + '" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="' + label + '">' + media + '</a>' +
+        '<div class="bb-attach-media-cap">' + (isVideo ? '\uD83C\uDFAC' : '\uD83D\uDCF7') + '<span class="bb-attach-media-name">' + label + '</span>' + x + '</div>' +
+      '</div>';
+    }
+    var icon = type === 'url'
+      ? '<span style="font-size:1.1rem">\uD83D\uDD17</span>'
+      : '<span style="font-size:1.1rem">\uD83D\uDCC4</span>';
     return '<a class="bb-attach-display" href="' + url + '" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="' + label + '">' + icon + '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px">' + label + '</span>' + x + '</a>';
   }
 
