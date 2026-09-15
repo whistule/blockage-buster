@@ -36,6 +36,13 @@
     text-decoration: none; max-width: 100%;
   }
   .bb-attach-display img { max-width: 28px; max-height: 28px; border-radius: 2px; object-fit: cover; }
+  .bb-attach-vid { position: relative; display: inline-flex; flex-shrink: 0; }
+  .bb-attach-vid video { width: 28px; height: 28px; border-radius: 2px; object-fit: cover; background: #1f2937; pointer-events: none; }
+  .bb-attach-vid::after {
+    content: '\25B6'; position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 0.6rem; text-shadow: 0 0 3px rgba(0,0,0,0.9); pointer-events: none;
+  }
   .bb-attach-display .bb-attach-x {
     cursor: pointer; color: #9ca3af; font-size: 0.7rem; margin-left: 4px;
     width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center;
@@ -2517,12 +2524,12 @@
     }
   }; */
 
-  function showToast(msg) {
+  function showToast(msg, ms) {
     var old = document.querySelector('.bb-toast');
     if (old) old.remove();
     var t = document.createElement('div'); t.className = 'bb-toast'; t.textContent = msg;
     document.body.appendChild(t);
-    setTimeout(function() { t.remove(); }, 2200);
+    setTimeout(function() { t.remove(); }, ms || 2200);
   }
 
   // ── NEW CARD ──
@@ -3385,6 +3392,7 @@
     if (!url) return '';
     var icon;
     if (type === 'image') icon = '<img src="' + url + '" alt="">';
+    else if (type === 'video') icon = '<span class="bb-attach-vid"><video src="' + url + '#t=0.1" muted playsinline preload="metadata"></video></span>';
     else if (type === 'url') icon = '<span style="font-size:1.1rem">\uD83D\uDD17</span>';
     else icon = '<span style="font-size:1.1rem">\uD83D\uDCC4</span>';
     var label = (name || 'attachment').replace(/</g, '&lt;');
@@ -3395,6 +3403,7 @@
   }
 
   // Hidden file input for uploads (re-used)
+  var MAX_UPLOAD_MB = 50; // Supabase project-wide per-file upload limit
   var bbAttachContext = null; // { table: 'cards'|'stages', id: dbId }
   window.openAttachmentMenu = function(e, table, dbId) {
     e.stopPropagation();
@@ -3412,6 +3421,8 @@
     menu.innerHTML =
       '<div class="bb-attach-menu-item" onclick="triggerAttachUpload(\'camera\')">\uD83D\uDCF7 Take photo</div>' +
       '<div class="bb-attach-menu-item" onclick="triggerAttachUpload(\'image\')">\uD83D\uDDBC From library</div>' +
+      '<div class="bb-attach-menu-item" onclick="triggerAttachUpload(\'videocam\')">\uD83C\uDFA5 Record video</div>' +
+      '<div class="bb-attach-menu-item" onclick="triggerAttachUpload(\'video\')">\uD83C\uDF9E Video from library</div>' +
       '<div class="bb-attach-menu-item" onclick="triggerAttachUpload(\'file\')">\uD83D\uDCCE File</div>' +
       '<div class="bb-attach-menu-item" onclick="addAttachmentLink()">\uD83D\uDD17 Link</div>';
     document.body.appendChild(menu);
@@ -3432,6 +3443,11 @@
       input.setAttribute('capture', 'environment');
     } else if (kind === 'image') {
       input.accept = 'image/*';
+    } else if (kind === 'videocam') {
+      input.accept = 'video/*';
+      input.setAttribute('capture', 'environment');
+    } else if (kind === 'video') {
+      input.accept = 'video/*';
     } else {
       input.accept = '*/*';
     }
@@ -3439,14 +3455,21 @@
     input.onchange = async function() {
       var file = input.files && input.files[0];
       if (!file || !bbAttachContext) return;
-      showToast('Uploading…');
+      var sizeMb = file.size / (1024 * 1024);
+      if (sizeMb > MAX_UPLOAD_MB) {
+        showToast('Too large: ' + Math.round(sizeMb) + ' MB (limit ' + MAX_UPLOAD_MB + ' MB). Trim it, or add it as a Link.', 7000);
+        return;
+      }
+      // Toast stays up until the next one replaces it — big videos can take a while on mobile data
+      showToast(sizeMb >= 5 ? 'Uploading ' + Math.round(sizeMb) + ' MB… keep this page open' : 'Uploading…', 600000);
       var safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
       var path = bbAttachContext.table + '/' + bbAttachContext.id + '/' + Date.now() + '-' + safeName;
-      var { error: upErr } = await sb.storage.from('attachments').upload(path, file, { upsert: true });
-      if (upErr) { showToast('Upload failed: ' + upErr.message); return; }
+      var { error: upErr } = await sb.storage.from('attachments').upload(path, file, { upsert: true, contentType: file.type || undefined });
+      if (upErr) { showToast('Upload failed: ' + upErr.message, 7000); return; }
       var { data: pub } = sb.storage.from('attachments').getPublicUrl(path);
       var url = pub && pub.publicUrl ? pub.publicUrl : '';
-      var attachType = (kind === 'image' || kind === 'camera') ? 'image' : 'file';
+      var attachType = (kind === 'video' || kind === 'videocam' || /^video\//.test(file.type)) ? 'video'
+        : (kind === 'image' || kind === 'camera') ? 'image' : 'file';
       var { error: dbErr } = await sb.from(bbAttachContext.table).update({
         attachment_url: url, attachment_name: file.name, attachment_type: attachType
       }).eq('id', bbAttachContext.id);
