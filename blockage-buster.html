@@ -934,6 +934,7 @@
           currentStep: nowStage ? nowStage.name : '—',
           hasReminder: !!reminderByCard[c.id],
           img: thumb.url,
+          cardImage: c.image_url || '',
           imgType: thumb.type,
           isSticky: c.is_sticky,
           loggedBy: c.logged_by || '',
@@ -1737,6 +1738,15 @@
 
     var completeBtn = '';
 
+    // Card image (main image, shown on the dashboard) + one attachment, each in its own slot
+    var cardMediaHTML =
+      (card.cardImage
+        ? buildAttachDisplay(card.cardImage, 'Card image', 'image', "removeCardImage('" + card.dbId + "')")
+        : '<div class="bb-attach-btn bb-attach-btn--inline" onclick="openCardImageMenu(event,\'' + card.dbId + '\')">+ Card image</div>') +
+      (card.attachmentUrl
+        ? buildAttachDisplay(card.attachmentUrl, card.attachmentName, card.attachmentType, "removeAttachment('cards','" + card.dbId + "')")
+        : '<div class="bb-attach-btn bb-attach-btn--inline" onclick="openAttachmentMenu(event,\'cards\',\'' + card.dbId + '\')">+ Attachment</div>');
+
     var html = '<div class="bb-detail-top" style="flex-wrap:wrap">' +
       '<div style="display:flex;align-items:center;gap:0.85rem;flex-shrink:0">' +
         '<span class="bb-detail-num" style="font-size:2.4rem;line-height:1">#' + card.id + '</span>' +
@@ -1759,17 +1769,11 @@
           '<div style="font-size:0.6rem;color:#65a30d;margin-bottom:4px">Ctrl+B bold · Ctrl+I italic · Ctrl+U underline</div>' +
           '<div contenteditable="true" id="editPostit" style="background:#d9f99d;border:1px solid #65a30d;border-radius:4px;padding:8px;min-height:2rem;font-style:italic;outline:none;line-height:1.5;font-family:inherit;font-size:0.9rem">' + (card.postit || '') + '</div>' +
           '<div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
-            (card.attachmentUrl
-              ? buildAttachDisplay(card.attachmentUrl, card.attachmentName, card.attachmentType, "removeAttachment('cards','" + card.dbId + "')")
-              : '<div class="bb-attach-btn bb-attach-btn--inline" onclick="openAttachmentMenu(event,\'cards\',\'' + card.dbId + '\')">+ Attachment</div>'
-            ) +
+            cardMediaHTML +
           '</div>'
         : '<div id="postitToggle" style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
             '<div onclick="showPostitField()" style="font-size:0.85rem;font-weight:600;color:#365314;cursor:pointer;padding:8px 16px;background:#d9f99d;border:1px dashed #65a30d;border-radius:6px">+ Add post-it</div>' +
-            (card.attachmentUrl
-              ? buildAttachDisplay(card.attachmentUrl, card.attachmentName, card.attachmentType, "removeAttachment('cards','" + card.dbId + "')")
-              : '<div class="bb-attach-btn bb-attach-btn--inline" onclick="openAttachmentMenu(event,\'cards\',\'' + card.dbId + '\')">+ Attachment</div>'
-            ) +
+            cardMediaHTML +
           '</div>') +
     '</div>' +
     '<div class="bb-section-panel" style="margin-bottom:0.75rem">' +
@@ -3483,6 +3487,24 @@
     }, 50);
   };
 
+  // Card image: same upload flow, but saved to cards.image_url (photos only)
+  window.openCardImageMenu = function(e, dbId) {
+    openAttachmentMenu(e, 'cards', dbId);
+    bbAttachContext.cardImage = true;
+    document.getElementById('bbAttachMenu').innerHTML =
+      '<div class="bb-attach-menu-item" onclick="triggerAttachUpload(\'camera\')">📷 Take photo</div>' +
+      '<div class="bb-attach-menu-item" onclick="triggerAttachUpload(\'image\')">🖼 From library</div>';
+  };
+
+  window.removeCardImage = async function(dbId) {
+    if (!confirm('Remove the card image?')) return;
+    var { error } = await sb.from('cards').update({ image_url: null }).eq('id', dbId);
+    if (error) { showToast('Error: ' + error.message); return; }
+    showToast('Card image removed');
+    await loadData();
+    if (currentCardId) await renderDetail(currentCardId);
+  };
+
   window.triggerAttachUpload = function(kind) {
     var menu = document.getElementById('bbAttachMenu');
     if (menu) menu.remove();
@@ -3520,11 +3542,11 @@
       var url = pub && pub.publicUrl ? pub.publicUrl : '';
       var attachType = (kind === 'video' || kind === 'videocam' || /^video\//.test(file.type)) ? 'video'
         : (kind === 'image' || kind === 'camera') ? 'image' : 'file';
-      var { error: dbErr } = await sb.from(bbAttachContext.table).update({
+      var { error: dbErr } = await sb.from(bbAttachContext.table).update(bbAttachContext.cardImage ? { image_url: url } : {
         attachment_url: url, attachment_name: file.name, attachment_type: attachType
       }).eq('id', bbAttachContext.id);
       if (dbErr) { showToast('Save failed: ' + dbErr.message); return; }
-      showToast('Attached');
+      showToast(bbAttachContext.cardImage ? 'Card image added' : 'Attached');
       await loadData();
       if (currentCardId) await renderDetail(currentCardId);
     };
