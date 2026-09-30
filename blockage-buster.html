@@ -296,6 +296,15 @@
     margin: auto 14px auto 0; flex-shrink: 0;
     background: #e5e7eb;
   }
+  /* Video thumbnail: first frame with a ▶ over it (dark tile if the phone won't load a frame) */
+  .bb-card-img--video { position: relative; overflow: hidden; background: #111827; }
+  .bb-card-img--video video { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
+  .bb-card-img--video::after {
+    content: '\25B6'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 24px; height: 24px; border-radius: 50%; background: rgba(0,0,0,0.55);
+    display: flex; align-items: center; justify-content: center; padding-left: 2px; box-sizing: border-box;
+    color: #fff; font-size: 0.65rem; pointer-events: none;
+  }
 
   .bb-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.35rem; }
   .bb-card-num { font-size: 0.75rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.04em; }
@@ -897,6 +906,14 @@
             if (ct && ct.type !== 'external' && !isHiddenInternal(ct.name) && watcherNames.indexOf(ct.name) === -1) watcherNames.push(ct.name);
           });
         }
+        // Dashboard thumbnail: the card's own photo/video, else the current step's
+        var thumb = { url: c.image_url || '', type: c.image_url ? 'image' : '' };
+        [c, nowStage].some(function(src) {
+          if (!thumb.url && src && src.attachment_url && (src.attachment_type === 'image' || src.attachment_type === 'video')) {
+            thumb = { url: src.attachment_url, type: src.attachment_type };
+          }
+          return !!thumb.url;
+        });
         return {
           id: String(c.buster_num).padStart(3, '0'),
           dbId: c.id,
@@ -916,7 +933,8 @@
           urgency: c.urgency || '',
           currentStep: nowStage ? nowStage.name : '—',
           hasReminder: !!reminderByCard[c.id],
-          img: c.image_url || '',
+          img: thumb.url,
+          imgType: thumb.type,
           isSticky: c.is_sticky,
           loggedBy: c.logged_by || '',
           why1: c.why1 || '',
@@ -1055,7 +1073,10 @@
       '</div>' +
     '</div>';
 
-    var imgHTML = c.img ? '<img class="bb-card-img" src="' + c.img + '" alt="">' : '';
+    var imgHTML = !c.img ? ''
+      : c.imgType === 'video'
+        ? '<div class="bb-card-img bb-card-img--video"><video src="' + c.img + '#t=0.1" muted playsinline preload="metadata"></video></div>'
+        : '<img class="bb-card-img" src="' + c.img + '" alt="">';
     var cardOpacity = hasRemindAt ? ' style="opacity:0.35"' : '';
 
     // Recoloured original bar: white stripe, coloured line down its RIGHT edge,
