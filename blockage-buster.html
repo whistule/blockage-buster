@@ -291,9 +291,9 @@
   .bb-card-bar .bb-pill { flex-shrink: 0; }
 
   .bb-card-img {
-    width: 64px; min-width: 64px; height: 64px;
+    width: 100%; height: 120px;
     object-fit: cover; border-radius: 4px;
-    margin: auto 14px auto 0; flex-shrink: 0;
+    display: block; margin: 4px 0 8px;
     background: #e5e7eb;
   }
   /* Video thumbnail: first frame with a ▶ over it (dark tile if the phone won't load a frame) */
@@ -301,9 +301,9 @@
   .bb-card-img--video video { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
   .bb-card-img--video::after {
     content: '\25B6'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    width: 24px; height: 24px; border-radius: 50%; background: rgba(0,0,0,0.55);
+    width: 32px; height: 32px; border-radius: 50%; background: rgba(0,0,0,0.55);
     display: flex; align-items: center; justify-content: center; padding-left: 2px; box-sizing: border-box;
-    color: #fff; font-size: 0.65rem; pointer-events: none;
+    color: #fff; font-size: 0.85rem; pointer-events: none;
   }
 
   .bb-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.35rem; }
@@ -1102,11 +1102,10 @@
       '<div class="bb-card-body">' +
         topRight +
         '<div class="bb-card-title" style="padding-right:64px">' + (isBusted ? '<span style="color:#0098a0;margin-right:4px">&#10003;</span>' : '') + c.title + '</div>' +
-        (c.img ? '<div style="display:flex;gap:10px"><div style="flex:1;min-width:0">' : '') +
         (c.postit
           ? '<div id="postit-card-' + c.id + '" onclick="event.stopPropagation();openCardPostit(\'' + c.id + '\',true)" style="background:#d9f99d;border-left:3px solid #65a30d;padding:4px 8px;border-radius:2px;font-style:italic;cursor:text;position:relative;font-size:0.85rem;color:#365314;line-height:1.4;margin-top:5px;margin-bottom:0.4rem;white-space:pre-wrap">' + c.postit + '<span onclick="event.stopPropagation();deletePostit(\'' + c.id + '\')" style="position:absolute;top:2px;right:4px;font-size:0.6rem;color:#65a30d;cursor:pointer;opacity:0.5;font-style:normal" title="Remove post-it">&#10005;</span></div>'
           : '<div id="postit-card-' + c.id + '"></div>') +
-        (c.img ? '</div>' + imgHTML + '</div>' : '') +
+        imgHTML +
         '<div class="bb-card-bottom">' + metaWithMood + bottomBar + '</div>' +
       '</div>' +
     '</div>';
