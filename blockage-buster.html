@@ -1741,7 +1741,7 @@
     var cardMediaHTML =
       (card.cardImage
         ? buildAttachDisplay(card.cardImage, 'Card image', 'image', "removeCardImage('" + card.dbId + "')")
-        : '<div class="bb-attach-btn bb-attach-btn--inline" onclick="openCardImageMenu(event,\'' + card.dbId + '\')">+ Card image</div>') +
+        : '<div class="bb-attach-btn bb-attach-btn--inline" onclick="openCardImageMenu(event,\'' + card.dbId + '\')" title="Or paste a picture with Ctrl+V">+ Card image <span style="font-weight:400;opacity:0.6">(or Ctrl+V)</span></div>') +
       (card.attachmentUrl
         ? buildAttachDisplay(card.attachmentUrl, card.attachmentName, card.attachmentType, "removeAttachment('cards','" + card.dbId + "')")
         : '<div class="bb-attach-btn bb-attach-btn--inline" onclick="openAttachmentMenu(event,\'cards\',\'' + card.dbId + '\')">+ Attachment</div>');
@@ -3523,36 +3523,58 @@
       input.accept = '*/*';
     }
     input.style.display = 'none';
-    input.onchange = async function() {
-      var file = input.files && input.files[0];
-      if (!file || !bbAttachContext) return;
-      var sizeMb = file.size / (1024 * 1024);
-      if (sizeMb > MAX_UPLOAD_MB) {
-        showToast('Too large: ' + Math.round(sizeMb) + ' MB (limit ' + MAX_UPLOAD_MB + ' MB). Trim it, or add it as a Link.', 7000);
-        return;
-      }
-      // Toast stays up until the next one replaces it — big videos can take a while on mobile data
-      showToast(sizeMb >= 5 ? 'Uploading ' + Math.round(sizeMb) + ' MB… keep this page open' : 'Uploading…', 600000);
-      var safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-      var path = bbAttachContext.table + '/' + bbAttachContext.id + '/' + Date.now() + '-' + safeName;
-      var { error: upErr } = await sb.storage.from('attachments').upload(path, file, { upsert: true, contentType: file.type || undefined });
-      if (upErr) { showToast('Upload failed: ' + upErr.message, 7000); return; }
-      var { data: pub } = sb.storage.from('attachments').getPublicUrl(path);
-      var url = pub && pub.publicUrl ? pub.publicUrl : '';
-      var attachType = (kind === 'video' || kind === 'videocam' || /^video\//.test(file.type)) ? 'video'
-        : (kind === 'image' || kind === 'camera') ? 'image' : 'file';
-      var { error: dbErr } = await sb.from(bbAttachContext.table).update(bbAttachContext.cardImage ? { image_url: url } : {
-        attachment_url: url, attachment_name: file.name, attachment_type: attachType
-      }).eq('id', bbAttachContext.id);
-      if (dbErr) { showToast('Save failed: ' + dbErr.message); return; }
-      showToast(bbAttachContext.cardImage ? 'Card image added' : 'Attached');
-      await loadData();
-      if (currentCardId) await renderDetail(currentCardId);
-    };
+    input.onchange = function() { uploadAttachFile(input.files && input.files[0], kind); };
     document.body.appendChild(input);
     input.click();
     setTimeout(function(){ input.remove(); }, 60000);
   };
+
+  // Upload a file into the current bbAttachContext (attachment slot, or card image)
+  async function uploadAttachFile(file, kind) {
+    if (!file || !bbAttachContext) return;
+    var sizeMb = file.size / (1024 * 1024);
+    if (sizeMb > MAX_UPLOAD_MB) {
+      showToast('Too large: ' + Math.round(sizeMb) + ' MB (limit ' + MAX_UPLOAD_MB + ' MB). Trim it, or add it as a Link.', 7000);
+      return;
+    }
+    // Toast stays up until the next one replaces it — big videos can take a while on mobile data
+    showToast(sizeMb >= 5 ? 'Uploading ' + Math.round(sizeMb) + ' MB… keep this page open' : 'Uploading…', 600000);
+    var safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    var path = bbAttachContext.table + '/' + bbAttachContext.id + '/' + Date.now() + '-' + safeName;
+    var { error: upErr } = await sb.storage.from('attachments').upload(path, file, { upsert: true, contentType: file.type || undefined });
+    if (upErr) { showToast('Upload failed: ' + upErr.message, 7000); return; }
+    var { data: pub } = sb.storage.from('attachments').getPublicUrl(path);
+    var url = pub && pub.publicUrl ? pub.publicUrl : '';
+    var attachType = (kind === 'video' || kind === 'videocam' || /^video\//.test(file.type)) ? 'video'
+      : (kind === 'image' || kind === 'camera') ? 'image' : 'file';
+    var { error: dbErr } = await sb.from(bbAttachContext.table).update(bbAttachContext.cardImage ? { image_url: url } : {
+      attachment_url: url, attachment_name: file.name, attachment_type: attachType
+    }).eq('id', bbAttachContext.id);
+    if (dbErr) { showToast('Save failed: ' + dbErr.message); return; }
+    showToast(bbAttachContext.cardImage ? 'Card image added' : 'Attached');
+    await loadData();
+    if (currentCardId) await renderDetail(currentCardId);
+  }
+
+  // Ctrl+V an image (screenshot, copied picture) while a card is open → it becomes the card image
+  document.addEventListener('paste', function(e) {
+    if (!currentCardId || !document.getElementById('bbDetail').classList.contains('bb-view--active')) return;
+    var items = (e.clipboardData && e.clipboardData.items) || [];
+    var file = null;
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].kind === 'file' && /^image\//.test(items[i].type)) { file = items[i].getAsFile(); break; }
+    }
+    if (!file) return; // plain text pastes into fields as normal
+    var card = cards.find(function(c) { return c.id === currentCardId; });
+    if (!card || !card.dbId) return;
+    e.preventDefault();
+    if (card.cardImage && !confirm('Replace the card image with the pasted picture?')) return;
+    // Clipboard images are all called "image.png" — give each a unique name
+    var ext = (file.type.split('/')[1] || 'png').replace(/[^a-z0-9]/gi, '');
+    file = new File([file], 'pasted-' + Date.now() + '.' + ext, { type: file.type });
+    bbAttachContext = { table: 'cards', id: card.dbId, cardImage: true };
+    uploadAttachFile(file, 'image');
+  });
 
   window.addAttachmentLink = async function() {
     var menu = document.getElementById('bbAttachMenu');
