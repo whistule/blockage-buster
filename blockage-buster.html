@@ -788,8 +788,15 @@
   // Names hidden from Us view, working-days grid, workstations matrix, person dropdowns,
   // extra-people checkboxes, and watcher lists. Contacts rows stay in place so historical
   // (busted/completed) cards and steps still resolve their name.
-  var HIDDEN_INTERNAL_NAMES = ['Ben'];
-  function isHiddenInternal(name) { return HIDDEN_INTERNAL_NAMES.indexOf(name) !== -1; }
+  // People who've left the team (contacts.active = false) — hidden from
+  // pickers and columns. Shared with Reg-Ops, which can also mark people
+  // as left from its Team & Tasks screen.
+  function isHiddenInternal(name) {
+    return Object.keys(contactsMap).some(function(id) {
+      var c = contactsMap[id];
+      return c.name === name && c.type !== 'external' && c.active === false;
+    });
+  }
 
   var viewMode = 'person';
   var activeTab = null;
@@ -1958,13 +1965,27 @@
     await renderDetail(currentCardId);
   };
 
+  // Reg-Ops keys each team member by a short unique initial. Same rule as
+  // Reg-Ops: first letter, else first two, else letter + number. Initials of
+  // people who've left stay taken, so their old ticks never change colour.
+  function newTeamInitial(name) {
+    var taken = {};
+    Object.keys(contactsMap).forEach(function(id) { if (contactsMap[id].initial) taken[contactsMap[id].initial] = true; });
+    var clean = name.replace(/[^A-Za-z]/g, '').toUpperCase();
+    var candidates = [clean.charAt(0), clean.substring(0, 2)];
+    for (var i = 2; i <= 9; i++) candidates.push((clean.charAt(0) || 'P') + i);
+    return candidates.find(function(k) { return k && !taken[k]; }) || null;
+  }
+
   // ── ADD NEW PERSON ──
   window.handleNewPerson = async function(selectEl) {
     if (selectEl.value !== '__new__') return;
     var name = prompt('New contact name:');
     if (!name || !name.trim()) { selectEl.value = ''; return; }
     var type = confirm('Is this person external (Them)?\n\nOK = Them\nCancel = Us (our team)') ? 'external' : 'internal';
-    var { data, error } = await sb.from('contacts').insert({ name: name.trim(), type: type }).select();
+    var row = { name: name.trim(), type: type };
+    if (type === 'internal') row.initial = newTeamInitial(row.name);
+    var { data, error } = await sb.from('contacts').insert(row).select();
     if (error) { showToast('Error: ' + error.message); selectEl.value = ''; return; }
     if (data && data[0]) {
       contactsMap[data[0].id] = data[0];
@@ -3690,14 +3711,14 @@
   }
 
   // ── WORKING DAYS (shared with reg-ops via regop_working_days table) ──
-  // reg-ops keys each person by a single letter. Keep the same mapping so the two apps stay in sync.
-  var WD_PEOPLE = [
-    { key: 'R', name: 'Ronnie', color: '#f5c518' },
-    { key: 'E', name: 'Ewen',   color: '#2ecc71' },
-    { key: 'H', name: 'Helena', color: '#3498db' },
-    { key: 'D', name: 'Dillon', color: '#e74c3c' },
-    { key: 'M', name: 'Misha',  color: '#9b59b6' }
-  ];
+  // The current team from contacts, keyed by the initial reg-ops uses.
+  function wdPeople() {
+    return Object.keys(contactsMap)
+      .map(function(id) { return contactsMap[id]; })
+      .filter(function(c) { return c.type === 'internal' && c.active !== false && c.initial; })
+      .sort(function(a, b) { return a.name.localeCompare(b.name); })
+      .map(function(c) { return { key: c.initial, name: c.name, color: c.color || defaultPersonColor }; });
+  }
   var WD_DAYS = ['mon','tue','wed','thu','fri'];
   var WD_DAY_LABELS = ['Mon','Tue','Wed','Thu','Fri'];
   var workingDays = {}; // { 'E': {mon:true,...} }
@@ -3709,7 +3730,7 @@
     if (data) data.forEach(function(r) {
       workingDays[r.person] = { mon: r.mon, tue: r.tue, wed: r.wed, thu: r.thu, fri: r.fri };
     });
-    WD_PEOPLE.forEach(function(p) {
+    wdPeople().forEach(function(p) {
       if (!workingDays[p.key]) workingDays[p.key] = { mon:true, tue:true, wed:true, thu:true, fri:true };
     });
   }
@@ -3727,7 +3748,7 @@
     WD_DAY_LABELS.forEach(function(d) {
       html += '<div style="text-align:center;font-size:0.7rem;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.06em">' + d + '</div>';
     });
-    WD_PEOPLE.forEach(function(p) {
+    wdPeople().forEach(function(p) {
       var wd = workingDays[p.key] || { mon:true, tue:true, wed:true, thu:true, fri:true };
       html += '<div style="display:flex;align-items:center;gap:8px;font-size:0.85rem;font-weight:600;color:#1f2937">' +
         '<span style="width:12px;height:12px;border-radius:50%;background:' + p.color + ';flex-shrink:0"></span>' + p.name + '</div>';
